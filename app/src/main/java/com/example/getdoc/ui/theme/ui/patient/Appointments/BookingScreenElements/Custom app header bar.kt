@@ -48,8 +48,8 @@ fun CustomAppBar(
                     tint = Color.White
                 )
             }
-            Spacer(modifier = Modifier.width(8.dp))
-            // text deleted
+
+            // text deleted and spacer
         }
     }
 }
