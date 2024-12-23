@@ -19,7 +19,7 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             GetDocTheme {
-
+                 Text(text = "prap")
             }
         }
     }
