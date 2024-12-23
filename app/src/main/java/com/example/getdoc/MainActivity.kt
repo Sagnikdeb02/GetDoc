@@ -19,9 +19,7 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             GetDocTheme {
-                Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
 
-                }
             }
         }
     }
