@@ -54,7 +54,12 @@ fun PatientDetailsPage() {
             Column(
                 modifier = Modifier.fillMaxWidth()
             ) {
-                //ekhan thaki katsi
+                PatientDetailRow(label = "Name:", value = "Sagnik Deb")
+                PatientDetailRow(label = "Gender:", value = "Male")
+                PatientDetailRow(label = "Age:", value = "32 Year Old")
+                PatientDetailRow(label = "Booking For:", value = "Self")
+                PatientDetailRow(label = "Booking ID:", value = "100068")
+                PatientDetailRow(label = "Phone No:", value = "01711111111")
             }
         }
 
