@@ -40,7 +40,7 @@ fun CustomAppBar(
         ) {
             IconButton(
                 onClick = { onBackClick() },
-                modifier = Modifier.size(24.dp)
+                modifier = Modifier.size(20.dp)
             ) {
                 Icon(
                     imageVector = Icons.Default.ArrowBack,
@@ -49,7 +49,7 @@ fun CustomAppBar(
                 )
             }
             Spacer(modifier = Modifier.width(8.dp))
-
+            // text deleted
         }
     }
 }
