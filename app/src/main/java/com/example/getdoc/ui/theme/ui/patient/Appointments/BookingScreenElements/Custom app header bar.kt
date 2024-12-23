@@ -49,12 +49,7 @@ fun CustomAppBar(
                 )
             }
             Spacer(modifier = Modifier.width(8.dp))
-            Text(
-                text = title,
-                style = MaterialTheme.typography.titleLarge,
-                color = Color.White,
-                modifier = Modifier.weight(1f)
-            )
+
         }
     }
 }
