@@ -48,8 +48,13 @@ fun CustomAppBar(
                     tint = Color.White
                 )
             }
-
-            // text deleted and spacer
+            Spacer(modifier = Modifier.width(8.dp))
+            Text(
+                text = title,
+                style = MaterialTheme.typography.titleLarge,
+                color = Color.White,
+                modifier = Modifier.weight(1f)
+            )
         }
     }
 }
