@@ -21,9 +21,9 @@ class MainActivity : ComponentActivity() {
             GetDocTheme {
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
                     Greeting(
-                        name = "Android",
+                        name = "prapti",
                         modifier = Modifier.padding(innerPadding)
-                        //comment
+
                     )
                 }
             }
