@@ -67,6 +67,11 @@ dependencies {
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)
 
+    // Compose Calendar Library
     implementation("io.github.kizitonwose:compose-calendar:1.0.0")
 
+    // Jetpack Compose Material Components
+    implementation("androidx.compose.material:material:<compose_version>")
+    implementation("androidx.compose.ui:ui:<compose_version>")
+    implementation("androidx.compose.ui:ui-tooling-preview:<compose_version>")
 }
