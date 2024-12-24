@@ -71,7 +71,7 @@ dependencies {
     implementation("io.github.kizitonwose:compose-calendar:1.0.0")
 
     // Jetpack Compose Material Components
-    implementation("androidx.compose.material:material:<compose_version>")
-    implementation("androidx.compose.ui:ui:<compose_version>")
-    implementation("androidx.compose.ui:ui-tooling-preview:<compose_version>")
+    implementation("androidx.compose.material:material:1.5.1")
+    implementation("androidx.compose.ui:ui:1.5.1")
+    implementation("androidx.compose.ui:ui-tooling-preview:1.5.1")
 }
