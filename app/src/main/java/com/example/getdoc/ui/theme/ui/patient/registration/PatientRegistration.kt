@@ -228,7 +228,7 @@ fun validateUsername(username: String): String {
 
 fun validateEmail(email: String): String {
     val emailPattern = "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}\$"
-    return if (!Pattern.compile(emailPattern).matcher(email).matches()) "Invalid email format" else ""
+    return if (!Pattern.compile(emailPattern).matcher(email).matches()) "Invalid email format " else ""
 }
 
 fun validatePassword(password: String): String {
