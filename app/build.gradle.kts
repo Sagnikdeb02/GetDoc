@@ -101,9 +101,6 @@ dependencies {
 // Google Sign-In
 
 
-// Facebook Login
-
-    implementation ("com.google.android.gms:play-services-auth:16.0.1")
 
 
 
