@@ -1,3 +1,6 @@
 <resources>
     <string name="app_name">GetDoc</string>
+    <string name="default_web_client_id">204719736095-8b03lc11oshj83p5lqrq5nils1fbfe7i.apps.googleusercontent.com</string>
+
+
 </resources>

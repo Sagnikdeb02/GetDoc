@@ -90,7 +90,7 @@ fun DoctorSignIn(){
 
             )
 
-            Spacer(modifier = Modifier.height(16.dp))
+            /*Spacer(modifier = Modifier.height(16.dp))
             OutlinedTextField(
                 value = "",
                 onValueChange = {},
@@ -102,7 +102,7 @@ fun DoctorSignIn(){
                     .height(50.dp),
                 shape = RoundedCornerShape(20.dp)
 
-            )
+            )*/
 
             Spacer(modifier = Modifier.height(16.dp))
             OutlinedTextField(
