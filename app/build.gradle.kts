@@ -77,33 +77,4 @@ dependencies {
     implementation("androidx.compose.material:material:1.5.1")
     implementation("androidx.compose.ui:ui:1.5.1")
     implementation("androidx.compose.ui:ui-tooling-preview:1.5.1")
-
-
-    // Firebase Authentication
-    implementation (libs.firebase.auth)
-
-    // Firebase Firestore
-    implementation (libs.firebase.firestore)
-
-    // Firebase BOM (optional but recommended for version management)
-    implementation (platform(libs.firebase.bom))
-    implementation (libs.json)
-
-
-
-
-    implementation( libs.androidx.navigation.compose)
-
-
-    implementation(libs.lifecycle.runtime.ktx)
-    implementation(libs.activity.compose)
-
-// Google Sign-In
-
-
-
-
-
-
-
 }
