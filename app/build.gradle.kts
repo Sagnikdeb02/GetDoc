@@ -1,6 +1,8 @@
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.jetbrains.kotlin.android)
+    alias(libs.plugins.google.services)
+
 }
 
 android {
@@ -28,6 +30,7 @@ android {
                 "proguard-rules.pro"
             )
         }
+
     }
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_1_8
@@ -68,10 +71,39 @@ dependencies {
     debugImplementation(libs.androidx.ui.test.manifest)
 
     // Compose Calendar Library
-    implementation("io.github.kizitonwose:compose-calendar:1.0.0")
+    // implementation("io.github.kizitonwose:compose-calendar:1.0.0")
 
     // Jetpack Compose Material Components
     implementation("androidx.compose.material:material:1.5.1")
     implementation("androidx.compose.ui:ui:1.5.1")
     implementation("androidx.compose.ui:ui-tooling-preview:1.5.1")
+
+
+    // Firebase Authentication
+    implementation (libs.firebase.auth)
+
+    // Firebase Firestore
+    implementation (libs.firebase.firestore)
+
+    // Firebase BOM (optional but recommended for version management)
+    implementation (platform(libs.firebase.bom))
+    implementation (libs.json)
+
+
+
+
+    implementation( libs.androidx.navigation.compose)
+
+
+    implementation(libs.lifecycle.runtime.ktx)
+    implementation(libs.activity.compose)
+
+// Google Sign-In
+
+
+
+
+
+
+
 }

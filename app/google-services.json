@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "204719736095",
+    "project_id": "getdoc-89f73",
+    "storage_bucket": "getdoc-89f73.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:204719736095:android:15d1f1cc2e8f72c18adc2a",
+        "android_client_info": {
+          "package_name": "com.example.getdoc"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDZ2IDJqXpK4coD1uGCv2PZmVURXzoTmr0"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
