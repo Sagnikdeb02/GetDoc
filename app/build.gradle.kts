@@ -2,7 +2,8 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.jetbrains.kotlin.android)
     alias(libs.plugins.google.services)
-
+    alias(libs.plugins.jetbrains.kotlin.serialization)
+    alias(libs.plugins.kotlin.compose)
 }
 
 android {
@@ -74,10 +75,9 @@ dependencies {
     // implementation("io.github.kizitonwose:compose-calendar:1.0.0")
 
     // Jetpack Compose Material Components
-    implementation("androidx.compose.material:material:1.5.1")
-    implementation("androidx.compose.ui:ui:1.5.1")
-    implementation("androidx.compose.ui:ui-tooling-preview:1.5.1")
-
+//    implementation("androidx.compose.material:material:1.7.6")
+//    implementation("androidx.compose.ui:ui:1.5.1")
+//    implementation("androidx.compose.ui:ui-tooling-preview:1.5.1")
 
     // Firebase Authentication
     implementation (libs.firebase.auth)
@@ -89,21 +89,10 @@ dependencies {
     implementation (platform(libs.firebase.bom))
     implementation (libs.json)
 
-
-
-
     implementation( libs.androidx.navigation.compose)
+    implementation(libs.kotlinx.serialization.json)
 
-
-    implementation(libs.lifecycle.runtime.ktx)
-    implementation(libs.activity.compose)
-
-// Google Sign-In
-
-
-
-
-
-
+    //Compose Viewmodel
+    implementation(libs.androidx.lifecycle.viewmodel.compose)
 
 }
