@@ -16,6 +16,7 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.*
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -28,10 +29,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.platform.LocalContext
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
 import com.google.firebase.auth.FirebaseAuth
-import kotlinx.coroutines.tasks.await
 import com.example.getdoc.R
 import java.util.regex.Pattern
 
@@ -39,20 +40,29 @@ import java.util.regex.Pattern
 
 // LogIn Composable Screen
 @Composable
-fun LogIn(
-    auth: FirebaseAuth,
-    navController: NavHostController,
-    onLoginSuccess: () -> Unit
+fun LogInScreen(
+    viewModel: AuthenticationViewModel,
+    onLoginSuccess: () -> Unit,
+    onSignUpClick: () -> Unit,
+    onForgotPasswordClick: () -> Unit
 ) {
     val context = LocalContext.current
+    val authUiState by viewModel.authUiState.collectAsStateWithLifecycle()
+    val firebaseUser by viewModel.firebaseUser.collectAsStateWithLifecycle()
 
-    var email by remember { mutableStateOf("") }
-    var password by remember { mutableStateOf("") }
     var emailError by remember { mutableStateOf("") }
     var passwordError by remember { mutableStateOf("") }
     var loginError by remember { mutableStateOf("") }
     var isLoading by remember { mutableStateOf(false) }
     var passwordVisible by remember { mutableStateOf(false) }
+
+
+    LaunchedEffect(key1 = firebaseUser) {
+        if (firebaseUser != null) {
+            onLoginSuccess()
+        }
+    }
+
 
     Column(
         modifier = Modifier
@@ -86,9 +96,9 @@ fun LogIn(
 
             Spacer(modifier = Modifier.height(16.dp))
             OutlinedTextField(
-                value = email,
+                value = authUiState.email,
                 onValueChange = {
-                    email = it.trim()
+                    viewModel.onEmailChange(it.trim())
                     emailError = ""
                 },
                 label = { Text(text = "Enter Email") },
@@ -102,9 +112,9 @@ fun LogIn(
 
             Spacer(modifier = Modifier.height(16.dp))
             OutlinedTextField(
-                value = password,
+                value = authUiState.password,
                 onValueChange = {
-                    password = it.trim()
+                    viewModel.onPasswordChange(it.trim())
                     passwordError = ""
                 },
                 label = { Text(text = "Password") },
@@ -129,17 +139,9 @@ fun LogIn(
                 horizontalArrangement = Arrangement.End
             ) {
                 TextButton(onClick = {
-                    if (email.isNotEmpty()) {
+                    if (authUiState.email.isNotEmpty()) {
                         isLoading = true
-                        auth.sendPasswordResetEmail(email)
-                            .addOnSuccessListener {
-                                Toast.makeText(context, "Password reset email sent to $email", Toast.LENGTH_LONG).show()
-                                isLoading = false
-                            }
-                            .addOnFailureListener { exception ->
-                                Toast.makeText(context, "Error: ${exception.message}", Toast.LENGTH_LONG).show()
-                                isLoading = false
-                            }
+                        viewModel.onPasswordResetClick()
                     } else {
                         Toast.makeText(context, "Please enter your email", Toast.LENGTH_LONG).show()
                     }
@@ -161,22 +163,19 @@ fun LogIn(
                             emailError = ""
                             passwordError = ""
 
-                            if (!isValidEmail(email)) {
+                            if (!isValidEmail(authUiState.email)) {
                                 emailError = "Invalid email format"
                             }
-                            if (password.isEmpty()) {
+                            if (authUiState.password.isEmpty()) {
                                 passwordError = "Password cannot be empty"
-                            } else if (password.length < 6) {
+                            } else if (authUiState.password.length < 6) {
                                 passwordError = "Password must be at least 6 characters"
                             }
 
                             if (emailError.isEmpty() && passwordError.isEmpty()) {
                                 isLoading = true
 
-                                signInUser(auth, email, password, context) {
-                                    isLoading = false
-                                    onLoginSuccess() // Call the success callback
-                                }
+                                viewModel.onSignInClick()
                             }
 
                         },
@@ -205,7 +204,7 @@ fun LogIn(
                 Text(text = "Don't have an account? ")
                 ClickableText(
                     text = AnnotatedString("Create one"),
-                    onClick = { navController.navigate("patientSignUp") }
+                    onClick = {onSignUpClick()}
                 )
             }
         }
@@ -223,11 +222,11 @@ fun LogInPreview() {
     val mockAuth = FirebaseAuth.getInstance()
     val mockNavController = rememberNavController()
 
-    LogIn(
-        auth = mockAuth,
-        navController = mockNavController,
-        onLoginSuccess = { /* Handle login success */ }
-    )
+//    LogInScreen(
+//        auth = mockAuth,
+//        navController = mockNavController,
+//        onLoginSuccess = { /* Handle login success */ }
+//    )
 }
 // Create User function
 //suspend fun createUser(auth: FirebaseAuth, email: String, password: String, context: Context) {
@@ -240,23 +239,23 @@ fun LogInPreview() {
 //    }
 //}
 // Updated signInUser function
-fun signInUser(
-    auth: FirebaseAuth,
-    email: String,
-    password: String,
-    context: Context, // Pass Context here
-    onSignInSuccess: () -> Unit
-) {
-    auth.signInWithEmailAndPassword(email, password).addOnCompleteListener { task ->
-        if (task.isSuccessful) {
-            val user = auth.currentUser
-            if (user?.isEmailVerified == true) {
-                onSignInSuccess()
-            } else {
-                Toast.makeText(context, "Please verify your email first", Toast.LENGTH_LONG).show()
-            }
-        } else {
-            Toast.makeText(context, "Sign-in failed: ${task.exception?.message}", Toast.LENGTH_LONG).show()
-        }
-    }
-}
+//fun signInUser(
+//    auth: FirebaseAuth,
+//    email: String,
+//    password: String,
+//    context: Context, // Pass Context here
+//    onSignInSuccess: () -> Unit
+//) {
+//    auth.signInWithEmailAndPassword(email, password).addOnCompleteListener { task ->
+//        if (task.isSuccessful) {
+//            val user = auth.currentUser
+//            if (user?.isEmailVerified == true) {
+//                onSignInSuccess()
+//            } else {
+//                Toast.makeText(context, "Please verify your email first", Toast.LENGTH_LONG).show()
+//            }
+//        } else {
+//            Toast.makeText(context, "Sign-in failed: ${task.exception?.message}", Toast.LENGTH_LONG).show()
+//        }
+//    }
+//}

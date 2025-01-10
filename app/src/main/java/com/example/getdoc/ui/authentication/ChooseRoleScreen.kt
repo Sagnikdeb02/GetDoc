@@ -30,7 +30,11 @@ import com.example.getdoc.R
 
 
 @Composable
-fun ChooseRoleScreen(){
+fun ChooseRoleScreen(
+    modifier: Modifier = Modifier,
+    onDoctorClick: () -> Unit,
+    onPatientClick: () -> Unit
+){
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -89,7 +93,7 @@ fun ChooseRoleScreen(){
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 Button(
-                    onClick = { /*TODO*/ },
+                    onClick = onDoctorClick,
                     modifier = Modifier.size(height = 50.dp, width = 120.dp),
                     colors = ButtonDefaults.buttonColors(Color(0xFF174666)),
                     shape = RoundedCornerShape(20.dp)
@@ -101,7 +105,7 @@ fun ChooseRoleScreen(){
                     )
                 }
                 Button(
-                    onClick = { /*TODO*/ },
+                    onClick = onPatientClick,
                     modifier = Modifier.size(height = 50.dp, width = 120.dp),
                     colors = ButtonDefaults.buttonColors(Color(0xFF174666)),
                     shape = RoundedCornerShape(20.dp)

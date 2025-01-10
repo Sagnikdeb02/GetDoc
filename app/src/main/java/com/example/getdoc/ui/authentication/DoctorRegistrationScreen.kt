@@ -90,19 +90,19 @@ fun DoctorSignIn(){
 
             )
 
-            /*Spacer(modifier = Modifier.height(16.dp))
-            OutlinedTextField(
-                value = "",
-                onValueChange = {},
-                label = {
-                    Text(text = "Enter Registration ID")
-                },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(50.dp),
-                shape = RoundedCornerShape(20.dp)
-
-            )*/
+//            Spacer(modifier = Modifier.height(16.dp))
+//            OutlinedTextField(
+//                value = "",
+//                onValueChange = {},
+//                label = {
+//                    Text(text = "Enter Registration ID")
+//                },
+//                modifier = Modifier
+//                    .fillMaxWidth()
+//                    .height(50.dp),
+//                shape = RoundedCornerShape(20.dp)
+//
+//            )
 
             Spacer(modifier = Modifier.height(16.dp))
             OutlinedTextField(

@@ -5,7 +5,6 @@ import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.*
 
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -28,23 +27,21 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.ui.platform.LocalContext
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 
 import com.example.getdoc.R
 import kotlinx.coroutines.tasks.await
 import java.util.regex.Pattern
 
 @Composable
-fun PatientSignUp(
-    auth: FirebaseAuth,
-    navController: NavHostController,
+fun SignupScreen(
+    viewModel: AuthenticationViewModel,
     onSignUpSuccess: () -> Unit
 ) {
-    var username by remember { mutableStateOf("") }
-    var email by remember { mutableStateOf("") }
-    var password by remember { mutableStateOf("") }
-    var confirmPassword by remember { mutableStateOf("") }
+    val authUiState by viewModel.authUiState.collectAsStateWithLifecycle()
+    val firebaseUser by viewModel.firebaseUser.collectAsStateWithLifecycle()
 
-    var usernameError by remember { mutableStateOf("") }
+
     var emailError by remember { mutableStateOf("") }
     var passwordError by remember { mutableStateOf("") }
     var confirmPasswordError by remember { mutableStateOf("") }
@@ -52,8 +49,12 @@ fun PatientSignUp(
     var passwordVisible by remember { mutableStateOf(false) }
     var isLoading by remember { mutableStateOf(false) }
 
-    val coroutineScope = rememberCoroutineScope()
-    val context = LocalContext.current // Get context here
+    LaunchedEffect(firebaseUser) {
+        if (firebaseUser != null) {
+            onSignUpSuccess()
+        }
+    }
+
 
     Column(
         modifier = Modifier
@@ -71,28 +72,28 @@ fun PatientSignUp(
         Spacer(modifier = Modifier.height(16.dp))
 
         // Username Input
-        OutlinedTextField(
-            value = username,
-            onValueChange = {
-                username = it
-                usernameError = ""
-            },
-            label = { Text(text = "Create Username") },
-            modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(20.dp),
-            isError = usernameError.isNotEmpty()
-        )
-        if (usernameError.isNotEmpty()) {
-            Text(text = usernameError, color = Color.Red, fontSize = 12.sp)
-        }
+//        OutlinedTextField(
+//            value = username,
+//            onValueChange = {
+//                username = it
+//                usernameError = ""
+//            },
+//            label = { Text(text = "Create Username") },
+//            modifier = Modifier.fillMaxWidth(),
+//            shape = RoundedCornerShape(20.dp),
+//            isError = usernameError.isNotEmpty()
+//        )
+//        if (usernameError.isNotEmpty()) {
+//            Text(text = usernameError, color = Color.Red, fontSize = 12.sp)
+//        }
 
         Spacer(modifier = Modifier.height(16.dp))
 
         // Email Input
         OutlinedTextField(
-            value = email,
+            value = authUiState.email,
             onValueChange = {
-                email = it
+                viewModel.onEmailChange(it.trim())
                 emailError = ""
             },
             label = { Text(text = "Enter Email") },
@@ -108,9 +109,9 @@ fun PatientSignUp(
 
         // Password Input
         OutlinedTextField(
-            value = password,
+            value = authUiState.password,
             onValueChange = {
-                password = it
+                viewModel.onPasswordChange(it.trim())
                 passwordError = ""
             },
             label = { Text(text = "Create Password") },
@@ -139,9 +140,9 @@ fun PatientSignUp(
 
         // Confirm Password Input
         OutlinedTextField(
-            value = confirmPassword,
+            value = authUiState.confirmPassword,
             onValueChange = {
-                confirmPassword = it
+                viewModel.onConfirmPasswordChange(it.trim())
                 confirmPasswordError = ""
             },
             label = { Text(text = "Re-Enter Password") },
@@ -171,24 +172,14 @@ fun PatientSignUp(
         // Sign Up Button
         Button(
             onClick = {
-                usernameError = validateUsername(username)
-                emailError = validateEmail(email)
-                passwordError = validatePassword(password)
-                confirmPasswordError = validateConfirmPassword(password, confirmPassword)
+//                usernameError = validateUsername(username)
+                emailError = validateEmail(authUiState.email)
+                passwordError = validatePassword(authUiState.password)
+                confirmPasswordError = validateConfirmPassword(authUiState.password, authUiState.confirmPassword)
 
-                if (usernameError.isEmpty() && emailError.isEmpty() && passwordError.isEmpty() && confirmPasswordError.isEmpty()) {
+                if (emailError.isEmpty() && passwordError.isEmpty() && confirmPasswordError.isEmpty()) {
                     isLoading = true
-                    coroutineScope.launch {
-                        try {
-                            createUser(auth, email, password, context) // Pass context here
-                            onSignUpSuccess()
-                            navController.navigate("login")
-                        } catch (e: Exception) {
-                            signUpError = e.message ?: "Unknown error occurred"
-                        } finally {
-                            isLoading = false
-                        }
-                    }
+                    viewModel.onSignUpClick()
                 }
             },
             modifier = Modifier.fillMaxWidth(),
@@ -209,17 +200,17 @@ fun PatientSignUp(
     }
 }
 
-suspend fun createUser(auth: FirebaseAuth, email: String, password: String, context: Context) {
-    try {
-        val user = auth.createUserWithEmailAndPassword(email, password).await().user
-        user?.sendEmailVerification()?.await()
-
-        // Show toast for email verification
-        Toast.makeText(context, "Check your email for email verification.", Toast.LENGTH_LONG).show()
-    } catch (e: Exception) {
-        throw e // Rethrow to handle in the calling function
-    }
-}
+//suspend fun createUser(auth: FirebaseAuth, email: String, password: String, context: Context) {
+//    try {
+//        val user = auth.createUserWithEmailAndPassword(email, password).await().user
+//        user?.sendEmailVerification()?.await()
+//
+//        // Show toast for email verification
+//        Toast.makeText(context, "Check your email for email verification.", Toast.LENGTH_LONG).show()
+//    } catch (e: Exception) {
+//        throw e // Rethrow to handle in the calling function
+//    }
+//}
 fun validateUsername(username: String): String {
     return if (username.isBlank()) "Username cannot be empty" else ""
 }

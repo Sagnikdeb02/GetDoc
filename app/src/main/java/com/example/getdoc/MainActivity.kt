@@ -13,11 +13,11 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         FirebaseApp.initializeApp(this)  // Initialize Firebase
-        val auth = FirebaseAuth.getInstance()  // Get FirebaseAuth instance
+          // Get FirebaseAuth instance
         FirebaseFirestore.getInstance()  // Get FirebaseFirestore instance
 
         setContent {
-            AppNavigation(auth)  // Pass auth and db to the composables
+            AppNavigation()  // Pass auth and db to the composables
         }
     }
 }

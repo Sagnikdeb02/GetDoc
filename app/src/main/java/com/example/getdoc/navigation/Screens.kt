@@ -5,8 +5,9 @@ import kotlinx.serialization.Serializable
 @Serializable data object SplashScreen
 @Serializable data object LoginScreen
 @Serializable data object ChooseRoleScreen
-@Serializable data object DoctorSignUpScreen
-@Serializable data object PatientSignUpScreen
+@Serializable data object SignUpScreen
+@Serializable data object UploadLicenseScreen
+@Serializable data object LicenseConfirmationScreen
 
 @Serializable data object PatientHomeScreen
 @Serializable data object DoctorHomeScreen
