@@ -1,5 +1,6 @@
 package com.example.getdoc.ui.doctor
 
+import android.os.Build
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -13,6 +14,10 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -21,9 +26,45 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import com.example.getdoc.R
+import java.time.DayOfWeek
+import java.time.Instant
+import java.time.ZoneId
+import java.util.Calendar
+import java.util.TimeZone
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DoctorHomeScreen() {
+
+    var calenderShow by remember { mutableStateOf(false) }
+    val datePickerState =
+        rememberDatePickerState(
+            selectableDates =
+            object : SelectableDates {
+                // Blocks Sunday and Saturday from being selected.
+                override fun isSelectableDate(utcTimeMillis: Long): Boolean {
+                    return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                        val dayOfWeek =
+                            Instant.ofEpochMilli(utcTimeMillis)
+                                .atZone(ZoneId.of("UTC"))
+                                .toLocalDate()
+                                .dayOfWeek
+                        dayOfWeek != DayOfWeek.SUNDAY && dayOfWeek != DayOfWeek.SATURDAY
+                    } else {
+                        val calendar = Calendar.getInstance(TimeZone.getTimeZone("UTC"))
+                        calendar.timeInMillis = utcTimeMillis
+                        calendar[Calendar.DAY_OF_WEEK] != Calendar.SUNDAY &&
+                                calendar[Calendar.DAY_OF_WEEK] != Calendar.SATURDAY
+                    }
+                }
+
+                // Allow selecting dates from year 2023 forward.
+                override fun isSelectableYear(year: Int): Boolean {
+                    return year > 2022
+                }
+            }
+        )
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -104,28 +145,27 @@ fun DoctorHomeScreen() {
             Icon(
                 painter = painterResource(id = R.drawable.img_14),
                 contentDescription = "Calendar Icon",
-                modifier = Modifier.size(24.dp),
+                modifier = Modifier
+                    .clickable {
+                        calenderShow = !calenderShow
+                    }
+                    .size(24.dp),
                 tint = Color.Black
             )
         }
 
         Spacer(modifier = Modifier.height(8.dp))
 
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(200.dp)
-                .background(Color.White, RoundedCornerShape(16.dp))
-                .padding(16.dp)
-        ) {
-            Text(
-                text = "September 2021",
-                fontSize = 16.sp,
-                fontWeight = FontWeight.Bold,
-                textAlign = TextAlign.Center,
-                modifier = Modifier.align(Alignment.TopCenter)
-            )
+        if(calenderShow){
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(500.dp)
+                    .background(Color.White, RoundedCornerShape(16.dp))
+            ) {
+                DatePicker(state = datePickerState)
 
+            }
         }
 
         Spacer(modifier = Modifier.height(16.dp))
@@ -145,7 +185,7 @@ fun PatientCard() {
             .fillMaxWidth()
             .background(Color.White, RoundedCornerShape(16.dp))
             .padding(16.dp)
-            .clickable {  },
+            .clickable { },
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceBetween
     ) {
