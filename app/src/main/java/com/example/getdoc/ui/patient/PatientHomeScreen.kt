@@ -40,7 +40,10 @@ fun DoctorListingPage() {
                 .padding(paddingValues)
         ) {
             UserProfileHeader(name = "Hasan")
-            SearchBar()
+            SearchBar(
+                searchQuery = "",
+                onSearch = {}
+            )
             SpecialtiesSection()
             TopDoctorsSection()
         }
@@ -70,14 +73,19 @@ fun UserProfileHeader(name: String) {
     }
 }
 
+
 @Composable
-fun SearchBar() {
-    val searchQuery = remember { mutableStateOf("") }
+fun SearchBar(
+    searchQuery: String,
+    modifier: Modifier = Modifier,
+    onSearch: (String) -> Unit
+) {
+
     OutlinedTextField(
-        value = searchQuery.value,
-        onValueChange = { searchQuery.value = it },
+        value = searchQuery,
+        onValueChange = onSearch,
         placeholder = { Text(text = "Eg: 'MIMS'") },
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
             .padding(horizontal = 16.dp),
         singleLine = true

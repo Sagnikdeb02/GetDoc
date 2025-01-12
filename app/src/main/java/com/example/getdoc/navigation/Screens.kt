@@ -17,13 +17,14 @@ import kotlinx.serialization.Serializable
 @Serializable data object PatientAppointmentScreen
 @Serializable data object SearchDoctorScreen
 @Serializable data object DoctorDetailsScreen
-@Serializable data object PatientBookingScreen
+@Serializable data object PatientBookAppointmentScreen
 @Serializable data object PatientProfileScreen
 @Serializable data object AppointmentConfirmationScreen
 
 @Serializable data object PatientDetailsScreen
 @Serializable data object DoctorProfileScreen
 @Serializable data object DoctorCredentialsScreen
+@Serializable data object DoctorAvailabilityScreen
 
 enum class Role {
     PATIENT,

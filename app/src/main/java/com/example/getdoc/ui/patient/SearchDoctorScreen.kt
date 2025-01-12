@@ -32,7 +32,7 @@ fun AllDoctors() {
 
             HeaderSection2()
             Spacer(modifier = Modifier.height(16.dp))
-            SearchBar()
+//            SearchBar()
             TopDoctorsSection2()
         }
     }
