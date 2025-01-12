@@ -1,6 +1,5 @@
 package com.example.getdoc.ui.authentication
 
-import android.widget.Toast
 import androidx.lifecycle.ViewModel
 import com.example.getdoc.navigation.Role
 import com.google.firebase.auth.FirebaseAuth
@@ -51,6 +50,8 @@ class AuthenticationViewModel: ViewModel() {
             firebaseUser.value = null
         }
     }
+
+
     fun onSignInClick() {
         firebaseAuth.signInWithEmailAndPassword(
             authUiState.value.email,

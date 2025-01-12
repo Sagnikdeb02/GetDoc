@@ -15,9 +15,7 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.navigation.NavHostController
 import com.google.firebase.auth.FirebaseAuth
-import kotlinx.coroutines.launch
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -26,7 +24,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
-import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 
 import com.example.getdoc.R
@@ -200,17 +197,18 @@ fun SignupScreen(
     }
 }
 
-//suspend fun createUser(auth: FirebaseAuth, email: String, password: String, context: Context) {
-//    try {
-//        val user = auth.createUserWithEmailAndPassword(email, password).await().user
-//        user?.sendEmailVerification()?.await()
-//
-//        // Show toast for email verification
-//        Toast.makeText(context, "Check your email for email verification.", Toast.LENGTH_LONG).show()
-//    } catch (e: Exception) {
-//        throw e // Rethrow to handle in the calling function
-//    }
-//}
+suspend fun createUser(auth: FirebaseAuth, email: String, password: String, context: Context) {
+  try {
+        val user = auth.createUserWithEmailAndPassword(email, password).await().user
+        user?.sendEmailVerification()?.await()
+
+      // Show toast for email verification
+       Toast.makeText(context, "Check your email for email verification.", Toast.LENGTH_LONG).show()
+   } catch (e: Exception) {
+        throw e // Rethrow to handle in the calling function
+    }
+}
+
 fun validateUsername(username: String): String {
     return if (username.isBlank()) "Username cannot be empty" else ""
 }

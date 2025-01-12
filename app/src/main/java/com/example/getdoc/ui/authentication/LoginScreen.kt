@@ -1,6 +1,5 @@
 package com.example.getdoc.ui.authentication
 
-import android.content.Context
 import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -30,7 +29,6 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
 import com.google.firebase.auth.FirebaseAuth
 import com.example.getdoc.R
@@ -44,7 +42,7 @@ fun LogInScreen(
     viewModel: AuthenticationViewModel,
     onLoginSuccess: () -> Unit,
     onSignUpClick: () -> Unit,
-    onForgotPasswordClick: () -> Unit
+//    onForgotPasswordClick: () -> Unit
 ) {
     val context = LocalContext.current
     val authUiState by viewModel.authUiState.collectAsStateWithLifecycle()

@@ -9,15 +9,14 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import com.example.getdoc.navigation.SignUpScreen
-import com.example.getdoc.navigation.UploadLicenseScreen
 import com.example.getdoc.ui.authentication.AuthenticationViewModel
 import com.example.getdoc.ui.authentication.ChooseRoleScreen
-import com.example.getdoc.ui.authentication.LicenseConfirmationScreen
+import com.example.getdoc.ui.authentication.doctor_registration.LicenseConfirmationScreen
 import com.example.getdoc.ui.authentication.LogInScreen
 import com.example.getdoc.ui.authentication.SignupScreen
 import com.example.getdoc.ui.authentication.SplashScreen
-import com.example.getdoc.ui.authentication.UploadLicenseScreen
+import com.example.getdoc.ui.authentication.doctor_registration.UploadLicenseScreen
+import com.example.getdoc.ui.authentication.doctor_registration.UploadLicenseViewModel
 import com.example.getdoc.ui.doctor.DoctorHomeScreen
 
 @Composable
@@ -29,15 +28,21 @@ fun AppNavigation(modifier: Modifier = Modifier) {
 
     NavHost(navController = navController, startDestination = SplashScreen) {
         composable<SplashScreen> {
-            LaunchedEffect(firebaseUser) {
-                if (firebaseUser != null) {
-                    navController.navigate(PatientHomeScreen)
-                } else {
-                    navController.navigate(LoginScreen)
+            SplashScreen(
+                onSplashComplete = {
+                    if (firebaseUser != null) {
+                        navController.navigate(PatientHomeScreen) {
+                            popUpTo(SplashScreen) { inclusive = true }
+                        }
+                    } else {
+                        navController.navigate(LoginScreen) {
+                            popUpTo(SplashScreen) { inclusive = true }
+                        }
+                    }
                 }
-            }
-            SplashScreen()
+            )
         }
+
 
         composable<LoginScreen> {
             LogInScreen(
@@ -45,9 +50,9 @@ fun AppNavigation(modifier: Modifier = Modifier) {
                 onSignUpClick = {
                     navController.navigate(SignUpScreen)
                 },
-                onForgotPasswordClick = {
-//                    navController.navigate(ForgotPasswordScreen)
-                },
+//                onForgotPasswordClick = {
+////                    navController.navigate(ForgotPasswordScreen)
+//                },
                 onLoginSuccess = {
                     navController.navigate(PatientHomeScreen)
                 }
@@ -62,13 +67,7 @@ fun AppNavigation(modifier: Modifier = Modifier) {
                 }
             )
         }
-        composable<UploadLicenseScreen> {
-            UploadLicenseScreen(
-                onImageUpload = {
-                    navController.navigate(LicenseConfirmationScreen)
-                }
-            )
-        }
+
         composable<LicenseConfirmationScreen> {
             LicenseConfirmationScreen()
         }
@@ -91,5 +90,15 @@ fun AppNavigation(modifier: Modifier = Modifier) {
         composable<DoctorHomeScreen> {
 
         }
+
+        composable<UploadLicenseScreen> {
+            val uploadLicenseViewModel: UploadLicenseViewModel = viewModel()
+            UploadLicenseScreen(
+                viewModel = uploadLicenseViewModel,
+            )
+        }
+
+
+
     }
 }
