@@ -17,7 +17,7 @@
  * This component will be used in [PatientAppointmentScreen] to show doctors details with
  * [Button] Reschedule and [Button] Cancel
  */
-@Composable
+//@Composable
 fun DoctorCardComponent(
     doctorName: String,
     modifier: Modifier = Modifier,
@@ -40,7 +40,7 @@ fun DoctorCardComponent(
 /**
  * This content will be displayed in [PatientAppointmentScreen]
  */
-@Composable
+//@Composable
 fun PatientAppointmentScreenContent(
     activeAppointmentList: List<String>,
     previousAppointmentList: List<String>,

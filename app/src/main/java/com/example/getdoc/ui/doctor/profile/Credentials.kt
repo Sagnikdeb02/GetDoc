@@ -28,9 +28,22 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.sp
+import com.example.getdoc.ui.doctor.appointments.HeaderComponent
 
+/**
+ * A composable function representing the credentials page for a user.
+ *
+ * @param onHomeClick Lambda for handling the "Home" button click in the bottom bar.
+ * @param onAppointmentsClick Lambda for handling the "Appointments" button click in the bottom bar.
+ * @param onProfileClick Lambda for handling the "Profile" button click in the bottom bar.
+ */
 @Composable
-fun MyCredentialsPage() {
+fun MyCredentialsPageComponent(
+    onHomeClick: () -> Unit,
+    onAppointmentsClick: () -> Unit,
+    onProfileClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
     // States for the form fields
     val degree = remember { mutableStateOf(TextFieldValue("")) }
     val speciality = remember { mutableStateOf(TextFieldValue("")) }
@@ -40,47 +53,30 @@ fun MyCredentialsPage() {
     val aboutYou = remember { mutableStateOf(TextFieldValue("")) }
 
     Column(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxSize()
             .background(Color(0xFFF0F3F5)),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Top
+        horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(60.dp)
-                .background(Color(0xFF1565C0))
-                .padding(horizontal = 8.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween
-        ){
-            Text(
-                text = "My Credentials",
-                fontSize = 24.sp,
-                color = Color.White,
-                modifier = Modifier
-                    .padding(vertical = 8.dp)
-            )
-            Image(painter = painterResource(id = R.drawable.img_9), contentDescription = "")
-        }
+        // Header Section
+        HeaderComponent(title = "My Credentials", iconResId = R.drawable.img_9)
 
-        // Form fields
+        // Form Fields Section
         Column(
             modifier = Modifier
-                .fillMaxSize()
-                .padding(8.dp)
+                .fillMaxWidth()
+                .padding(16.dp)
         ) {
-            FormField(label = "Enter Your Degree", value = degree.value, onValueChange = { degree.value = it })
-            FormField(label = "Enter Your Speciality", value = speciality.value, onValueChange = { speciality.value = it })
-            FormField(label = "Enter Your DOB", value = dob.value, onValueChange = { dob.value = it })
-            FormField(label = "Enter Your Clinic Address", value = address.value, onValueChange = { address.value = it })
-            FormField(label = "Enter Your Consultation Fee", value = fee.value, onValueChange = { fee.value = it })
-            FormField(label = "About You", value = aboutYou.value, onValueChange = { aboutYou.value = it })
+            FormFieldComponent(label = "Enter Your Degree", value = degree.value, onValueChange = { degree.value = it })
+            FormFieldComponent(label = "Enter Your Speciality", value = speciality.value, onValueChange = { speciality.value = it })
+            FormFieldComponent(label = "Enter Your DOB", value = dob.value, onValueChange = { dob.value = it })
+            FormFieldComponent(label = "Enter Your Clinic Address", value = address.value, onValueChange = { address.value = it })
+            FormFieldComponent(label = "Enter Your Consultation Fee", value = fee.value, onValueChange = { fee.value = it })
+            FormFieldComponent(label = "About You", value = aboutYou.value, onValueChange = { aboutYou.value = it })
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Buttons
+            // Buttons Section
             Row(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 modifier = Modifier.fillMaxWidth()
@@ -101,19 +97,43 @@ fun MyCredentialsPage() {
                     Text(text = "Submit")
                 }
             }
-            Spacer(modifier = Modifier.height(20.dp))
+        }
 
-            BottomBar()
+        // Bottom Bar Section
+        Column(
+            modifier = Modifier.fillMaxSize(),
+            verticalArrangement = Arrangement.Bottom
+        ) {
+            BottomBarComponent(
+                onHomeClick = onHomeClick,
+                onAppointmentsClick = onAppointmentsClick,
+                onProfileClick = onProfileClick
+            )
         }
     }
 }
 
+/**
+ * A reusable composable for a form field.
+ *
+ * @param label The label text for the form field.
+ * @param value The current text field value.
+ * @param onValueChange Lambda to handle changes in the text field.
+ * @param modifier Modifier for styling the form field.
+ */
 @Composable
-fun FormField(label: String, value: TextFieldValue, onValueChange: (TextFieldValue) -> Unit) {
-    Column(modifier = Modifier
-        .fillMaxWidth()
-        .padding(vertical = 8.dp)) {
-        Text(text = label, fontSize = 16.sp, color = Color.Gray, modifier = Modifier.padding(bottom = 4.dp))
+fun FormFieldComponent(
+    label: String,
+    value: TextFieldValue,
+    onValueChange: (TextFieldValue) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Column(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(vertical = 8.dp)
+    ) {
+        Text(text = label, fontSize = 16.sp, color = Color.Black, modifier = Modifier.padding(bottom = 4.dp))
         BasicTextField(
             value = value,
             onValueChange = onValueChange,
@@ -127,52 +147,23 @@ fun FormField(label: String, value: TextFieldValue, onValueChange: (TextFieldVal
                 .background(Color.White)
                 .padding(8.dp)
                 .height(40.dp)
-
-
         )
     }
 }
 
+/**
+ * Preview function for MyCredentialsPageComponent.
+ */
 @Preview(showSystemUi = true)
 @Composable
-fun PreviewMyCredentialsPage() {
-    MyCredentialsPage()
+fun PreviewMyCredentialsPageComponent() {
+    MyCredentialsPageComponent(
+        onHomeClick = { /* Navigate to Home */ },
+        onAppointmentsClick = { /* Navigate to Appointments */ },
+        onProfileClick = { /* Navigate to Profile */ }
+    )
 }
 
 
 
-@Composable
-fun BottomBar(){
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.Bottom
-    ) {
-        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            Image(
-                painter = painterResource(id = R.drawable.img_6),
-                contentDescription = "",
-                modifier = Modifier.size(25.dp)
-            )
-            Text(text = "Home")
-        }
-        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            Image(
-                painter = painterResource(id = R.drawable.img_8),
-                contentDescription = "",
-                modifier = Modifier.size(25.dp)
-            )
-            Text(text = "My Appointments")
-        }
-        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            Image(
-                painter = painterResource(id = R.drawable.img_10),
-                contentDescription = "",
-                modifier = Modifier.size(25.dp)
-            )
-            Text(text = "Profile")
-        }
-    }
-}
+

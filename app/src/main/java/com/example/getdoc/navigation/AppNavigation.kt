@@ -84,7 +84,11 @@ fun AppNavigation(modifier: Modifier = Modifier) {
 
 
         composable<PatientHomeScreen> {
-            DoctorHomeScreen()
+            DoctorHomeScreen(
+                onHomeClick = { /* Handle Home Click */ },
+                onAppointmentsClick = { /* Handle Appointments Click */ },
+                onProfileClick = { /* Handle Profile Click */ }
+            )
         }
         composable<DoctorHomeScreen> {
 

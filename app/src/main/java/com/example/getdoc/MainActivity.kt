@@ -4,6 +4,7 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import com.example.getdoc.navigation.AppNavigation
+import com.example.getdoc.ui.doctor.DoctorHomeScreen
 
 import com.google.firebase.FirebaseApp
 import com.google.firebase.firestore.FirebaseFirestore
@@ -15,7 +16,12 @@ class MainActivity : ComponentActivity() {
         FirebaseApp.initializeApp(this)  // Initialize Firebase
 
         setContent {
-             AppNavigation()
+             //AppNavigation()
+            DoctorHomeScreen(
+                onHomeClick = { /* Handle Home Click */ },
+                onAppointmentsClick = { /* Handle Appointments Click */ },
+                onProfileClick = { /* Handle Profile Click */ }
+            )
 
         }
     }

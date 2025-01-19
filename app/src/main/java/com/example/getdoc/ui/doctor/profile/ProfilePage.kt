@@ -24,9 +24,16 @@ import androidx.compose.ui.tooling.preview.Preview
 import com.example.getdoc.R
 
 @Composable
-fun ProfilePage() {
+fun ProfilePageComponent(
+    modifier: Modifier = Modifier,
+    onLogoutClick: () -> Unit,
+    onOptionClick: (String) -> Unit,
+    onHomeClick: () -> Unit,
+    onAppointmentsClick: () -> Unit,
+    onProfileClick: () -> Unit,
+) {
     Column(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxSize()
             .background(Color(0xFFF0F4F7))
     ) {
@@ -50,56 +57,11 @@ fun ProfilePage() {
             Image(painter = painterResource(id = R.drawable.img_9), contentDescription = "")
         }
 
-
-
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp)
-                .size(80.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Image(
-                    painter = painterResource(id = R.drawable.img_7 ),
-                    contentDescription = "Profile Picture",
-                    modifier = Modifier
-                        .size(70.dp)
-                        .clip(CircleShape),
-                    contentScale = ContentScale.Crop
-                )
-
-                Spacer(modifier = Modifier.width(16.dp))
-
-                Column {
-                    Text(
-                        text = "Christopher",
-                        fontSize = 20.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = Color.Black
-                    )
-                    Text(
-                        text = "01787985785",
-                        fontSize = 16.sp,
-                        color = Color.Gray
-                    )
-                    Text(
-                        text = "Sylhet",
-                        fontSize = 16.sp,
-                        color = Color.Gray
-                    )
-                }
-            }
-
-            // Edit Icon
-            Icon(
-                imageVector = Icons.Default.Edit,
-                contentDescription = "Edit",
-                modifier = Modifier.size(24.dp),
-                tint = Color.Black
-            )
-        }
+        // Profile Information Row
+        ProfileInfoRowComponent(
+            modifier = Modifier.padding(16.dp),
+            onEditClick = { /* Handle Edit */ }
+        )
 
         Spacer(modifier = Modifier.height(40.dp))
 
@@ -115,43 +77,104 @@ fun ProfilePage() {
         )
 
         options.forEach { option ->
-            ProfileOptionItem(option)
+            ProfileOptionItemComponent(
+                option = option,
+                onClick = { onOptionClick(option) }
+            )
         }
 
-        Spacer(modifier = Modifier.weight(1f))
+        Spacer(modifier = Modifier.padding(vertical = 100.dp))
 
         // Logout Section
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .clickable { /* Handle Logout */ }
-                .padding(16.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Text(
-                text = "Logout",
-                fontSize = 18.sp,
-                fontWeight = FontWeight.Bold,
-                color = Color(0xFF1565C0),
-                modifier = Modifier.padding(end = 8.dp)
-            )
-            Icon(
-                imageVector = Icons.Default.ExitToApp,
-                contentDescription = "LogOut",
-                tint = Color(0xFF1565C0)
-            )
-        }
+        LogoutSectionComponent(
+            modifier = Modifier.padding(16.dp),
+            onLogoutClick = onLogoutClick
+        )
+    }
+    Column(
+        modifier = Modifier.fillMaxSize(),
+        verticalArrangement = Arrangement.Bottom
+    ) {
+        BottomBarComponent(
+            onHomeClick = onHomeClick,
+            onAppointmentsClick = onAppointmentsClick,
+            onProfileClick = onProfileClick
+        )
     }
 }
 
+/**
+ * Profile Info Row component
+ */
 @Composable
-fun ProfileOptionItem(option: String) {
+fun ProfileInfoRowComponent(
+    modifier: Modifier = Modifier,
+    onEditClick: () -> Unit
+) {
     Row(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp,vertical = 8.dp)
-            .clickable { },
+            .size(80.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.SpaceBetween
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Image(
+                painter = painterResource(id = R.drawable.img_7),
+                contentDescription = "Profile Picture",
+                modifier = Modifier
+                    .size(70.dp)
+                    .clip(CircleShape),
+                contentScale = ContentScale.Crop
+            )
+
+            Spacer(modifier = Modifier.width(16.dp))
+
+            Column {
+                Text(
+                    text = "Christopher",
+                    fontSize = 20.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color.Black
+                )
+                Text(
+                    text = "01787985785",
+                    fontSize = 16.sp,
+                    color = Color.Gray
+                )
+                Text(
+                    text = "Sylhet",
+                    fontSize = 16.sp,
+                    color = Color.Gray
+                )
+            }
+        }
+
+        // Edit Icon
+        Icon(
+            imageVector = Icons.Default.Edit,
+            contentDescription = "Edit",
+            modifier = Modifier.size(24.dp),
+            tint = Color.Black,
+            //onClick = onEditClick
+        )
+    }
+}
+
+/**
+ * Profile Option Item component
+ */
+@Composable
+fun ProfileOptionItemComponent(
+    option: String,
+    modifier: Modifier = Modifier,
+    onClick: () -> Unit
+) {
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 8.dp)
+            .clickable { onClick() },
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
@@ -169,8 +192,47 @@ fun ProfileOptionItem(option: String) {
     }
 }
 
+/**
+ * Logout Section component
+ */
+@Composable
+fun LogoutSectionComponent(
+    modifier: Modifier = Modifier,
+    onLogoutClick: () -> Unit
+) {
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .clickable { onLogoutClick() },
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(
+            text = "Logout",
+            fontSize = 18.sp,
+            fontWeight = FontWeight.Bold,
+            color = Color(0xFF1565C0),
+            modifier = Modifier.padding(end = 8.dp)
+        )
+        Icon(
+            imageVector = Icons.Default.ExitToApp,
+            contentDescription = "LogOut",
+            tint = Color(0xFF1565C0)
+        )
+    }
+}
+
+/**
+ * Preview for ProfilePageComponent
+ */
 @Preview(showSystemUi = true)
 @Composable
 fun PreviewProfilePage() {
-    ProfilePage()
+    ProfilePageComponent(
+        onLogoutClick = { /* Handle Logout */ },
+        onOptionClick = { option -> /* Handle Option Click */ },
+        onHomeClick = { },
+    onAppointmentsClick = { },
+    onProfileClick = { },
+    )
 }
