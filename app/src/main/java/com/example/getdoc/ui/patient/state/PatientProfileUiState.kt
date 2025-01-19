@@ -8,5 +8,5 @@ data class PatientProfileUiState(
     val imageUri: Uri? = null,
 
 
-    val username: String = usernameInput.text,
+    val username: String = usernameInput.text
 )
