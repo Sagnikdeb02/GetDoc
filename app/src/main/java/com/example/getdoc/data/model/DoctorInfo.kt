@@ -14,6 +14,7 @@ import com.example.getdoc.R
 data class DoctorInfo(
     val name: String,
     val degree: String = "",
+    val dob: String= " ",
     val specialization: String,
     val experience: Int = 0,
     val location: String,
