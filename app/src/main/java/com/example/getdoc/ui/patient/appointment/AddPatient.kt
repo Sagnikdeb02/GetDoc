@@ -17,7 +17,7 @@ import com.example.getdoc.ui.patient.component.CustomButton
 import com.example.getdoc.ui.patient.component.CustomAppBar
 
 @Composable
-fun AddPatientScreen(viewModel: PatientViewModel = androidx.lifecycle.viewmodel.compose.viewModel(),
+fun AddPatientScreen(viewModel: PatientViewModel ,
                      onBackClick: () -> Unit) {
     val uiState by viewModel.uiState.collectAsState()
 

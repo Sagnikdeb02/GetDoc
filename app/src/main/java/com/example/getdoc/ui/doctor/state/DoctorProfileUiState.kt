@@ -1,10 +1,8 @@
-package com.example.getdoc.ui.patient.state
-
+package com.example.getdoc.ui.doctor.state
 
 import android.net.Uri
-import androidx.compose.ui.text.input.TextFieldValue
 
-data class PatientProfileUiState(
+data class DoctorProfileUiState(
     val usernameInput: String = "",
     val imageUri: Uri? = null,
     val isLoading: Boolean = false,

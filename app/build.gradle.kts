@@ -96,5 +96,7 @@ dependencies {
     //Compose Viewmodel
     implementation(libs.androidx.lifecycle.viewmodel.compose)
     implementation(libs.coil.compose)
+    implementation("io.appwrite:sdk-for-android:5.1.0")
+
 
 }

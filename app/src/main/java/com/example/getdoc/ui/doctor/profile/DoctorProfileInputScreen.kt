@@ -1,4 +1,5 @@
-package com.example.getdoc.ui.patient
+package com.example.getdoc.ui.doctor.profile
+
 
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -13,10 +14,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import com.example.getdoc.ui.doctor.DoctorViewModel
 import kotlinx.coroutines.launch
 
 @Composable
-fun PatientProfileInputScreen(viewModel: PatientViewModel) {
+fun DoctorProfileInputScreen(viewModel: DoctorViewModel) {
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
 
@@ -29,7 +31,6 @@ fun PatientProfileInputScreen(viewModel: PatientViewModel) {
     )
 
     Scaffold { padding ->
-
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -37,7 +38,7 @@ fun PatientProfileInputScreen(viewModel: PatientViewModel) {
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Text("Patient Profile Update Screen ")
+            Text("Doctor Profile Update Screen ")
             OutlinedTextField(
                 value = username,
                 onValueChange = {
@@ -63,17 +64,17 @@ fun PatientProfileInputScreen(viewModel: PatientViewModel) {
             }
 
             Spacer(modifier = Modifier.height(16.dp))
-
             Button(
                 onClick = {
                     coroutineScope.launch {
-                        viewModel.uploadPatientProfile(context)
+                        viewModel.uploadDoctorProfile(context)  // Correct method name
                     }
                 },
                 modifier = Modifier.fillMaxWidth(0.8f)
             ) {
                 Text("Update")
             }
+
         }
     }
 }
