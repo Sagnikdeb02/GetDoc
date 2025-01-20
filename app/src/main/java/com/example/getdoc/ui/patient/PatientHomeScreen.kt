@@ -209,9 +209,9 @@ fun DoctorListingPagePreview() {
         name = "John Doe",
         location = "New York",
         doctors = listOf(
-            DoctorInfo("Dr. Priya Hasan", "Cardiologist", "5 years", 1, consultingFee = 500),
-            DoctorInfo("Dr. Anil Kumar", "Dermatologist", "10 years", 1, consultingFee = 500),
-            DoctorInfo("Dr. Karim Ahmed", "Pediatrician", "8 years", 1, consultingFee = 500)
+            DoctorInfo(name = "Dr. Priya Hasan", specialization = "Cardiologist", experience =  5, consultingFee = 500),
+            DoctorInfo(name = "Dr. Anil Kumar", specialization = "Dermatologist", experience = 10,  consultingFee = 500),
+            DoctorInfo(name = "Dr. Karim Ahmed", specialization = "Pediatrician", experience = 8,  consultingFee = 500)
         )
     )
 
