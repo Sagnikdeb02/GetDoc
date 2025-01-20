@@ -10,13 +10,11 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.example.getdoc.ui.authentication.AuthenticationViewModel
 import com.example.getdoc.ui.authentication.ChooseRoleScreen
-import com.example.getdoc.ui.authentication.doctor_registration.LicenseConfirmationScreen
 import com.example.getdoc.ui.authentication.LogInScreen
 import com.example.getdoc.ui.authentication.SignupScreen
 import com.example.getdoc.ui.authentication.SplashScreen
-import com.example.getdoc.ui.authentication.doctor_registration.UploadLicenseScreen
-import com.example.getdoc.ui.authentication.doctor_registration.UploadLicenseViewModel
 import com.example.getdoc.ui.doctor.DoctorHomeScreen
+import com.example.getdoc.ui.doctor.profile.MyCredentialsPageComponent
 
 @Composable
 fun AppNavigation(modifier: Modifier = Modifier) {
@@ -67,9 +65,9 @@ fun AppNavigation(modifier: Modifier = Modifier) {
             )
         }
 
-        composable<LicenseConfirmationScreen> {
-            LicenseConfirmationScreen()
-        }
+//        composable<LicenseConfirmationScreen> {
+//            LicenseConfirmationScreen()
+//        }
 
         composable<ChooseRoleScreen> {
             ChooseRoleScreen(
@@ -83,23 +81,34 @@ fun AppNavigation(modifier: Modifier = Modifier) {
         }
 
 
-        composable<PatientHomeScreen> {
-            DoctorHomeScreen(
-                onHomeClick = { /* Handle Home Click */ },
-                onAppointmentsClick = { /* Handle Appointments Click */ },
-                onProfileClick = { /* Handle Profile Click */ }
+        composable<DoctorCredentialsScreen> {
+            MyCredentialsPageComponent(
+                onHomeClick = {
+                    navController.navigate(DoctorHomeScreen)
+                },
+                onAppointmentsClick = {
+                    navController.navigate(AppointmentConfirmationScreen)
+                },
+                onProfileClick = {
+                    navController.navigate(DoctorProfileScreen)
+                }
             )
         }
+
+
         composable<DoctorHomeScreen> {
 
         }
+        composable<DoctorCredentialsScreen>{
 
-        composable<UploadLicenseScreen> {
-            val uploadLicenseViewModel: UploadLicenseViewModel = viewModel()
-            UploadLicenseScreen(
-                viewModel = uploadLicenseViewModel,
-            )
         }
+
+//        composable<UploadLicenseScreen> {
+//            val uploadLicenseViewModel: UploadLicenseViewModel = viewModel()
+//            UploadLicenseScreen(
+//                viewModel = uploadLicenseViewModel,
+//            )
+//        }
 
 
 

@@ -1,33 +1,37 @@
 package com.example.getdoc.ui.doctor.profile
 
 import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.getdoc.R
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Text
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.sp
+import com.example.getdoc.ui.doctor.DoctorViewModel
 import com.example.getdoc.ui.doctor.appointments.HeaderComponent
 
 /**
@@ -39,18 +43,14 @@ import com.example.getdoc.ui.doctor.appointments.HeaderComponent
  */
 @Composable
 fun MyCredentialsPageComponent(
+    viewModel: DoctorViewModel = androidx.lifecycle.viewmodel.compose.viewModel(),
     onHomeClick: () -> Unit,
     onAppointmentsClick: () -> Unit,
     onProfileClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    // States for the form fields
-    val degree = remember { mutableStateOf(TextFieldValue("")) }
-    val speciality = remember { mutableStateOf(TextFieldValue("")) }
-    val dob = remember { mutableStateOf(TextFieldValue("")) }
-    val address = remember { mutableStateOf(TextFieldValue("")) }
-    val fee = remember { mutableStateOf(TextFieldValue("")) }
-    val aboutYou = remember { mutableStateOf(TextFieldValue("")) }
+    val uiState by viewModel.uiState.collectAsState()
+    var showDialog by remember { mutableStateOf(false) }
 
     Column(
         modifier = modifier
@@ -58,48 +58,122 @@ fun MyCredentialsPageComponent(
             .background(Color(0xFFF0F3F5)),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        // Header Section
         HeaderComponent(title = "My Credentials", iconResId = R.drawable.img_9)
 
-        // Form Fields Section
-        Column(
+        LazyColumn(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(16.dp)
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            FormFieldComponent(label = "Enter Your Degree", value = degree.value, onValueChange = { degree.value = it })
-            FormFieldComponent(label = "Enter Your Speciality", value = speciality.value, onValueChange = { speciality.value = it })
-            FormFieldComponent(label = "Enter Your DOB", value = dob.value, onValueChange = { dob.value = it })
-            FormFieldComponent(label = "Enter Your Clinic Address", value = address.value, onValueChange = { address.value = it })
-            FormFieldComponent(label = "Enter Your Consultation Fee", value = fee.value, onValueChange = { fee.value = it })
-            FormFieldComponent(label = "About You", value = aboutYou.value, onValueChange = { aboutYou.value = it })
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            // Buttons Section
-            Row(
-                horizontalArrangement = Arrangement.SpaceBetween,
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Button(
-                    onClick = { /* Cancel action */ },
-                    modifier = Modifier.weight(1f),
-                    colors = ButtonDefaults.buttonColors(Color(0xFF174666))
+            item {
+                FormFieldComponent(
+                    label = "Enter Your Full Name",
+                    value = uiState.name,
+                    onValueChange = { viewModel.updateUiState("name", it) }
+                )
+            }
+            item {
+                FormFieldComponent(
+                    label = "Enter Your Degree",
+                    value = uiState.degree,
+                    onValueChange = { viewModel.updateUiState("degree", it) }
+                )
+            }
+            item {
+                FormFieldComponent(
+                    label = "Enter Your Speciality",
+                    value = uiState.speciality,
+                    onValueChange = { viewModel.updateUiState("speciality", it) }
+                )
+            }
+            item {
+                FormFieldComponent(
+                    label = "Enter Your DOB",
+                    value = uiState.dob,
+                    onValueChange = { viewModel.updateUiState("dob", it) }
+                )
+            }
+            item {
+                FormFieldComponent(
+                    label = "Enter Your Clinic Address",
+                    value = uiState.address,
+                    onValueChange = { viewModel.updateUiState("address", it) }
+                )
+            }
+            item {
+                FormFieldComponent(
+                    label = "Enter Your Consultation Fee",
+                    value = uiState.fee,
+                    onValueChange = { viewModel.updateUiState("fee", it) }
+                )
+            }
+            item {
+                FormFieldComponent(
+                    label = "About You",
+                    value = uiState.aboutYou,
+                    onValueChange = { viewModel.updateUiState("aboutYou", it) }
+                )
+            }
+            item {
+                Row(
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    modifier = Modifier.fillMaxWidth()
                 ) {
-                    Text(text = "Cancel")
+                    Button(
+                        onClick = { showDialog = true },
+                        modifier = Modifier.weight(1f),
+                        colors = ButtonDefaults.buttonColors(Color(0xFF174666))
+                    ) {
+                        Text(text = "Cancel")
+                    }
+
+                    Spacer(modifier = Modifier.width(16.dp))
+
+                    Button(
+                        onClick = { viewModel.submitDoctorProfile() },
+                        modifier = Modifier.weight(1f),
+                        colors = ButtonDefaults.buttonColors(Color(0xFF174666))
+                    ) {
+                        Text(text = "Submit")
+                    }
                 }
-                Spacer(modifier = Modifier.width(16.dp))
-                Button(
-                    onClick = { /* Submit action */ },
-                    modifier = Modifier.weight(1f),
-                    colors = ButtonDefaults.buttonColors(Color(0xFF174666))
-                ) {
-                    Text(text = "Submit")
+            }
+
+            item {
+                if (uiState.isLoading) {
+                    CircularProgressIndicator()
+                }
+            }
+
+            item {
+                uiState.errorMessage?.let {
+                    Text(text = it, color = Color.Red)
                 }
             }
         }
 
-        // Bottom Bar Section
+        if (showDialog) {
+            AlertDialog(
+                onDismissRequest = { showDialog = false },
+                title = { Text("Confirm Cancel") },
+                text = { Text("Are you sure you want to clear the form?") },
+                confirmButton = {
+                    Button(onClick = {
+                        viewModel.clearForm()
+                        showDialog = false
+                    }) {
+                        Text("Yes")
+                    }
+                },
+                dismissButton = {
+                    Button(onClick = { showDialog = false }) {
+                        Text("No")
+                    }
+                }
+            )
+        }
+
         Column(
             modifier = Modifier.fillMaxSize(),
             verticalArrangement = Arrangement.Bottom
@@ -113,19 +187,11 @@ fun MyCredentialsPageComponent(
     }
 }
 
-/**
- * A reusable composable for a form field.
- *
- * @param label The label text for the form field.
- * @param value The current text field value.
- * @param onValueChange Lambda to handle changes in the text field.
- * @param modifier Modifier for styling the form field.
- */
 @Composable
 fun FormFieldComponent(
     label: String,
-    value: TextFieldValue,
-    onValueChange: (TextFieldValue) -> Unit,
+    value: String,
+    onValueChange: (String) -> Unit,
     modifier: Modifier = Modifier
 ) {
     Column(
@@ -133,10 +199,16 @@ fun FormFieldComponent(
             .fillMaxWidth()
             .padding(vertical = 8.dp)
     ) {
-        Text(text = label, fontSize = 16.sp, color = Color.Black, modifier = Modifier.padding(bottom = 4.dp))
+        Text(
+            text = label,
+            fontSize = 16.sp,
+            color = Color.Black,
+            modifier = Modifier.padding(bottom = 4.dp)
+        )
+
         BasicTextField(
-            value = value,
-            onValueChange = onValueChange,
+            value = value, // Directly use the state passed from ViewModel
+            onValueChange = onValueChange, // Update ViewModel state
             modifier = Modifier
                 .fillMaxWidth()
                 .clip(RoundedCornerShape(20.dp))
@@ -146,24 +218,13 @@ fun FormFieldComponent(
                 )
                 .background(Color.White)
                 .padding(8.dp)
-                .height(40.dp)
+                .height(40.dp),
+            singleLine = true,
+            textStyle = androidx.compose.ui.text.TextStyle(
+                color = Color.Black,
+                fontSize = 16.sp
+            )
         )
     }
 }
-
-/**
- * Preview function for MyCredentialsPageComponent.
- */
-@Preview(showSystemUi = true)
-@Composable
-fun PreviewMyCredentialsPageComponent() {
-    MyCredentialsPageComponent(
-        onHomeClick = { /* Navigate to Home */ },
-        onAppointmentsClick = { /* Navigate to Appointments */ },
-        onProfileClick = { /* Navigate to Profile */ }
-    )
-}
-
-
-
-
+  

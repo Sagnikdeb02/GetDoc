@@ -2,6 +2,7 @@ package com.example.getdoc.ui.patient.appointment
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowDropDown
@@ -10,59 +11,41 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.items
-import com.example.getdoc.data.model.PatientInfo
+import com.example.getdoc.ui.patient.PatientViewModel
 import com.example.getdoc.ui.patient.component.CustomButton
 import com.example.getdoc.ui.patient.component.CustomAppBar
 
-// Main AddPatientScreen
 @Composable
-fun AddPatientScreen(onSave: (PatientInfo) -> Unit, onBackClick: () -> Unit) {
+fun AddPatientScreen(viewModel: PatientViewModel = androidx.lifecycle.viewmodel.compose.viewModel(),
+                     onBackClick: () -> Unit) {
+    val uiState by viewModel.uiState.collectAsState()
+
     Column(modifier = Modifier.fillMaxSize()) {
-        // Add AppBar
-        CustomAppBar(
-            title = "Add A Patient",
-            onBackClick = onBackClick
-        )
+        CustomAppBar(title = "Add A Patient", onBackClick = onBackClick)
 
-        // Patient Details Form
-        var firstName by remember { mutableStateOf("") }
-        var lastName by remember { mutableStateOf("") }
-        var age by remember { mutableStateOf("") }
-        var gender by remember { mutableStateOf("") }
-
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(16.dp)
-        ) {
-            // First Name Field
+        Column(modifier = Modifier.fillMaxSize().padding(16.dp)) {
             OutlinedTextField(
-                value = firstName,
-                onValueChange = { firstName = it },
+                value = uiState.firstName,
+                onValueChange = { viewModel.updateUiState("firstName", it) },
                 label = { Text("First Name") },
                 modifier = Modifier.fillMaxWidth()
             )
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            // Last Name Field
             OutlinedTextField(
-                value = lastName,
-                onValueChange = { lastName = it },
+                value = uiState.lastName,
+                onValueChange = { viewModel.updateUiState("lastName", it) },
                 label = { Text("Last Name (Optional)") },
                 modifier = Modifier.fillMaxWidth()
             )
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            // Age Field
             OutlinedTextField(
-                value = age,
-                onValueChange = { age = it },
+                value = uiState.age,
+                onValueChange = { viewModel.updateUiState("age", it) },
                 label = { Text("Age (DD/MM/YYYY)") },
                 modifier = Modifier.fillMaxWidth(),
                 keyboardOptions = KeyboardOptions.Default.copy(keyboardType = KeyboardType.Number)
@@ -70,38 +53,33 @@ fun AddPatientScreen(onSave: (PatientInfo) -> Unit, onBackClick: () -> Unit) {
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            // Gender Selection
             Text("Gender:", style = MaterialTheme.typography.bodyMedium)
             Spacer(modifier = Modifier.height(4.dp))
 
+            val genderOptions = listOf("Male", "Female", "Others")
             LazyRow(verticalAlignment = Alignment.CenterVertically) {
-                items(listOf("Male", "Female", "Others")) { option ->
+                items(genderOptions.size) { index ->
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
                         modifier = Modifier
                             .padding(end = 16.dp)
-                            .clickable { gender = option }
+                            .clickable { viewModel.updateUiState("gender", genderOptions[index]) }
                     ) {
                         RadioButton(
-                            selected = gender == option,
-                            onClick = { gender = option }
+                            selected = uiState.gender == genderOptions[index],
+                            onClick = { viewModel.updateUiState("gender", genderOptions[index]) }
                         )
-                        Text(option, modifier = Modifier.padding(start = 4.dp))
+                        Text(genderOptions[index], modifier = Modifier.padding(start = 4.dp))
                     }
                 }
             }
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            // Relation Dropdown
-            var selectedRelation by remember { mutableStateOf("Self") }
             var expanded by remember { mutableStateOf(false) }
-            val relationOptions = listOf("Self", "Spouse", "Child", "Parent", "Other")
-
             Box(modifier = Modifier.fillMaxWidth()) {
-                // TextField as a dropdown trigger
                 OutlinedTextField(
-                    value = selectedRelation,
+                    value = uiState.relation,
                     onValueChange = {},
                     readOnly = true,
                     label = { Text("Relation") },
@@ -113,63 +91,28 @@ fun AddPatientScreen(onSave: (PatientInfo) -> Unit, onBackClick: () -> Unit) {
                     }
                 )
 
-                // DropdownMenu with alternative implementation
                 DropdownMenu(
                     expanded = expanded,
                     onDismissRequest = { expanded = false }
                 ) {
-                    relationOptions.forEach { option ->
-                        // Each option is wrapped in a Row with clickable modifier
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(8.dp)
-                                .clickable {
-                                    selectedRelation = option
-                                    expanded = false
-                                },
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Text(
-                                text = option,
-                                style = MaterialTheme.typography.bodyMedium,
-                                modifier = Modifier.padding(8.dp)
-                            )
-                        }
+                    listOf("Self", "Spouse", "Child", "Parent", "Other").forEach { option ->
+                        DropdownMenuItem(
+                            onClick = {
+                                viewModel.updateUiState("relation", option)
+                                expanded = false
+                            },
+                            text = { Text(option) }
+                        )
                     }
                 }
             }
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Instructions
-            Text(
-                text = "• Add Patient Basic Information For Know About Patient Basic Details\n" +
-                        "• And Doctors Right Prescriptions. Please Given A Proper Details About Patient",
-                style = MaterialTheme.typography.bodyMedium
-            )
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            // Save Button
             CustomButton(
                 buttonText = "Save",
-                onClick = { /* Handle book appointment logic */ }
+                onClick = { viewModel.submitPatientProfile() }
             )
         }
-    }
-}
-
-
-
-// Usage Example
-@Preview(showSystemUi = true)
-@Composable
-fun AddPatientScreenPreview() {
-    MaterialTheme {
-        AddPatientScreen(
-            onSave = { patient -> println("Saved patient: $patient") },
-            onBackClick = { println("Back button clicked") }
-        )
     }
 }
