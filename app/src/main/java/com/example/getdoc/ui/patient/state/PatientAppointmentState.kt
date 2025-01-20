@@ -1,8 +1,9 @@
 package com.example.getdoc.ui.patient.state
 
-import com.example.getdoc.ui.patient.appointment.Appointment
+import com.example.getdoc.data.model.AppointmentInfo
+
 
 data class PatientAppointmentState(
-    val activeAppointments: List<Appointment> = emptyList(),
-    val previousAppointments: List<Appointment> = emptyList()
+    val activeAppointments: List<AppointmentInfo> = emptyList(),
+    val previousAppointments: List<AppointmentInfo> = emptyList()
 )

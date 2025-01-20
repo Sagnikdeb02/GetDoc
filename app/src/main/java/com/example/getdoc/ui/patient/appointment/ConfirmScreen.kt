@@ -15,6 +15,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.getdoc.data.model.DoctorInfo
+import com.example.getdoc.ui.patient.component.DoctorCard
 import com.example.getdoc.ui.patient.component.sampleDoctor
 
 @Composable
@@ -61,38 +62,14 @@ fun ConfirmScreen(
                 Spacer(modifier = Modifier.height(24.dp))
 
                 // Doctor's Information
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(8.dp),
-                    elevation = CardDefaults.cardElevation(4.dp),
-                    colors = CardDefaults.cardColors(MaterialTheme.colorScheme.surface)
-                ) {
-                    Column(modifier = Modifier.padding(16.dp)) {
-                        Text(
-                            text = doctor.name,
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 18.sp
-                        )
-                        Text(
-                            text = doctor.specialization,
-                            style = MaterialTheme.typography.bodySmall
-                        )
-                        Spacer(modifier = Modifier.height(8.dp))
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Icon(
-                                imageVector = Icons.Default.LocationOn,
-                                contentDescription = "Location Icon",
-                                tint = Color.Gray,
-                                modifier = Modifier.size(16.dp)
-                            )
-                            Spacer(modifier = Modifier.width(4.dp))
-                            Text(
-                                text = doctor.location,
-                                style = MaterialTheme.typography.bodySmall
-                            )
-                        }
-                    }
-                }
+                DoctorCard(
+                    name = doctor.name,
+                    specialty = doctor.specialization,
+                    experience = doctor.experience,
+                    fee = doctor.consultingFee,
+                    doctorImage = doctor.profileImage,
+                    rating = doctor.rating
+                )
 
                 Spacer(modifier = Modifier.height(32.dp))
 

@@ -27,17 +27,17 @@ import androidx.compose.ui.unit.sp
 import com.example.getdoc.data.model.DoctorInfo
 import com.example.getdoc.ui.patient.component.CustomAppBar
 import com.example.getdoc.ui.patient.component.CustomButton
+import com.example.getdoc.ui.patient.component.DoctorCard
 import com.example.getdoc.ui.patient.component.sampleDoctor
 
 @Composable
 fun BookingDoctorScreen(
     doctor: DoctorInfo,
+    selectedDate: String,
+    onDateSelected: (String) -> Unit,
     onBackClick: () -> Unit,
     onProceedClick: () -> Unit
 ) {
-    // State to keep track of the selected date
-    val selectedDate = remember { mutableStateOf("Today") }
-
     Scaffold(
         topBar = {
             CustomAppBar(
@@ -53,53 +53,16 @@ fun BookingDoctorScreen(
                     .padding(16.dp)
             ) {
                 // Doctor's Information Section
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    // Doctor Profile Picture
-                    Image(
-                        painter = painterResource(id = doctor.profileImage),
-                        contentDescription = "Doctor Profile",
-                        contentScale = ContentScale.Crop,
-                        modifier = Modifier
-                            .size(80.dp)
-                            .padding(end = 16.dp)
-                            .clip(CircleShape)
-                    )
-                    Column {
-                        Text(
-                            text = doctor.name,
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 20.sp
-                        )
-                        Text(
-                            text = doctor.degree,
-                            fontSize = 16.sp,
-                            color = Color.Gray
-                        )
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Icon(
-                                imageVector = Icons.Default.LocationOn,
-                                contentDescription = "Location Icon",
-                                tint = Color.Gray,
-                                modifier = Modifier.size(16.dp)
-                            )
-                            Spacer(modifier = Modifier.width(4.dp))
-                            Text(
-                                text = doctor.location,
-                                fontSize = 14.sp,
-                                color = Color.Gray
-                            )
-                        }
-                        Text(
-                            text = "Consulting Fee: ৳${doctor.consultingFee}",
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 16.sp
-                        )
-                    }
-                }
+                DoctorCard(
+                    name = doctor.name,
+                    specialty = doctor.specialization,
+                    experience = doctor.experience,
+                    fee = doctor.consultingFee,
+                    doctorImage = doctor.profileImage,
+                    rating = doctor.rating
+                )
                 Spacer(modifier = Modifier.height(16.dp))
+
                 // Date Selection Section
                 Text(
                     text = "Choose A Date",
@@ -115,19 +78,19 @@ fun BookingDoctorScreen(
                     items(dates) { date ->
                         DateButton(
                             text = date,
-                            isSelected = selectedDate.value == date,
-                            onClick = { selectedDate.value = date }
+                            isSelected = selectedDate == date,
+                            onClick = { onDateSelected(date) }
                         )
                     }
                 }
                 Spacer(modifier = Modifier.height(16.dp))
 
-// Slots Available and Time Section
+                // Slots Available and Time Section
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(vertical = 16.dp), // Adds vertical padding for spacing
-                    horizontalAlignment = Alignment.CenterHorizontally // Centers content horizontally
+                        .padding(vertical = 16.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     Text(
                         text = "Slots Available",
@@ -135,13 +98,13 @@ fun BookingDoctorScreen(
                         fontWeight = FontWeight.Bold,
                         fontSize = 16.sp
                     )
-                    Spacer(modifier = Modifier.height(8.dp)) // Spacing between lines
+                    Spacer(modifier = Modifier.height(8.dp))
                     Text(
                         text = "9 Slots Available",
                         fontSize = 14.sp,
                         color = Color.Gray
                     )
-                    Spacer(modifier = Modifier.height(4.dp)) // Spacing between lines
+                    Spacer(modifier = Modifier.height(4.dp))
                     Text(
                         text = "4 PM - 6 PM",
                         fontSize = 14.sp,
@@ -172,7 +135,7 @@ fun BookingDoctorScreen(
                         checked = true,
                         onCheckedChange = { /* Handle checkbox */ },
                         colors = CheckboxDefaults.colors(
-                            checkedColor =MaterialTheme.colorScheme.primary,
+                            checkedColor = MaterialTheme.colorScheme.primary,
                             uncheckedColor = Color.Gray,
                             checkmarkColor = Color.White
                         )
@@ -188,7 +151,7 @@ fun BookingDoctorScreen(
                 // Proceed Button
                 CustomButton(
                     buttonText = "Proceed",
-                    onClick = { /* Handle book appointment logic */ }
+                    onClick = onProceedClick
                 )
             }
         }
@@ -216,6 +179,7 @@ fun DateButton(text: String, isSelected: Boolean, onClick: () -> Unit) {
     }
 }
 
+
 @Preview(showSystemUi = true)
 @Composable
 fun BookingDoctorScreenPreview() {
@@ -223,6 +187,10 @@ fun BookingDoctorScreenPreview() {
     BookingDoctorScreen(
         doctor = sampleDoctor,
         onBackClick = { /* Handle Back Navigation */ },
-        onProceedClick = { /* Navigate to Proceed Screen */ }
+        onProceedClick = { /* Navigate to Proceed Screen */ },
+        selectedDate= "",
+        onDateSelected= {},
     )
 }
+
+

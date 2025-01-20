@@ -16,9 +16,9 @@ data class DoctorInfo(
     val degree: String = "",
     val specialization: String,
     val experience: Int = 0,
-    val location: String,
+    val location: String = "",
     val consultingFee: Int,
-    val rating: Float = 0f,
+    val rating: Float = 4.1f,
     val profileImage: Int = R.drawable.doctor_profile, // Default image resource
     val about: String = ""
 )

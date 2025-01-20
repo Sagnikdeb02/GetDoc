@@ -5,33 +5,47 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
-
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
-
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.getdoc.data.model.DoctorInfo
+import com.example.getdoc.ui.patient.component.DoctorCard
+import com.example.getdoc.ui.patient.component.PatientBottomBarComponent
+import com.example.getdoc.ui.patient.state.PatientHomeUiState
 
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun DoctorListingPage() {
+fun PatientHomeScreen(
+    state: PatientHomeUiState,
+    onHomeClick: () -> Unit,
+    onAppointmentsClick: () -> Unit,
+    onDoctorsClick: () -> Unit,
+    onProfileClick: () -> Unit,
+    onSearch: (String) -> Unit
+) {
     Scaffold(
         bottomBar = {
-//            BottomAppBar()
+            PatientBottomBarComponent(
+                onHomeClick = onHomeClick,
+                onAppointmentsClick = onAppointmentsClick,
+                onDoctorsClick = onDoctorsClick,
+                onProfileClick = onProfileClick
+            )
         }
     ) { paddingValues ->
         Column(
@@ -39,19 +53,39 @@ fun DoctorListingPage() {
                 .fillMaxSize()
                 .padding(paddingValues)
         ) {
-            UserProfileHeader(name = "Hasan")
-            SearchBar(
-                searchQuery = "",
-                onSearch = {}
-            )
+            UserProfileHeader(name = state.name, location = state.location)
+
+
+
+            Search(query = state.searchQuery,  onQueryChange = onSearch)
             SpecialtiesSection()
-            TopDoctorsSection()
+            TopDoctorsSection(doctors = state.doctors)
         }
     }
 }
 
 @Composable
-fun UserProfileHeader(name: String) {
+fun Search(
+    query: String,
+    onQueryChange: (String) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    OutlinedTextField(
+        value = query,
+        onValueChange = onQueryChange,
+        label = { Text(text = "Search...") },
+        placeholder = { Text(text = "Eg: 'MIMS'") },
+        singleLine = true,
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(16.dp),
+        shape = RoundedCornerShape(16.dp)
+    )
+}
+
+
+@Composable
+fun UserProfileHeader(name: String, location: String) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -68,28 +102,9 @@ fun UserProfileHeader(name: String) {
         Spacer(modifier = Modifier.width(8.dp))
         Column {
             Text(text = "Hi, $name", fontSize = 20.sp, style = MaterialTheme.typography.headlineLarge)
-            Text(text = "Your location: Sylhet", fontSize = 14.sp, color = Color.Gray)
+            Text(text = "Your location: $location", fontSize = 14.sp, color = Color.Gray)
         }
     }
-}
-
-
-@Composable
-fun SearchBar(
-    searchQuery: String,
-    modifier: Modifier = Modifier,
-    onSearch: (String) -> Unit
-) {
-
-    OutlinedTextField(
-        value = searchQuery,
-        onValueChange = onSearch,
-        placeholder = { Text(text = "Eg: 'MIMS'") },
-        modifier = modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp),
-        singleLine = true
-    )
 }
 
 @Composable
@@ -160,7 +175,7 @@ fun SpecialtiesSection() {
 }
 
 @Composable
-fun TopDoctorsSection() {
+fun TopDoctorsSection(doctors: List<DoctorInfo>) {
     Column(modifier = Modifier.padding(16.dp)) {
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -171,75 +186,48 @@ fun TopDoctorsSection() {
         }
         Spacer(modifier = Modifier.height(8.dp))
         LazyColumn {
-            items((1..2).toList()) {
-                DoctorCard(name = "Dr Priya Hasan", specialty = "Cardiologist", experience = "4 years", fee = "500", doctorImage = com.example.getdoc.R.drawable.doc2)
-                DoctorCard(name = "Dr Anil", specialty = "Cardiologist", experience = "4 years", fee = "600", doctorImage = com.example.getdoc.R.drawable.doc1)
-                DoctorCard(name = "Dr Karim", specialty = "Cardiologist", experience = "4 years", fee = "600", doctorImage = com.example.getdoc.R.drawable.doc1)
+            items(doctors) { DoctorInfo ->
+                DoctorCard(
+                    name = DoctorInfo.name,
+                    specialty = DoctorInfo.specialization,
+                    experience = DoctorInfo.experience,
+                    fee = DoctorInfo.consultingFee,
+                    doctorImage = DoctorInfo.profileImage,
+                    rating = DoctorInfo.rating
+
+                )
             }
         }
     }
 }
 
+
+@Preview(showBackground = true)
 @Composable
-fun DoctorCard(name: String, specialty: String, experience: String, fee: String, doctorImage: Int) {
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 8.dp),
-        elevation = CardDefaults.cardElevation(4.dp)
-    ) {
-        Row(modifier = Modifier.padding(16.dp)) {
-            Image(
-                painter = painterResource(id = doctorImage), // Placeholder image
-                contentDescription = null,
-                modifier = Modifier
-                    .size(60.dp)
-                    .clip(CircleShape)
-            )
-            Spacer(modifier = Modifier.width(16.dp))
-            Column(modifier = Modifier.weight(1f)) {
-                Text(text = name, style = MaterialTheme.typography.headlineSmall)
-                Text(text = specialty, fontSize = 14.sp, color = Color.Gray)
-                Text(text = "$experience Experience", fontSize = 14.sp, color = Color.Gray)
-            }
+fun DoctorListingPagePreview() {
+    val mockState = PatientHomeUiState(
+        name = "John Doe",
+        location = "New York",
+        doctors = listOf(
+            DoctorInfo("Dr. Priya Hasan", "Cardiologist", "5 years", 1, consultingFee = 500),
+            DoctorInfo("Dr. Anil Kumar", "Dermatologist", "10 years", 1, consultingFee = 500),
+            DoctorInfo("Dr. Karim Ahmed", "Pediatrician", "8 years", 1, consultingFee = 500)
+        )
+    )
 
-            Column(
-                verticalArrangement = Arrangement.SpaceBetween
-            ) {
-                Row(
-
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    Spacer(modifier = Modifier.width(30.dp))
-                    Image(
-                        painter = painterResource(id = com.example.getdoc.R.drawable.star),
-                        contentDescription = "",
-                        modifier = Modifier.size(50.dp))
-                }
-
-
-                Spacer(modifier = Modifier.height(30.dp))
-
-                Row(
-
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    Spacer(modifier = Modifier.width(30.dp))
-                    Text(text = "৳$fee", style = MaterialTheme.typography.headlineSmall, color = MaterialTheme.colorScheme.primary)
-                }
-
-
-            }
-
-        }
-    }
+    PatientHomeScreen(
+        state = mockState,
+        onHomeClick = {},
+        onAppointmentsClick = {},
+        onDoctorsClick = {},
+        onProfileClick = {},
+        onSearch = {}
+    )
 }
 
 
 
 
-@Preview
-@Composable
-private fun DoctorListingPageprev() {
-    DoctorListingPage()
-}
+
+
+
