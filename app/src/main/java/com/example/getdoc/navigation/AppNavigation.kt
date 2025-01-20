@@ -60,25 +60,29 @@ fun AppNavigation(modifier: Modifier = Modifier) {
             SignupScreen(
                 viewModel = authViewModel,
                 onSignUpSuccess = {
-                    navController.navigate(ChooseRoleScreen)
-                }
-            )
+                    navController.navigate(LoginScreen)
+                })
         }
+
+
 
 //        composable<LicenseConfirmationScreen> {
 //            LicenseConfirmationScreen()
 //        }
-
+//
         composable<ChooseRoleScreen> {
             ChooseRoleScreen(
                 onDoctorClick = {
-                    navController.navigate(UploadLicenseScreen)
+                   // navController.navigate(UploadLicenseScreen)
+                    navController.navigate(DoctorHomeScreen)
                 },
                 onPatientClick = {
                     navController.navigate(PatientHomeScreen)
                 }
             )
         }
+
+
 
 
         composable<DoctorCredentialsScreen> {
@@ -97,8 +101,22 @@ fun AppNavigation(modifier: Modifier = Modifier) {
 
 
         composable<DoctorHomeScreen> {
+           DoctorHomeScreen(
+               onHomeClick = {
+                   navController.navigate(DoctorCredentialsScreen)
+               },
+               onAppointmentsClick = {
+                   navController.navigate(AppointmentConfirmationScreen)
+               },
+               onProfileClick = {
+                   navController.navigate(DoctorProfileScreen)
+               }
+           )
 
-        }
+}
+
+
+
         composable<DoctorCredentialsScreen>{
 
         }

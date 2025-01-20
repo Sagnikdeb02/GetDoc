@@ -101,14 +101,14 @@ fun PatientProfileScreen(
 
                 Spacer(modifier = Modifier.width(16.dp))
 
-                Column {
-                    Text(
-                        text = uiState.username,
-                        fontSize = 20.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = Color.Black
-                    )
-                }
+//                Column {
+//                    Text(
+//                        text = uiState.username,
+//                        fontSize = 20.sp,
+//                        fontWeight = FontWeight.Bold,
+//                        color = Color.Black
+//                    )
+//                }
             }
 
             // Edit Icon
