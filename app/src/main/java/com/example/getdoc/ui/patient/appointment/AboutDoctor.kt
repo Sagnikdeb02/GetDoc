@@ -19,6 +19,7 @@ import androidx.compose.ui.unit.sp
 import com.example.getdoc.data.model.DoctorInfo
 import com.example.getdoc.ui.patient.component.sampleDoctor
 import com.example.getdoc.ui.patient.component.CustomAppBar
+import com.example.getdoc.ui.patient.component.DoctorCard
 import com.example.getdoc.ui.patient.component.ReviewItem
 
 @Composable
@@ -38,53 +39,17 @@ fun DoctorDetailsScreen(doctor: DoctorInfo, onBackClick: () -> Unit) {
                     .padding(16.dp)
             ) {
                 // Profile Section
-                Row( verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.fillMaxWidth() ){
-                    Image(
-                        painter = painterResource(id = doctor.profileImage),
-                        contentDescription = "Doctor Profile Picture",
-                        modifier = Modifier
-                            .size(80.dp)
-                            .background(Color.Gray, CircleShape)
-                    )
-                    Spacer(modifier = Modifier.width(16.dp))
-                    Column {
-                        Text(
-                            text = doctor.name,
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 20.sp
-                        )
-                        Text(text = "${doctor.degree}, ${doctor.specialization}")
-                        Text(text = "${doctor.experience} Years Experience")
-                       Row{ Icon(
-                            imageVector = Icons.Default.LocationOn,
-                            contentDescription = "Location Icon",
-                            tint = Color.Gray,
-                            modifier = Modifier.size(16.dp)
-                        )
-                        Text(text = doctor.location)}
-                    }
-                }
+                DoctorCard(
+                    name = doctor.name,
+                    specialty = doctor.specialization,
+                    experience = doctor.experience,
+                    fee = doctor.consultingFee,
+                    doctorImage = doctor.profileImage,
+                    rating = doctor.rating
+                )
                 Spacer(modifier = Modifier.height(16.dp))
 
-                // Rating and Fee Section
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(vertical = 8.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ){
-                    Text(
-                        text = "Consulting Fee: ৳${doctor.consultingFee}",
-                        fontWeight = FontWeight.Medium,
-                        fontSize = 16.sp
-                    )
-                    Text(
-                        text = "⭐ ${doctor.rating}",
-                        fontWeight = FontWeight.Medium,
-                        fontSize = 16.sp
-                    )
-                }
+
                 Spacer(modifier = Modifier.height(16.dp))
 
                 // Buttons
