@@ -13,5 +13,3 @@ data class PatientUiState(
     val isSuccess: Boolean = false,
     val errorMessage: String? = null
 )
-
-// Data class for patient

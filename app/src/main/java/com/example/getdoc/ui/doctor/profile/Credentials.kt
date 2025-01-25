@@ -43,7 +43,7 @@ import com.example.getdoc.ui.doctor.appointments.HeaderComponent
  */
 @Composable
 fun MyCredentialsPageComponent(
-    viewModel: DoctorViewModel = androidx.lifecycle.viewmodel.compose.viewModel(),
+    viewModel: DoctorViewModel ,
     onHomeClick: () -> Unit,
     onAppointmentsClick: () -> Unit,
     onProfileClick: () -> Unit,
@@ -131,7 +131,7 @@ fun MyCredentialsPageComponent(
                     Spacer(modifier = Modifier.width(16.dp))
 
                     Button(
-                        onClick = { viewModel.submitDoctorProfile() },
+                        onClick = { viewModel.submitDoctorCredentialProfile()},
                         modifier = Modifier.weight(1f),
                         colors = ButtonDefaults.buttonColors(Color(0xFF174666))
                     ) {

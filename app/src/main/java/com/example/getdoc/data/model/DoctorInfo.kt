@@ -12,14 +12,14 @@ import com.example.getdoc.R
  * @property consultingFee The doctor's consulting fee. e.g. 1000, 2000, etc.
  */
 data class DoctorInfo(
-    val name: String,
+    val about: String = "",
+    val consultingFee: Int = 0,
     val degree: String = "",
-    val dob: String= " ",
-    val specialization: String,
+    val dob: String = "",
     val experience: Int = 0,
     val location: String = "",
-    val consultingFee: Int,
-    val rating: Float = 4.1f,
-    val profileImage: Int = R.drawable.doctor_profile, // Default image resource
-    val about: String = ""
+    val name: String = "",
+    val profileImage: String = "",  // Ensure this is treated as a string
+    val rating: Double = 0.0,
+    val specialization: String = ""
 )

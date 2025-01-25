@@ -1,21 +1,14 @@
 package com.example.getdoc.ui.authentication
 
+import android.content.Context
 import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.text.ClickableText
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
+import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -26,41 +19,32 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.platform.LocalContext
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.navigation.compose.rememberNavController
+import androidx.navigation.NavHostController
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FirebaseFirestore
 import com.example.getdoc.R
+import com.example.getdoc.navigation.AdminHomeScreen
+import com.example.getdoc.navigation.ChooseRoleScreen
+import com.example.getdoc.navigation.DoctorHomeScreen
+import com.example.getdoc.navigation.LoginScreen
+import com.example.getdoc.navigation.PatientHomeScreen
 import java.util.regex.Pattern
-
-
-
-// LogIn Composable Screen
 @Composable
 fun LogInScreen(
-    viewModel: AuthenticationViewModel,
-    onLoginSuccess: () -> Unit,
-    onSignUpClick: () -> Unit,
-//    onForgotPasswordClick: () -> Unit
+    auth: FirebaseAuth,
+    firestore: FirebaseFirestore,
+    navController: NavHostController,
+    onLoginSuccess: () -> Unit
 ) {
     val context = LocalContext.current
-    val authUiState by viewModel.authUiState.collectAsStateWithLifecycle()
-    val firebaseUser by viewModel.firebaseUser.collectAsStateWithLifecycle()
 
+    var email by remember { mutableStateOf("") }
+    var password by remember { mutableStateOf("") }
     var emailError by remember { mutableStateOf("") }
     var passwordError by remember { mutableStateOf("") }
-    var loginError by remember { mutableStateOf("") }
     var isLoading by remember { mutableStateOf(false) }
     var passwordVisible by remember { mutableStateOf(false) }
-
-
-    LaunchedEffect(key1 = firebaseUser) {
-        if (firebaseUser != null) {
-            onLoginSuccess()
-        }
-    }
-
 
     Column(
         modifier = Modifier
@@ -94,9 +78,9 @@ fun LogInScreen(
 
             Spacer(modifier = Modifier.height(16.dp))
             OutlinedTextField(
-                value = authUiState.email,
+                value = email,
                 onValueChange = {
-                    viewModel.onEmailChange(it.trim())
+                    email = it.trim()
                     emailError = ""
                 },
                 label = { Text(text = "Enter Email") },
@@ -110,9 +94,9 @@ fun LogInScreen(
 
             Spacer(modifier = Modifier.height(16.dp))
             OutlinedTextField(
-                value = authUiState.password,
+                value = password,
                 onValueChange = {
-                    viewModel.onPasswordChange(it.trim())
+                    password = it.trim()
                     passwordError = ""
                 },
                 label = { Text(text = "Password") },
@@ -131,66 +115,52 @@ fun LogInScreen(
                 Text(text = passwordError, color = Color.Red, fontSize = 12.sp)
             }
 
-            Spacer(modifier = Modifier.height(10.dp))
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.End
-            ) {
-                TextButton(onClick = {
-                    if (authUiState.email.isNotEmpty()) {
-                        isLoading = true
-                        viewModel.onPasswordResetClick()
-                    } else {
-                        Toast.makeText(context, "Please enter your email", Toast.LENGTH_LONG).show()
-                    }
-                }) {
-                    Text(text = "Forgot password?", color = Color.Black)
-                }
-            }
-
             Spacer(modifier = Modifier.height(16.dp))
-            if (isLoading) {
-                CircularProgressIndicator(modifier = Modifier.align(Alignment.CenterHorizontally))
-            } else {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.Center
-                ) {
-                    Button(
-                        onClick = {
-                            emailError = ""
-                            passwordError = ""
+            Button(
+                onClick = {
+                    emailError = ""
+                    passwordError = ""
 
-                            if (!isValidEmail(authUiState.email)) {
-                                emailError = "Invalid email format"
-                            }
-                            if (authUiState.password.isEmpty()) {
-                                passwordError = "Password cannot be empty"
-                            } else if (authUiState.password.length < 6) {
-                                passwordError = "Password must be at least 6 characters"
-                            }
-
-                            if (emailError.isEmpty() && passwordError.isEmpty()) {
-                                isLoading = true
-
-                                viewModel.onSignInClick()
-                            }
-
-                        },
-                        modifier = Modifier.size(height = 50.dp, width = 120.dp),
-                        colors = ButtonDefaults.buttonColors(Color(0xFF174666)),
-                        shape = RoundedCornerShape(20.dp)
-                    ) {
-                        Text(text = "Sign In", fontSize = 20.sp, color = Color.White)
+                    if (!isValidEmail(email)) {
+                        emailError = "Invalid email format"
                     }
-                }
-            }
+                    if (password.isEmpty()) {
+                        passwordError = "Password cannot be empty"
+                    } else if (password.length < 6) {
+                        passwordError = "Password must be at least 6 characters"
+                    }
 
-            if (loginError.isNotEmpty()) {
-                Spacer(modifier = Modifier.height(8.dp))
-                Text(text = loginError, color = Color.Red, fontSize = 12.sp)
-            }
+                    if (emailError.isEmpty() && passwordError.isEmpty()) {
+                        isLoading = true
 
+                        // Handle admin login
+                        signInAdmin(email, password, context) { role ->
+                            isLoading = false
+                            onLoginSuccess()
+                            navController.navigate(AdminHomeScreen) { popUpTo(LoginScreen) { inclusive = true } }
+                        }
+
+                        // Handle doctor login
+                        signInDoctor(firestore, email, password, context) { role ->
+                            isLoading = false
+                            onLoginSuccess()
+                            navController.navigate(DoctorHomeScreen) { popUpTo(LoginScreen) { inclusive = true } }
+                        }
+
+                        // Handle patient login
+                        signInPatient(auth, email, password, context) { role ->
+                            isLoading = false
+                            onLoginSuccess()
+                            navController.navigate(PatientHomeScreen) { popUpTo(LoginScreen) { inclusive = true } }
+                        }
+                    }
+                },
+                modifier = Modifier.fillMaxWidth(),
+                colors = ButtonDefaults.buttonColors(Color(0xFF174666)),
+                shape = RoundedCornerShape(20.dp)
+            ) {
+                Text(text = if (isLoading) "Signing In..." else "Sign In", fontSize = 20.sp, color = Color.White)
+            }
             Spacer(modifier = Modifier.height(16.dp))
             Row(
                 modifier = Modifier
@@ -202,58 +172,81 @@ fun LogInScreen(
                 Text(text = "Don't have an account? ")
                 ClickableText(
                     text = AnnotatedString("Create one"),
-                    onClick = {onSignUpClick()}
+                    onClick = { navController.navigate(ChooseRoleScreen) }
                 )
             }
         }
     }
 }
 
+// Helper function to validate email format
 fun isValidEmail(email: String): Boolean {
-    val emailPattern = "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}\$"
+    val emailPattern = "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$"
     return Pattern.compile(emailPattern).matcher(email).matches()
 }
 
-@Preview(showBackground = true)
-@Composable
-fun LogInPreview() {
-    val mockAuth = FirebaseAuth.getInstance()
-    val mockNavController = rememberNavController()
-
-//    LogInScreen(
-//        auth = mockAuth,
-//        navController = mockNavController,
-//        onLoginSuccess = { /* Handle login success */ }
-//    )
+fun signInAdmin(
+    email: String,
+    password: String,
+    context: Context,
+    onSignInSuccess: (String) -> Unit
+) {
+    if (email.trim().lowercase() == "admin@getdoc.com" && password == "admin123") {
+        onSignInSuccess("admin")
+        Toast.makeText(context, "Admin login successful!", Toast.LENGTH_LONG).show()
+    } else {
+        Toast.makeText(context, "Invalid admin credentials", Toast.LENGTH_LONG).show()
+    }
 }
-// Create User function
-//suspend fun createUser(auth: FirebaseAuth, email: String, password: String, context: Context) {
-//    try {
-//        val user = auth.createUserWithEmailAndPassword(email, password).await().user
-//        user?.sendEmailVerification()?.await()
-//        Toast.makeText(context, "Check your email for email verification.", Toast.LENGTH_LONG).show()
-//    } catch (e: Exception) {
-//        Toast.makeText(context, "Error: ${e.message}", Toast.LENGTH_LONG).show()
-//    }
-//}
-// Updated signInUser function
-//fun signInUser(
-//    auth: FirebaseAuth,
-//    email: String,
-//    password: String,
-//    context: Context, // Pass Context here
-//    onSignInSuccess: () -> Unit
-//) {
-//    auth.signInWithEmailAndPassword(email, password).addOnCompleteListener { task ->
-//        if (task.isSuccessful) {
-//            val user = auth.currentUser
-//            if (user?.isEmailVerified == true) {
-//                onSignInSuccess()
-//            } else {
-//                Toast.makeText(context, "Please verify your email first", Toast.LENGTH_LONG).show()
-//            }
-//        } else {
-//            Toast.makeText(context, "Sign-in failed: ${task.exception?.message}", Toast.LENGTH_LONG).show()
-//        }
-//    }
-//}
+
+fun signInDoctor(
+    firestore: FirebaseFirestore,
+    email: String,
+    password: String,
+    context: Context,
+    onSignInSuccess: (String) -> Unit
+) {
+    firestore.collection("doctor_registrations")
+        .whereEqualTo("email", email)
+        .whereEqualTo("password", password) // Checking directly as per your requirements
+        .get()
+        .addOnSuccessListener { documents ->
+            if (!documents.isEmpty) {
+                val document = documents.documents[0]
+                val status = document.getString("status") ?: "pending"
+                if (status == "approved") {
+                    onSignInSuccess("doctor")
+                    Toast.makeText(context, "Doctor login successful!", Toast.LENGTH_LONG).show()
+                } else {
+                    Toast.makeText(context, "Your registration is pending approval", Toast.LENGTH_LONG).show()
+                }
+            } else {
+                Toast.makeText(context, "Doctor not found or incorrect credentials", Toast.LENGTH_LONG).show()
+            }
+        }
+        .addOnFailureListener {
+            Toast.makeText(context, "Error fetching registration", Toast.LENGTH_LONG).show()
+        }
+}
+
+fun signInPatient(
+    auth: FirebaseAuth,
+    email: String,
+    password: String,
+    context: Context,
+    onSignInSuccess: (String) -> Unit
+) {
+    auth.signInWithEmailAndPassword(email, password).addOnCompleteListener { task ->
+        if (task.isSuccessful) {
+            val user = auth.currentUser
+            if (user?.isEmailVerified == true) {
+                onSignInSuccess("patient")
+                Toast.makeText(context, "Patient login successful!", Toast.LENGTH_LONG).show()
+            } else {
+                Toast.makeText(context, "Please verify your email first", Toast.LENGTH_LONG).show()
+            }
+        } else {
+            Toast.makeText(context, "Sign-in failed: ${task.exception?.message}", Toast.LENGTH_LONG).show()
+        }
+    }
+}

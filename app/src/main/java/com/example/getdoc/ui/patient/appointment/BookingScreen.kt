@@ -2,24 +2,15 @@ package com.example.getdoc.ui.theme.ui.patient.Appointments
 
 
 
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -27,8 +18,6 @@ import androidx.compose.ui.unit.sp
 import com.example.getdoc.data.model.DoctorInfo
 import com.example.getdoc.ui.patient.component.CustomAppBar
 import com.example.getdoc.ui.patient.component.CustomButton
-import com.example.getdoc.ui.patient.component.DoctorCard
-import com.example.getdoc.ui.patient.component.sampleDoctor
 
 @Composable
 fun BookingDoctorScreen(
@@ -53,14 +42,14 @@ fun BookingDoctorScreen(
                     .padding(16.dp)
             ) {
                 // Doctor's Information Section
-                DoctorCard(
-                    name = doctor.name,
-                    specialty = doctor.specialization,
-                    experience = doctor.experience,
-                    fee = doctor.consultingFee,
-                    doctorImage = doctor.profileImage,
-                    rating = doctor.rating
-                )
+//                DoctorCard(
+//                    name = doctor.name,
+//                    specialty = doctor.specialization,
+//                    experience = doctor.experience,
+//                    fee = doctor.consultingFee,
+//                    doctorImage = doctor.profileImage,
+//                    rating = doctor.rating
+//                )
                 Spacer(modifier = Modifier.height(16.dp))
 
                 // Date Selection Section
@@ -180,17 +169,6 @@ fun DateButton(text: String, isSelected: Boolean, onClick: () -> Unit) {
 }
 
 
-@Preview(showSystemUi = true)
-@Composable
-fun BookingDoctorScreenPreview() {
 
-    BookingDoctorScreen(
-        doctor = sampleDoctor,
-        onBackClick = { /* Handle Back Navigation */ },
-        onProceedClick = { /* Navigate to Proceed Screen */ },
-        selectedDate= "",
-        onDateSelected= {},
-    )
-}
 
 

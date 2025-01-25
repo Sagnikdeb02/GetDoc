@@ -9,11 +9,9 @@ import androidx.lifecycle.viewModelScope
 import com.example.getdoc.data.model.DoctorInfo
 import com.example.getdoc.ui.doctor.state.DoctorProfileUiState
 import com.example.getdoc.ui.doctor.state.DoctorUiState
-import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import io.appwrite.Client
 import io.appwrite.ID
-import io.appwrite.exceptions.AppwriteException
 import io.appwrite.models.InputFile
 import io.appwrite.services.Storage
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -34,19 +32,13 @@ class DoctorViewModel(
     private val _profileUiState = MutableStateFlow(DoctorProfileUiState())
     val profileUiState: StateFlow<DoctorProfileUiState> get() = _profileUiState
 
-    fun submitDoctorProfile() {
+    // Submit doctor profile to Firestore without authentication
+    fun submitDoctorCredentialProfile() {
         val state = _uiState.value
         _uiState.value = state.copy(isLoading = true, errorMessage = null)
 
-        val userId = FirebaseAuth.getInstance().currentUser?.uid
-        if (userId == null) {
-            _uiState.value = state.copy(
-                isLoading = false,
-                errorMessage = "User is not authenticated"
-            )
-            Log.e("FirebaseAuth", "User not logged in")
-            return
-        }
+        // Generate Firestore unique document ID
+        val doctorId = firestore.collection("doctors").document().id
 
         val experienceValue = state.dob.takeIf { it.length == 10 && it.contains("-") }
             ?.split("-")?.firstOrNull()?.toIntOrNull()?.let { 2025 - it } ?: 0
@@ -64,7 +56,7 @@ class DoctorViewModel(
         )
 
         firestore.collection("doctors")
-            .document(userId)
+            .document(doctorId)
             .set(doctorInfo)
             .addOnSuccessListener {
                 _uiState.value = _uiState.value.copy(isLoading = false, isSuccess = true)
@@ -76,6 +68,7 @@ class DoctorViewModel(
             }
     }
 
+    // Updates doctor profile UI state
     fun updateUiState(field: String, value: String) {
         _uiState.value = when (field) {
             "name" -> _uiState.value.copy(name = value)
@@ -94,6 +87,7 @@ class DoctorViewModel(
         }
     }
 
+    // Upload doctor profile picture to Appwrite and save reference to Firestore
     fun uploadDoctorProfile(context: Context) {
         val state = _profileUiState.value
         _profileUiState.value = state.copy(isLoading = true, errorMessage = null)
@@ -118,14 +112,16 @@ class DoctorViewModel(
 
                     val profileData = hashMapOf(
                         "username" to state.usernameInput,
-                        "profileImageUrl" to result.id
+                        "profileImageUrl" to result.id,
+                        "status" to "pending" // Default status as 'pending' for admin approval
                     )
 
                     firestore.collection("doctors")
-                        .add(profileData) // Allow auto-generated document ID instead of user ID
+                        .document()
+                        .set(profileData)
                         .addOnSuccessListener {
                             _profileUiState.value = state.copy(isLoading = false, isSuccess = true)
-                            Toast.makeText(context, "Profile updated successfully!", Toast.LENGTH_LONG).show()
+                            Toast.makeText(context, "Profile submitted for approval!", Toast.LENGTH_LONG).show()
                         }
                         .addOnFailureListener { e ->
                             _profileUiState.value = state.copy(isLoading = false, errorMessage = e.localizedMessage)
@@ -143,6 +139,8 @@ class DoctorViewModel(
     fun clearForm() {
         _uiState.value = DoctorUiState()
     }
+
+    // Convert Uri to File
     private fun uriToFile(uri: Uri?, context: Context): File? {
         return try {
             val inputStream: InputStream? = uri?.let { context.contentResolver.openInputStream(it) }

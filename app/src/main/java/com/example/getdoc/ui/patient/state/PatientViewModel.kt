@@ -1,11 +1,14 @@
 package com.example.getdoc.ui.patient
 
 import android.content.Context
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import android.net.Uri
 import android.util.Log
 import android.widget.Toast
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.getdoc.data.model.DoctorInfo
 import com.example.getdoc.data.model.PatientUiState
 import com.example.getdoc.ui.patient.state.PatientProfileUiState
 import com.google.firebase.auth.FirebaseAuth
@@ -15,9 +18,13 @@ import io.appwrite.ID
 import io.appwrite.exceptions.AppwriteException
 import io.appwrite.models.InputFile
 import io.appwrite.services.Storage
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.tasks.await
+import kotlinx.coroutines.withContext
 import java.io.File
 import java.io.FileOutputStream
 import java.io.InputStream
@@ -86,6 +93,33 @@ class PatientViewModel(
         }
     }
 
+    fun fetchUserProfile(userId: String) {
+        viewModelScope.launch {
+            _profileUiState.value = _profileUiState.value.copy(isLoading = true)
+            try {
+                val userSnapshot = firestore.collection("patients").document(userId).get().await()
+                val username = userSnapshot.getString("username") ?: "Unknown"
+                val imageId = userSnapshot.getString("profileImageUrl")
+
+                _profileUiState.value = _profileUiState.value.copy(usernameInput = username)
+
+                if (!imageId.isNullOrEmpty()) {
+                    val storage = Storage(client)
+                    val imageData = withContext(Dispatchers.IO) {
+                        storage.getFileDownload(bucketId = "678dd5d30039f0a22428", fileId = imageId)
+                    }
+                    val bitmap = convertImageByteArrayToBitmap(imageData)
+                    _profileUiState.value = _profileUiState.value.copy(profileImageBitmap = bitmap)
+                }
+            } catch (e: Exception) {
+                Log.e("FirestoreError", "Error fetching user data: ${e.localizedMessage}", e)
+                _profileUiState.value = _profileUiState.value.copy(errorMessage = "Failed to load profile")
+            } finally {
+                _profileUiState.value = _profileUiState.value.copy(isLoading = false)
+            }
+        }
+    }
+
     fun uploadPatientProfile(context: Context) {
 
         val state = _profileUiState.value
@@ -134,7 +168,6 @@ class PatientViewModel(
                         }
                         .addOnFailureListener { e ->
                             _profileUiState.value = state.copy(isLoading = false, errorMessage = e.localizedMessage)
-                            Log.e("FirestoreError", "Error uploading document: ${e.localizedMessage}", e)
                             Toast.makeText(context, "Error: ${e.localizedMessage}", Toast.LENGTH_LONG).show()
                         }
                 } else {
@@ -143,20 +176,17 @@ class PatientViewModel(
                 }
             } catch (e: AppwriteException) {
                 _profileUiState.value = state.copy(isLoading = false, errorMessage = e.message)
-                Log.e("AppwriteError", "Appwrite error: ${e.message}")
                 Toast.makeText(context, "Error uploading image: ${e.message}", Toast.LENGTH_LONG).show()
             } catch (e: Exception) {
                 _profileUiState.value = state.copy(isLoading = false, errorMessage = e.message)
-                Log.e("UploadError", "Unexpected error: ${e.message}")
                 Toast.makeText(context, "Unexpected error: ${e.message}", Toast.LENGTH_LONG).show()
             }
         }
     }
 
-
-    private fun uriToFile(uri: Uri?, context: Context): File? {
+    private fun uriToFile(uri: Uri, context: Context): File? {
         return try {
-            val inputStream: InputStream? = uri?.let { context.contentResolver.openInputStream(it) }
+            val inputStream: InputStream? = context.contentResolver.openInputStream(uri)
             val tempFile = File.createTempFile("upload_", ".jpg", context.cacheDir)
             inputStream?.use { input ->
                 FileOutputStream(tempFile).use { output ->
@@ -170,4 +200,50 @@ class PatientViewModel(
         }
     }
 
-}
+    private fun convertImageByteArrayToBitmap(imageData: ByteArray): Bitmap {
+        return BitmapFactory.decodeByteArray(imageData, 0, imageData.size)
+    }
+    private val _doctorList = MutableStateFlow<List<DoctorInfo>>(emptyList())
+    val doctorList: StateFlow<List<DoctorInfo>> get() = _doctorList
+
+    private val _isLoading = MutableStateFlow(true)
+    val isLoading: StateFlow<Boolean> get() = _isLoading
+
+    init {
+        fetchDoctors()
+    }
+    private fun fetchDoctors() {
+        viewModelScope.launch {
+            _isLoading.value = true
+            try {
+                val snapshot = firestore.collection("doctors").get().await()
+                _doctorList.value = snapshot.documents.mapNotNull { document ->
+                    val data = document.data
+                    Log.d("FirestoreData", "Fetched doctor: $data")
+
+                    // Parse document fields safely to avoid null issues
+                    DoctorInfo(
+                        about = data?.get("about") as? String ?: "",
+                        consultingFee = (data?.get("consultingFee") as? Long)?.toInt() ?: 0,
+                        degree = data?.get("degree") as? String ?: "",
+                        dob = data?.get("dob") as? String ?: "",
+                        experience = (data?.get("experience") as? Long)?.toInt() ?: 0,
+                        location = data?.get("location") as? String ?: "",
+                        name = data?.get("name") as? String ?: "",
+                        profileImage = data?.get("profileImage").toString(),
+                        rating = (data?.get("rating") as? Double) ?: 0.0,
+                        specialization = data?.get("specialization") as? String ?: ""
+                    )
+                }
+            } catch (e: Exception) {
+                Log.e("Firestore", "Error fetching doctor data: ${e.localizedMessage}")
+            } finally {
+                _isLoading.value = false
+            }
+        }
+    }
+
+    }
+
+
+

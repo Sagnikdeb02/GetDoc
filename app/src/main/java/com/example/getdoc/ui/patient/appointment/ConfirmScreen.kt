@@ -4,7 +4,6 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CheckCircle
-import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -15,8 +14,6 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.getdoc.data.model.DoctorInfo
-import com.example.getdoc.ui.patient.component.DoctorCard
-import com.example.getdoc.ui.patient.component.sampleDoctor
 
 @Composable
 fun ConfirmScreen(
@@ -62,14 +59,14 @@ fun ConfirmScreen(
                 Spacer(modifier = Modifier.height(24.dp))
 
                 // Doctor's Information
-                DoctorCard(
-                    name = doctor.name,
-                    specialty = doctor.specialization,
-                    experience = doctor.experience,
-                    fee = doctor.consultingFee,
-                    doctorImage = doctor.profileImage,
-                    rating = doctor.rating
-                )
+//                DoctorCard(
+//                    name = doctor.name,
+//                    specialty = doctor.specialization,
+//                    experience = doctor.experience,
+//                    fee = doctor.consultingFee,
+//                    doctorImage = doctor.profileImage,
+//                    rating = doctor.rating
+//                )
 
                 Spacer(modifier = Modifier.height(32.dp))
 
@@ -88,15 +85,5 @@ fun ConfirmScreen(
                 }
             }
         }
-    )
-}
-
-@Preview(showSystemUi = true)
-@Composable
-fun ConfirmScreenPreview() {
-    ConfirmScreen(
-        bookingId = 1234567890.toString(),
-        doctor = sampleDoctor,
-        onBackToHomeClick = { /* Handle Back to Home */ }
     )
 }

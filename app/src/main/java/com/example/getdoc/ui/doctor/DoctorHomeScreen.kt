@@ -27,8 +27,13 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.navigation.NavController
+import androidx.navigation.NavHostController
 import com.example.getdoc.R
+import com.example.getdoc.navigation.DoctorCredentialsScreen
+import com.example.getdoc.navigation.DoctorProfileInputScreen
 import com.example.getdoc.ui.doctor.profile.BottomBarComponent
+import com.example.getdoc.ui.doctor.profile.DoctorProfileInputScreen
 import java.time.DayOfWeek
 import java.time.Instant
 import java.time.ZoneId
@@ -41,6 +46,7 @@ fun DoctorHomeScreen(
     onHomeClick: () -> Unit,
     onAppointmentsClick: () -> Unit,
     onProfileClick: () -> Unit,
+    navController: NavHostController
 ) {
     var calendarShow by remember { mutableStateOf(false) }
     var searchText by remember { mutableStateOf("") }
@@ -149,7 +155,7 @@ fun DoctorHomeScreen(
             BottomBarComponent(
                 onHomeClick = onHomeClick,
                 onAppointmentsClick = onAppointmentsClick,
-                onProfileClick = onProfileClick
+                onProfileClick = { navController.navigate(DoctorProfileInputScreen) }
             )
         }
     }

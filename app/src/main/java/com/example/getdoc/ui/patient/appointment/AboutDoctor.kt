@@ -1,25 +1,15 @@
 package com.example.getdoc.ui.patient.appointment
 
 import androidx.compose.runtime.Composable
-import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material3.*
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.example.getdoc.data.model.DoctorInfo
-import com.example.getdoc.ui.patient.component.sampleDoctor
+import com.example.getdoc.ui.patient.DoctorCard
 import com.example.getdoc.ui.patient.component.CustomAppBar
-import com.example.getdoc.ui.patient.component.DoctorCard
 import com.example.getdoc.ui.patient.component.ReviewItem
 
 @Composable
@@ -39,14 +29,15 @@ fun DoctorDetailsScreen(doctor: DoctorInfo, onBackClick: () -> Unit) {
                     .padding(16.dp)
             ) {
                 // Profile Section
-                DoctorCard(
-                    name = doctor.name,
-                    specialty = doctor.specialization,
-                    experience = doctor.experience,
-                    fee = doctor.consultingFee,
-                    doctorImage = doctor.profileImage,
-                    rating = doctor.rating
-                )
+//                DoctorCard(
+//                    name = doctor.name,
+//                    specialty = doctor.specialization,
+//                    experience = doctor.experience,
+//                    fee = doctor.consultingFee,
+//                    doctorImage = doctor.profileImage,
+//                    rating = doctor.rating,
+//                    client = doctor.nam
+//                )
                 Spacer(modifier = Modifier.height(16.dp))
 
 
@@ -108,11 +99,4 @@ fun DoctorDetailsScreen(doctor: DoctorInfo, onBackClick: () -> Unit) {
 
 }
 
-@Preview(showSystemUi = true)
-@Composable
-fun DoctorDetailsScreenPreview() {
-    DoctorDetailsScreen(
-        doctor = sampleDoctor,
-        onBackClick = { /* Handle Back Navigation */ }
-    )
-}
+

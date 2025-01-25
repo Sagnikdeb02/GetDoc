@@ -67,7 +67,9 @@ fun PatientProfileInputScreen(viewModel: PatientViewModel) {
             Button(
                 onClick = {
                     coroutineScope.launch {
-                        viewModel.uploadPatientProfile(context)
+                        viewModel.uploadPatientProfile(
+                            context
+                        )
                     }
                 },
                 modifier = Modifier.fillMaxWidth(0.8f)

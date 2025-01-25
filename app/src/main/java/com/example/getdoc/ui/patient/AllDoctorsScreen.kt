@@ -16,6 +16,8 @@ import androidx.compose.ui.unit.dp
 import com.example.getdoc.data.model.DoctorInfo
 import com.example.getdoc.ui.patient.component.PatientBottomBarComponent
 import com.example.getdoc.ui.patient.state.PatientHomeUiState
+import com.google.firebase.firestore.FirebaseFirestore
+import io.appwrite.Client
 
 @Composable
 fun AllDoctorsScreen(
@@ -24,7 +26,9 @@ fun AllDoctorsScreen(
     onAppointmentsClick: () -> Unit,
     onDoctorsClick: () -> Unit,
     onProfileClick: () -> Unit,
-    onSearch: (String) -> Unit
+    onSearch: (String) -> Unit,
+    firestore: FirebaseFirestore,
+    client: Client
 ) {
     Scaffold(
         bottomBar = {
@@ -45,7 +49,10 @@ fun AllDoctorsScreen(
             HeaderSection2()
             Spacer(modifier = Modifier.height(16.dp))
             Search(query = state.searchQuery,  onQueryChange = onSearch)
-            TopDoctorsSection(doctors = state.doctors)
+            TopDoctorsSection(
+                PatientViewModel(client,firestore),
+                client = client
+            )
 
         }
     }
@@ -69,30 +76,4 @@ fun HeaderSection2() {
 
 
 
-
-
-
-@Preview(showBackground = true)
-@Composable
-fun AllDoctorsPreview() {
-    val mockState = PatientHomeUiState(
-        name = "John Doe",
-        location = "New York",
-        searchQuery = "",
-        doctors = listOf(
-            DoctorInfo(name = "Dr. Priya Hasan", specialization = "Cardiologist", experience =  5, consultingFee = 500),
-            DoctorInfo(name = "Dr. Anil Kumar", specialization = "Dermatologist", experience = 10,  consultingFee = 500),
-            DoctorInfo(name = "Dr. Karim Ahmed", specialization = "Pediatrician", experience = 8,  consultingFee = 500)
-        )
-    )
-
-    AllDoctorsScreen(
-        state = mockState,
-        onHomeClick = { /* No-op for preview */ },
-        onAppointmentsClick = { /* No-op for preview */ },
-        onDoctorsClick = { /* No-op for preview */ },
-        onProfileClick = { /* No-op for preview */ },
-        onSearch = { /* Handle search query */ }
-    )
-}
 
