@@ -6,9 +6,10 @@ import android.util.Log
 import android.widget.Toast
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.getdoc.data.model.DoctorInfo
+import com.example.getdoc.ui.doctor.state.DoctorHomeScreenUiState
+import com.example.getdoc.ui.doctor.state.DoctorProfileScreenUiState
 import com.example.getdoc.ui.doctor.state.DoctorProfileUiState
-import com.example.getdoc.ui.doctor.state.DoctorUiState
+import com.example.getdoc.ui.doctor.state.DoctorCredentialScreenUiState
 import com.google.firebase.firestore.FirebaseFirestore
 import io.appwrite.Client
 import io.appwrite.ID
@@ -16,6 +17,7 @@ import io.appwrite.models.InputFile
 import io.appwrite.services.Storage
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import java.io.File
 import java.io.FileOutputStream
@@ -25,11 +27,30 @@ class DoctorViewModel(
     private val firestore: FirebaseFirestore
 ) : ViewModel() {
 
-    private val _uiState = MutableStateFlow(DoctorUiState())
-    val uiState: StateFlow<DoctorUiState> get() = _uiState
+    // TODO: Remove this
+    private val _uiState = MutableStateFlow(DoctorCredentialScreenUiState())
+    val uiState: StateFlow<DoctorCredentialScreenUiState> get() = _uiState
 
+    // TODO: Remove this
     private val _profileUiState = MutableStateFlow(DoctorProfileUiState())
     val profileUiState: StateFlow<DoctorProfileUiState> get() = _profileUiState
+
+    private val _homeScreenUiState = MutableStateFlow(DoctorHomeScreenUiState())
+    val homeScreenUiState = _homeScreenUiState.asStateFlow()
+    private val _profileScreenUiState = MutableStateFlow(DoctorProfileScreenUiState())
+    val profileScreenUiState = _profileScreenUiState.asStateFlow()
+    private val _credentialScreenUiState = MutableStateFlow(DoctorCredentialScreenUiState())
+    val credentialScreenUiState = _credentialScreenUiState.asStateFlow()
+
+
+    private fun loadDoctorCredentials() {
+        firestore.collection("doctors")
+    }
+
+    private fun loadAppointments() {
+
+    }
+
 
     fun submitDoctorCredentialProfile() {
         val state = _uiState.value
@@ -129,7 +150,7 @@ class DoctorViewModel(
     }
 
     fun clearForm() {
-        _uiState.value = DoctorUiState()
+        _uiState.value = DoctorCredentialScreenUiState()
     }
 
     private fun uriToFile(uri: Uri?, context: Context): File? {
@@ -147,6 +168,6 @@ class DoctorViewModel(
             null
         }
     }
-
-
 }
+
+

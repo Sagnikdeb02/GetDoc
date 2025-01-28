@@ -9,6 +9,8 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.ExitToApp
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
@@ -30,93 +32,83 @@ import com.example.getdoc.R
 import com.example.getdoc.navigation.LoginScreen
 import com.example.getdoc.ui.authentication.AuthenticationViewModel
 import kotlinx.coroutines.launch
+
+
+enum class DoctorProfileOption(
+    val displayName: String
+) {
+    MY_CREDENTIALS("My Credentials"),
+    CHANGE_CONTACT("Change Contact"),
+    CHANGE_PASSWORD("Change Password"),
+    ABOUT_US("About Us"),
+    HELP("Help")
+}
+
 @Composable
 fun DoctorProfileScreen(
-    navController: NavHostController,
     modifier: Modifier = Modifier,
     onLogoutClick: () -> Unit,
-    onOptionClick: (String) -> Unit,
-    onHomeClick: () -> Unit,
-    onAppointmentsClick: () -> Unit,
-    onProfileClick: () -> Unit,
+    onOptionClick: (DoctorProfileOption) -> Unit,
 ) {
-    val authViewModel: AuthenticationViewModel = viewModel()
-    val context = LocalContext.current  // Move outside LaunchedEffect
-
+    // TODO: Remove this after implementing authentication
+    val viewModel: AuthenticationViewModel = viewModel()
+    val context = LocalContext.current
     LaunchedEffect(Unit) {
-        authViewModel.init(context)  // Use context safely here
+        viewModel.init(context)
     }
 
-    Column(
-        modifier = modifier
-            .fillMaxSize()
-            .background(Color(0xFFF0F4F7))
+    Scaffold(
+        modifier = modifier,
+        topBar = {
+            // Header
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(60.dp)
+                    .background(Color(0xFF1565C0))
+                    .padding(horizontal = 8.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Text(
+                    text = "Profile",
+                    fontSize = 24.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color.White,
+                    modifier = Modifier.padding(10.dp)
+                )
+                Image(painter = painterResource(id = R.drawable.img_9), contentDescription = "")
+            }
+        },
+        bottomBar = {
+            // Logout Section
+            LogoutSectionComponent(
+                onLogoutClick = onLogoutClick
+            )
+        }
     ) {
-        // Header
-        Row(
+        Column(
             modifier = Modifier
-                .fillMaxWidth()
-                .height(60.dp)
-                .background(Color(0xFF1565C0))
-                .padding(horizontal = 8.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween
+                .fillMaxSize()
+                .padding(it)
         ) {
-            Text(
-                text = "Profile",
-                fontSize = 24.sp,
-                fontWeight = FontWeight.Bold,
-                color = Color.White,
-                modifier = Modifier.padding(10.dp)
+            ProfileInfoRowComponent(
+                modifier = Modifier.padding(16.dp),
+                onEditClick = { /* Handle Edit */ }
             )
-            Image(painter = painterResource(id = R.drawable.img_9), contentDescription = "")
+
+            Spacer(modifier = Modifier.height(40.dp))
+
+
+            DoctorProfileOption.entries.forEach { option ->
+                ProfileOptionItemComponent(
+                    option = option.displayName,
+                    onClick = { onOptionClick(option) }
+                )
+            }
         }
-
-        // Profile Information Row
-        ProfileInfoRowComponent(
-            modifier = Modifier.padding(16.dp),
-            onEditClick = { /* Handle Edit */ }
-        )
-
-        Spacer(modifier = Modifier.height(40.dp))
-
-        // Options List
-        val options = listOf(
-            "My Appointments",
-            "My Credentials",
-            "Change Contact",
-            "Change Location",
-            "Change Password",
-            "About Us",
-            "Help"
-        )
-
-        options.forEach { option ->
-            ProfileOptionItemComponent(
-                option = option,
-                onClick = { onOptionClick(option) }
-            )
-        }
-
-        Spacer(modifier = Modifier.padding(vertical = 100.dp))
-
-        // Logout Section
-        LogoutSectionComponent(
-            modifier = Modifier.padding(16.dp),
-            viewModel = authViewModel,
-            navController = navController
-        )
     }
-    Column(
-        modifier = Modifier.fillMaxSize(),
-        verticalArrangement = Arrangement.Bottom
-    ) {
-        BottomBarComponent(
-            onHomeClick = onHomeClick,
-            onAppointmentsClick = onAppointmentsClick,
-            onProfileClick = onProfileClick
-        )
-    }
+
 }
 
 /**
@@ -214,22 +206,14 @@ fun ProfileOptionItemComponent(
 @Composable
 fun LogoutSectionComponent(
     modifier: Modifier = Modifier,
-    viewModel: AuthenticationViewModel,
-    navController: NavHostController
+    onLogoutClick: () -> Unit,
+
 ) {
     val coroutineScope = rememberCoroutineScope()
 
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .clickable {
-                coroutineScope.launch {
-                    viewModel.logout()
-                    navController.navigate(LoginScreen) {
-                        popUpTo(LoginScreen) { inclusive = true }
-                    }
-                }
-            }
             .padding(16.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
@@ -241,10 +225,14 @@ fun LogoutSectionComponent(
             color = Color(0xFF1565C0),
             modifier = Modifier.padding(end = 8.dp)
         )
-        Icon(
-            imageVector = Icons.Default.ExitToApp,
-            contentDescription = "Logout",
-            tint = Color(0xFF1565C0)
-        )
+        IconButton(
+            onClick = onLogoutClick
+        ) {
+            Icon(
+                imageVector = Icons.Default.ExitToApp,
+                contentDescription = "Logout",
+                tint = Color(0xFF1565C0)
+            )
+        }
     }
 }

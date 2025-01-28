@@ -3,6 +3,7 @@ package com.example.getdoc
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.activity.enableEdgeToEdge
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
@@ -26,12 +27,12 @@ import io.appwrite.Client
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        enableEdgeToEdge()
         FirebaseApp.initializeApp(this)  // Initialize Firebase
         FirebaseFirestore.setLoggingEnabled(true)
         val firestore = FirebaseFirestore.getInstance()
         val client = Client(this).setProject("678dd5bc0024c854ef06")
         setContent {
-
 
            AppNavigation(Modifier ,client,firestore)
 

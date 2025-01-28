@@ -1,12 +1,13 @@
 package com.example.getdoc.navigation
 
+import com.example.getdoc.ui.authentication.Role
 import kotlinx.serialization.Serializable
 
 @Serializable data object SplashScreen
 @Serializable data object LoginScreen
 @Serializable data object ChooseRoleScreen
-@Serializable data object SignUpScreen
-@Serializable data object DoctorRegistrationScreen
+@Serializable data class RegistrationScreen(val role: Role)
+@Serializable data object WaitingForVerificationScreen
 
 @Serializable data object PatientHomeScreen
 @Serializable data object DoctorHomeScreen
@@ -33,8 +34,3 @@ import kotlinx.serialization.Serializable
 @Serializable data object DoctorProfileInputScreen
 @Serializable data object DoctorCredentialsScreen
 @Serializable data object DoctorAvailabilityScreen
-
-enum class Role {
-    PATIENT,
-    DOCTOR
-}

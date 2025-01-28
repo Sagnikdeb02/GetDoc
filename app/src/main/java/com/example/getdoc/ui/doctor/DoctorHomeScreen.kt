@@ -2,14 +2,11 @@ package com.example.getdoc.ui.doctor
 
 import android.annotation.SuppressLint
 import android.os.Build
-import android.util.Log
-import android.widget.Toast
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.*
 import androidx.compose.ui.layout.ContentScale
@@ -19,8 +16,6 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -29,21 +24,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.tooling.preview.Preview
-import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.navigation.NavController
 import androidx.navigation.NavHostController
 import com.example.getdoc.R
-import com.example.getdoc.navigation.DoctorCredentialsScreen
-import com.example.getdoc.navigation.DoctorProfileInputScreen
-import com.example.getdoc.navigation.DoctorProfileScreen
-import com.example.getdoc.ui.doctor.profile.BottomBarComponent
-import com.example.getdoc.ui.doctor.profile.MyCredentialsPageComponent
-import com.example.getdoc.ui.doctor.profile.UploadDoctorProfilePictureScreen
-import com.google.firebase.firestore.FirebaseFirestore
 import java.time.DayOfWeek
 import java.time.Instant
 import java.time.ZoneId
@@ -61,21 +44,11 @@ fun DoctorHomeScreen(
     navController: NavHostController
 ) {
 
-//    MyCredentialsPageComponent(
-//        viewModel = viewModel,
-//        onHomeClick,
-//        onAppointmentsClick,
-//        onProfileClick,
-//        modifier = Modifier
-//    )
 
+    var isCalendarVisible by remember { mutableStateOf(false) }
+    var searchQuery by remember { mutableStateOf("") }
 
-
-
-    var calendarShow by remember { mutableStateOf(false) }
-    var searchText by remember { mutableStateOf("") }
-
-    val datePickerState = rememberDatePickerState(
+    val appointmentDatePickerState = rememberDatePickerState(
         selectableDates = object : SelectableDates {
             override fun isSelectableDate(utcTimeMillis: Long): Boolean {
                 return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
@@ -94,11 +67,6 @@ fun DoctorHomeScreen(
         }
     )
 
-    val patients = listOf(
-        Patient("Priya Hasan", "Female", 42, "100068"),
-        Patient("Rahul Dey", "Male", 35, "100101"),
-        Patient("Anita Roy", "Female", 29, "100152"),
-    )
 
     Column(
         modifier = Modifier
@@ -111,8 +79,8 @@ fun DoctorHomeScreen(
 
         // Search Field
         OutlinedTextField(
-            value = searchText,
-            onValueChange = { searchText = it },
+            value = searchQuery,
+            onValueChange = { searchQuery = it },
             modifier = Modifier.fillMaxWidth(),
             placeholder = { Text("Eg: \"MIMS\"") },
             leadingIcon = {
@@ -121,7 +89,8 @@ fun DoctorHomeScreen(
                     contentDescription = "Search Icon"
                 )
             },
-            shape = RoundedCornerShape(16.dp)
+            shape = RoundedCornerShape(16.dp),
+            singleLine = true
         )
 
         Spacer(modifier = Modifier.height(16.dp))
@@ -133,7 +102,7 @@ fun DoctorHomeScreen(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-                text = "Patients (${patients.size})",
+                text = "Appointment Requests",
                 fontSize = 18.sp,
                 fontWeight = FontWeight.Bold,
                 color = Color(0xFF2E7D32)
@@ -142,51 +111,27 @@ fun DoctorHomeScreen(
                 painter = painterResource(id = R.drawable.img_14),
                 contentDescription = "Calendar Icon",
                 modifier = Modifier
-                    .clickable { calendarShow = !calendarShow }
+                    .clickable { isCalendarVisible = !isCalendarVisible }
                     .size(24.dp)
             )
         }
 
         Spacer(modifier = Modifier.height(8.dp))
 
-        if (calendarShow) {
-            BoxWithConstraints(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .background(Color.White, RoundedCornerShape(16.dp))
-            ) {
-                val height = maxHeight * 0.7f
-                Box(modifier = Modifier.height(height)) {
-                    DatePicker(state = datePickerState)
-                }
-            }
+        AnimatedVisibility(isCalendarVisible) {
+            DatePicker(state = appointmentDatePickerState)
         }
+
 
         Spacer(modifier = Modifier.height(16.dp))
 
         // Patient List
-        LazyColumn {
-            items(patients) { patient ->
-                PatientCard(patient)
-                Spacer(modifier = Modifier.height(8.dp))
-            }
-        }
-
-        Column(
-            modifier = Modifier.fillMaxSize(),
-            verticalArrangement = Arrangement.Bottom
-        ) {
-            BottomBarComponent(
-                onHomeClick = onHomeClick,
-                onAppointmentsClick = onAppointmentsClick,
-                 onProfileClick = onProfileClick
-
-
-
-
-
-            )
-        }
+//        LazyColumn {
+//            items(patients) { patient ->
+//                PatientCard(patient)
+//                Spacer(modifier = Modifier.height(8.dp))
+//            }
+//        }
     }
 }
 

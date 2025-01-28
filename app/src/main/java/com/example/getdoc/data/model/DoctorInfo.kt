@@ -1,7 +1,5 @@
 package com.example.getdoc.data.model
 
-import com.example.getdoc.R
-
 /**
  * Represents a doctor's information.
  * @property name The doctor's name.
@@ -22,5 +20,6 @@ data class DoctorInfo(
     val name: String = "",
     val profileImage: String = "",
     val rating: Double = 0.0,
-    val specialization: String = ""
+    val specialization: String = "",
+    val isApproved: Boolean = false
 )

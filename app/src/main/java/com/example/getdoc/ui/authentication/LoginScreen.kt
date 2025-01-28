@@ -24,6 +24,7 @@ import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
@@ -45,10 +46,9 @@ private val USER_EMAIL_KEY = stringPreferencesKey("user_email")
 
 @Composable
 fun LogInScreen(
-    auth: FirebaseAuth,
-    firestore: FirebaseFirestore,
-    navController: NavHostController,
-    onLoginSuccess: () -> Unit
+    viewModel: AuthViewModel,
+    onLoginSuccess: () -> Unit,
+    onSignUpClick: () -> Unit,
 ) {
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
@@ -60,20 +60,13 @@ fun LogInScreen(
     var isLoading by remember { mutableStateOf(false) }
     var passwordVisible by remember { mutableStateOf(false) }
 
-    // Auto-login if session exists
-    LaunchedEffect(Unit) {
-        val preferences = context.dataStore.data.first()
-        val isLoggedIn = preferences[IS_LOGGED_IN_KEY] ?: false
-        val savedRole = preferences[USER_ROLE_KEY] ?: ""
-
-        if (isLoggedIn) {
-            when (savedRole) {
-                "admin" -> navController.navigate(AdminHomeScreen)
-                "doctor" -> navController.navigate(DoctorHomeScreen)
-                "patient" -> navController.navigate(PatientHomeScreen)
-            }
+    val authState by viewModel.authState.collectAsStateWithLifecycle()
+    LaunchedEffect(authState) {
+        if (authState is AuthState.Authenticated) {
+            onLoginSuccess()
         }
     }
+
 
     Column(
         modifier = Modifier
@@ -151,33 +144,7 @@ fun LogInScreen(
 
                     if (emailError.isEmpty() && passwordError.isEmpty()) {
                         isLoading = true
-
-                        signInAdmin(email, password, context) { role ->
-                            isLoading = false
-                            coroutineScope.launch {
-                                saveLoginSession(context, email, role)
-                            }
-                            onLoginSuccess()
-                            navController.navigate(AdminHomeScreen) { popUpTo(LoginScreen) { inclusive = true } }
-                        }
-
-                        signInDoctor(firestore, email, password, context) { role ->
-                            isLoading = false
-                            coroutineScope.launch {
-                                saveLoginSession(context, email, role)
-                            }
-                            onLoginSuccess()
-                            navController.navigate(DoctorHomeScreen) { popUpTo(LoginScreen) { inclusive = true } }
-                        }
-
-                        signInPatient(auth, email, password, context) { role ->
-                            isLoading = false
-                            coroutineScope.launch {
-                                saveLoginSession(context, email, role)
-                            }
-                            onLoginSuccess()
-                            navController.navigate(PatientHomeScreen) { popUpTo(LoginScreen) { inclusive = true } }
-                        }
+                        viewModel.signInUser(email, password)
                     }
                 },
                 modifier = Modifier.fillMaxWidth(),
@@ -196,10 +163,11 @@ fun LogInScreen(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(text = "Don't have an account? ")
-                ClickableText(
-                    text = AnnotatedString("Create one"),
-                    onClick = { navController.navigate(ChooseRoleScreen) }
-                )
+                TextButton(
+                    onClick = { onSignUpClick() }
+                ) {
+                    Text(text = "Sign Up", color = Color(0xFF174666))
+                }
             }
         }
     }

@@ -23,11 +23,15 @@ import java.io.File
 import java.io.FileOutputStream
 import java.io.InputStream
 import android.widget.Toast
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.example.getdoc.ui.authentication.AuthState
+import com.example.getdoc.ui.authentication.AuthViewModel
+
 @Composable
 fun DoctorRegistrationScreen(
-    client: Client,
-    firestore: FirebaseFirestore,
-    modifier: Modifier = Modifier
+    viewModel: AuthViewModel,
+    modifier: Modifier = Modifier,
+    onSignUpSuccess: () -> Unit,
 ) {
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
@@ -39,6 +43,14 @@ fun DoctorRegistrationScreen(
     var selectedImageUri by remember { mutableStateOf<Uri?>(null) }
     var registrationStatus by remember { mutableStateOf("") }
     var isSubmitting by remember { mutableStateOf(false) }
+
+    val authState by viewModel.authState.collectAsStateWithLifecycle()
+    LaunchedEffect(authState) {
+        if (authState is AuthState.Authenticated) {
+            onSignUpSuccess()
+        }
+    }
+
 
     val imagePickerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent(),
@@ -96,32 +108,32 @@ fun DoctorRegistrationScreen(
                 if (doctorName.isNotEmpty() && email.isNotEmpty() && password.isNotEmpty() && confirmPassword == password && selectedImageUri != null) {
                     isSubmitting = true
                     coroutineScope.launch {
-                        uploadDoctorLicense(
-                            doctorName = doctorName,
-                            email = email,
-                            password = password,
-                            imageUri = selectedImageUri!!,
-                            client = client,
-                            firestore = firestore,
-                            context = context,
-                            onSuccess = {
-                                registrationStatus = "pending"
-                                isSubmitting = false
-                                Toast.makeText(
-                                    context,
-                                    "Registration submitted successfully!",
-                                    Toast.LENGTH_SHORT
-                                ).show()
-                            },
-                            onFailure = { error ->
-                                isSubmitting = false
-                                Toast.makeText(
-                                    context,
-                                    "Failed to submit registration: $error",
-                                    Toast.LENGTH_SHORT
-                                ).show()
-                            }
-                        )
+//                        uploadDoctorLicense(
+//                            doctorName = doctorName,
+//                            email = email,
+//                            password = password,
+//                            imageUri = selectedImageUri!!,
+//                            client = client,
+//                            firestore = firestore,
+//                            context = context,
+//                            onSuccess = {
+//                                registrationStatus = "pending"
+//                                isSubmitting = false
+//                                Toast.makeText(
+//                                    context,
+//                                    "Registration submitted successfully!",
+//                                    Toast.LENGTH_SHORT
+//                                ).show()
+//                            },
+//                            onFailure = { error ->
+//                                isSubmitting = false
+//                                Toast.makeText(
+//                                    context,
+//                                    "Failed to submit registration: $error",
+//                                    Toast.LENGTH_SHORT
+//                                ).show()
+//                            }
+//                        )
                     }
                 } else {
                     Toast.makeText(context, "Please fill all fields correctly!", Toast.LENGTH_SHORT)

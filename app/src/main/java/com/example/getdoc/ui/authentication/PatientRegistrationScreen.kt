@@ -1,13 +1,8 @@
 package com.example.getdoc.ui.authentication
 
-import android.content.Context
-import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.BasicTextField
-import androidx.compose.material.*
-import androidx.compose.material.icons.Icons
 
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -16,34 +11,24 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.navigation.NavHostController
-import com.google.firebase.auth.FirebaseAuth
-import kotlinx.coroutines.launch
-import androidx.compose.ui.text.input.TextFieldValue
-import androidx.compose.foundation.text.InlineTextContent
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.painterResource
-
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.getdoc.R
-import kotlinx.coroutines.tasks.await
 import java.util.regex.Pattern
 
 @Composable
-fun SignupScreen(
-    auth: FirebaseAuth,
-    navController: NavHostController,
+fun RegistrationScreen(
+    role: Role,
+    viewModel: AuthViewModel,
     onSignUpSuccess: () -> Unit
 ) {
     var email by remember { mutableStateOf("") }
@@ -58,8 +43,15 @@ fun SignupScreen(
     var passwordVisible by remember { mutableStateOf(false) }
     var isLoading by remember { mutableStateOf(false) }
 
-    val coroutineScope = rememberCoroutineScope()
-    val context = LocalContext.current // Get context here
+
+    val authState by viewModel.authState.collectAsStateWithLifecycle()
+
+    LaunchedEffect(authState) {
+        if (authState is AuthState.VerificationEmailSent) {
+            onSignUpSuccess()
+        }
+    }
+
 
     Column(
         modifier = Modifier
@@ -166,17 +158,7 @@ fun SignupScreen(
 
                 if (usernameError.isEmpty() && emailError.isEmpty() && passwordError.isEmpty() && confirmPasswordError.isEmpty()) {
                     isLoading = true
-                    coroutineScope.launch {
-                        try {
-                            createUser(auth, email, password, context) // Pass context here
-                            onSignUpSuccess()
-                            navController.navigate("login")
-                        } catch (e: Exception) {
-                            signUpError = e.message ?: "Unknown error occurred"
-                        } finally {
-                            isLoading = false
-                        }
-                    }
+                    viewModel.signUpUser(email, password, role)
                 }
             },
             modifier = Modifier.fillMaxWidth(),
@@ -197,17 +179,6 @@ fun SignupScreen(
     }
 }
 
-suspend fun createUser(auth: FirebaseAuth, email: String, password: String, context: Context) {
-    try {
-        val user = auth.createUserWithEmailAndPassword(email, password).await().user
-        user?.sendEmailVerification()?.await()
-
-        // Show toast for email verification
-        Toast.makeText(context, "Check your email for email verification.", Toast.LENGTH_LONG).show()
-    } catch (e: Exception) {
-        throw e // Rethrow to handle in the calling function
-    }
-}
 
 
 fun validateEmail(email: String): String {

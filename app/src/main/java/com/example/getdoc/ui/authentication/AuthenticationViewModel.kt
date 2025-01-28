@@ -9,7 +9,6 @@ import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.getdoc.navigation.Role
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseUser
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -155,9 +154,7 @@ class AuthenticationViewModel : ViewModel() {
 }
 
 // Role Enum (Ensure consistency in role names)
-enum class Role {
-    ADMIN, DOCTOR, PATIENT
-}
+
 
 data class AuthUiState(
     val email: String = "",

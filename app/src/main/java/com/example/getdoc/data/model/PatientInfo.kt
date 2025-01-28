@@ -13,3 +13,11 @@ data class PatientUiState(
     val isSuccess: Boolean = false,
     val errorMessage: String? = null
 )
+
+data class PatientInfo(
+    val firstName: String = "",
+    val lastName: String = "",
+    val age: String = "",
+    val gender: String = "",
+    val username: String = ""
+)
