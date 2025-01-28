@@ -12,6 +12,7 @@ import com.example.getdoc.R
  * @property consultingFee The doctor's consulting fee. e.g. 1000, 2000, etc.
  */
 data class DoctorInfo(
+    val id: String = "",  // Unique identifier for the doctor
     val about: String = "",
     val consultingFee: Int = 0,
     val degree: String = "",
@@ -19,7 +20,7 @@ data class DoctorInfo(
     val experience: Int = 0,
     val location: String = "",
     val name: String = "",
-    val profileImage: String = "",  // Ensure this is treated as a string
+    val profileImage: String = "",
     val rating: Double = 0.0,
     val specialization: String = ""
 )

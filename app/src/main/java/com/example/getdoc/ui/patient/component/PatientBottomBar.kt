@@ -17,8 +17,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.navigation.compose.rememberNavController
 import com.example.getdoc.R
-import com.example.getdoc.ui.doctor.appointments.BottomBarComponent
+import com.example.getdoc.navigation.AllDoctorsScreen
+import com.example.getdoc.navigation.PatientProfileScreen
 
 
 @Composable
@@ -29,7 +31,7 @@ fun PatientBottomBarComponent(
     onProfileClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-
+    val navController = rememberNavController()
     Column {
         Row(
             modifier = modifier
@@ -51,12 +53,12 @@ fun PatientBottomBarComponent(
             BottomBarItem(
                 iconResId = R.drawable.doctors,
                 label = "All Doctors",
-                onClick = onDoctorsClick
+                onClick = { navController.navigate(AllDoctorsScreen)}
             )
             BottomBarItem(
                 iconResId = R.drawable.img_10,
                 label = "Profile",
-                onClick = onProfileClick
+                onClick = { navController.navigate(PatientProfileScreen) }
             )
         }
 

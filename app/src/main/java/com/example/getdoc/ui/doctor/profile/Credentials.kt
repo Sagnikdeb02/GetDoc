@@ -1,5 +1,7 @@
 package com.example.getdoc.ui.doctor.profile
 
+import android.util.Log
+import android.widget.Toast
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
@@ -30,9 +32,12 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.sp
 import com.example.getdoc.ui.doctor.DoctorViewModel
 import com.example.getdoc.ui.doctor.appointments.HeaderComponent
+import com.google.firebase.auth.FirebaseAuth
 
 /**
  * A composable function representing the credentials page for a user.
@@ -127,16 +132,31 @@ fun MyCredentialsPageComponent(
                     ) {
                         Text(text = "Cancel")
                     }
-
+                    val context = LocalContext.current
                     Spacer(modifier = Modifier.width(16.dp))
-
                     Button(
-                        onClick = { viewModel.submitDoctorCredentialProfile()},
+                        onClick = {
+                            viewModel.submitDoctorCredentialProfile()
+                        },
                         modifier = Modifier.weight(1f),
                         colors = ButtonDefaults.buttonColors(Color(0xFF174666))
                     ) {
                         Text(text = "Submit")
                     }
+
+
+// Show a Toast based on the upload result
+                    LaunchedEffect(key1 = uiState.isSuccess, key2 = uiState.errorMessage) {
+                        if (uiState.isSuccess) {
+                            Toast.makeText(context, "Credentials submitted successfully!", Toast.LENGTH_LONG).show()
+                        } else if (uiState.errorMessage != null) {
+                            Toast.makeText(context, "Error: ${uiState.errorMessage}", Toast.LENGTH_LONG).show()
+                        }
+                    }
+
+
+
+
                 }
             }
 
@@ -220,7 +240,7 @@ fun FormFieldComponent(
                 .padding(8.dp)
                 .height(40.dp),
             singleLine = true,
-            textStyle = androidx.compose.ui.text.TextStyle(
+            textStyle = TextStyle(
                 color = Color.Black,
                 fontSize = 16.sp
             )

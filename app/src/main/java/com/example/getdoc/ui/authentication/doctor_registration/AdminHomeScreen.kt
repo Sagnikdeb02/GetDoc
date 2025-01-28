@@ -1,5 +1,7 @@
 package com.example.getdoc.ui.authentication.doctor_registration
 
+import android.annotation.SuppressLint
+import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.widget.Toast
@@ -24,12 +26,32 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.tasks.await
 import kotlinx.coroutines.withContext
 import android.util.Log
+import androidx.navigation.NavHostController
+import com.example.getdoc.navigation.AdminHomeScreen
+import com.example.getdoc.navigation.LoginScreen
+import com.example.getdoc.ui.authentication.AuthenticationViewModel
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.launch
 
+@SuppressLint("RememberReturnType")
 @Composable
-fun AdminHomeScreen(firestore: FirebaseFirestore, client: Client, bucketId: String = "678dd5d30039f0a22428") {
+fun AdminHomeScreen(
+    navController: NavHostController,
+    viewModel: AuthenticationViewModel,
+    firestore: FirebaseFirestore,
+    client: Client,
+    bucketId: String = "678dd5d30039f0a22428") {
+    val context = LocalContext.current.applicationContext
+
+    // Ensure init is called once
+    remember {
+        viewModel.init(context)
+    }
     var doctorList by remember { mutableStateOf<List<Map<String, Any>>>(emptyList()) }
     var isLoading by remember { mutableStateOf(true) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
+
+
 
     val fetchDoctorRegistrations: () -> Unit = {
         isLoading = true
@@ -58,6 +80,20 @@ fun AdminHomeScreen(firestore: FirebaseFirestore, client: Client, bucketId: Stri
 
     Column(modifier = Modifier.padding(16.dp)) {
         Text("Admin Panel", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, fontSize = 24.sp)
+
+        val coroutineScope = rememberCoroutineScope()
+        Button(onClick = {
+            coroutineScope.launch {
+                viewModel.logout()
+                navController.navigate(LoginScreen) {
+                    popUpTo(AdminHomeScreen) { inclusive = true }
+                }
+            }
+        }) {
+            Text("Logout")
+        }
+
+
 
         Spacer(modifier = Modifier.height(16.dp))
 

@@ -4,11 +4,15 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
+import com.example.getdoc.data.model.DoctorInfo
 import com.example.getdoc.ui.authentication.AuthenticationViewModel
 import com.example.getdoc.ui.authentication.ChooseRoleScreen
 import com.example.getdoc.ui.authentication.LogInScreen
@@ -20,12 +24,14 @@ import com.example.getdoc.ui.doctor.DoctorHomeScreen
 import com.example.getdoc.ui.doctor.DoctorViewModel
 import com.example.getdoc.ui.doctor.profile.MyCredentialsPageComponent
 import com.example.getdoc.ui.patient.PatientProfileInputScreen
-import com.example.getdoc.ui.doctor.profile.DoctorProfileInputScreen
+import com.example.getdoc.ui.doctor.profile.DoctorProfileScreen
+import com.example.getdoc.ui.doctor.profile.UploadDoctorProfilePictureScreen
+import com.example.getdoc.ui.patient.AllDoctorsScreen
 import com.example.getdoc.ui.patient.PatientHomeScreen
 import com.example.getdoc.ui.patient.PatientViewModel
 import com.example.getdoc.ui.patient.appointment.AddPatientScreen
+import com.example.getdoc.ui.patient.appointment.DoctorDetailsScreen
 import com.example.getdoc.ui.patient.state.PatientHomeUiState
-import com.example.getdoc.ui.patient.state.PatientProfileUiState
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import io.appwrite.Client
@@ -36,7 +42,7 @@ fun AppNavigation(modifier: Modifier = Modifier, client: Client, firestore: Fire
     val authViewModel: AuthenticationViewModel = viewModel()
     val authUiState by authViewModel.authUiState.collectAsStateWithLifecycle()
     val firebaseUser by authViewModel.firebaseUser.collectAsStateWithLifecycle()
-
+    val context = LocalContext.current
     NavHost(navController = navController, startDestination = LoginScreen) {
         composable<SplashScreen> {
             SplashScreen(
@@ -74,12 +80,13 @@ fun AppNavigation(modifier: Modifier = Modifier, client: Client, firestore: Fire
             )
         }
 
-
         composable<AdminHomeScreen> {
             AdminHomeScreen(
-                firestore,
                 client = client,
-                bucketId = "678dd5d30039f0a22428"
+                bucketId = "678dd5d30039f0a22428",
+                navController = navController,
+                viewModel = AuthenticationViewModel(),
+                firestore = firestore,
             )
         }
 
@@ -102,16 +109,27 @@ fun AppNavigation(modifier: Modifier = Modifier, client: Client, firestore: Fire
 
         composable<DoctorHomeScreen> {
             DoctorHomeScreen(
+                viewModel = DoctorViewModel(client,firestore),
                 onHomeClick = {
-                    navController.navigate(DoctorCredentialsScreen)
+
                 },
                 onAppointmentsClick = {
-                    navController.navigate(AppointmentConfirmationScreen)
+                    navController.navigate(DoctorCredentialsScreen)//(AppointmentConfirmationScreen)
                 },
                 onProfileClick = {
                     navController.navigate(DoctorProfileScreen)
                 },
-                navController
+                navController = navController,
+            )
+        }
+
+        composable("DoctorDetailsScreen/{doctorId}") { backStackEntry ->
+            val doctorId = backStackEntry.arguments?.getString("doctorId") ?: ""
+            DoctorDetailsScreen(
+                doctorId = doctorId,
+                onBackClick = { navController.popBackStack() },
+                client = client,
+                viewModel = PatientViewModel(client, firestore)
             )
         }
         composable<DoctorCredentialsScreen> {
@@ -127,10 +145,7 @@ fun AppNavigation(modifier: Modifier = Modifier, client: Client, firestore: Fire
                     // Navigate to appointments screen
                     navController.navigate(PatientAppointmentScreen)
                 },
-                onProfileClick = {
-                    // Navigate to profile screen
-                    navController.navigate(DoctorProfileScreen)
-                },
+                onProfileClick = { navController.navigate(DoctorProfileScreen) },
                 modifier = Modifier.fillMaxSize()
             )
         }
@@ -141,11 +156,11 @@ fun AppNavigation(modifier: Modifier = Modifier, client: Client, firestore: Fire
             )
         }
 
-        composable<DoctorProfileInputScreen> {
-            DoctorProfileInputScreen(
-                viewModel = DoctorViewModel(client, firestore)
-            )
-        }
+//        composable<DoctorProfileInputScreen> {
+//            DoctorProfileInputScreen(
+//                viewModel = DoctorViewModel(client, firestore)
+//            )
+//        }
 
         composable<AddPatientScreen> {
             AddPatientScreen(
@@ -190,6 +205,51 @@ fun AppNavigation(modifier: Modifier = Modifier, client: Client, firestore: Fire
                 client,firestore
             )
         }
+
+        composable<DoctorProfileScreen> {
+            DoctorProfileScreen(
+                onLogoutClick = {
+                    navController.navigate(LoginScreen) {
+                        popUpTo(DoctorProfileScreen) { inclusive = true }
+                    }
+                },
+                modifier = modifier,
+                onOptionClick = {},
+                onHomeClick = { navController.navigate(DoctorHomeScreen) },
+                onAppointmentsClick = { navController.navigate(AppointmentConfirmationScreen) },
+                onProfileClick = { navController.navigate(DoctorProfileScreen) },
+                navController = navController
+            )
+        }
+
+
+
+        composable<AllDoctorsScreen> {
+            AllDoctorsScreen(
+                onHomeClick = {},
+                onAppointmentsClick = {},
+                onDoctorsClick = {},
+                onProfileClick = {},
+                onSearch = {},
+                firestore = firestore,
+                client = client,
+               // state = TODO()
+            )
+        }
+
+        composable(
+            route = "UploadDoctorProfilePictureScreen/{doctorId}",
+            arguments = listOf(navArgument("doctorId") { type = NavType.StringType })
+        ) { backStackEntry ->
+            val doctorId = backStackEntry.arguments?.getString("doctorId") ?: ""
+            UploadDoctorProfilePictureScreen(
+                viewModel = DoctorViewModel(client,firestore), // Pass your DoctorViewModel instance
+                doctorId = doctorId
+            )
+        }
+
+
+
 
 
 

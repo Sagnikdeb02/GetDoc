@@ -4,6 +4,8 @@ plugins {
     alias(libs.plugins.google.services)
     alias(libs.plugins.jetbrains.kotlin.serialization)
     alias(libs.plugins.kotlin.compose)
+
+
 }
 
 android {
@@ -97,6 +99,7 @@ dependencies {
     implementation(libs.androidx.lifecycle.viewmodel.compose)
     implementation(libs.coil.compose)
     implementation("io.appwrite:sdk-for-android:5.1.0")
+    implementation("androidx.datastore:datastore-preferences:1.0.0")
 
 
 

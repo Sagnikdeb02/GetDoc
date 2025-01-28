@@ -20,7 +20,6 @@ import kotlinx.coroutines.launch
 import java.io.File
 import java.io.FileOutputStream
 import java.io.InputStream
-
 class DoctorViewModel(
     private val client: Client,
     private val firestore: FirebaseFirestore
@@ -32,31 +31,32 @@ class DoctorViewModel(
     private val _profileUiState = MutableStateFlow(DoctorProfileUiState())
     val profileUiState: StateFlow<DoctorProfileUiState> get() = _profileUiState
 
-    // Submit doctor profile to Firestore without authentication
     fun submitDoctorCredentialProfile() {
         val state = _uiState.value
         _uiState.value = state.copy(isLoading = true, errorMessage = null)
-
-        // Generate Firestore unique document ID
-        val doctorId = firestore.collection("doctors").document().id
 
         val experienceValue = state.dob.takeIf { it.length == 10 && it.contains("-") }
             ?.split("-")?.firstOrNull()?.toIntOrNull()?.let { 2025 - it } ?: 0
         val feeValue = state.fee.toIntOrNull() ?: 0
 
-        val doctorInfo = DoctorInfo(
-            name = state.name,
-            degree = state.degree,
-            specialization = state.speciality,
-            dob = state.dob,
-            experience = experienceValue,
-            location = state.address,
-            consultingFee = feeValue,
-            about = state.aboutYou
+        // Generate a valid document ID (NO SPACES OR SPECIAL CHARACTERS)
+        val uniqueId = state.name.replace(" ", "_") + "_" + state.dob.replace("/", "_")
+
+        val doctorInfo = mapOf(
+            "id" to uniqueId,
+            "name" to state.name,
+            "degree" to state.degree,
+            "specialization" to state.speciality,
+            "dob" to state.dob,
+            "experience" to experienceValue,
+            "location" to state.address,
+            "consultingFee" to feeValue,
+            "about" to state.aboutYou,
+            "rating" to 0.0
         )
 
         firestore.collection("doctors")
-            .document(doctorId)
+            .document(uniqueId)
             .set(doctorInfo)
             .addOnSuccessListener {
                 _uiState.value = _uiState.value.copy(isLoading = false, isSuccess = true)
@@ -68,7 +68,6 @@ class DoctorViewModel(
             }
     }
 
-    // Updates doctor profile UI state
     fun updateUiState(field: String, value: String) {
         _uiState.value = when (field) {
             "name" -> _uiState.value.copy(name = value)
@@ -87,14 +86,13 @@ class DoctorViewModel(
         }
     }
 
-    // Upload doctor profile picture to Appwrite and save reference to Firestore
-    fun uploadDoctorProfile(context: Context) {
+    fun uploadDoctorProfilePicture(context: Context, doctorId: String) {
         val state = _profileUiState.value
         _profileUiState.value = state.copy(isLoading = true, errorMessage = null)
 
-        if (state.usernameInput.isEmpty() || state.imageUri == null) {
-            _profileUiState.value = state.copy(isLoading = false, errorMessage = "Please provide all details")
-            Toast.makeText(context, "Please enter username and select an image", Toast.LENGTH_LONG).show()
+        if (state.imageUri == null) {
+            _profileUiState.value = state.copy(isLoading = false, errorMessage = "Please select an image")
+            Toast.makeText(context, "Please select an image to upload", Toast.LENGTH_LONG).show()
             return
         }
 
@@ -110,22 +108,17 @@ class DoctorViewModel(
                         file = inputFile
                     )
 
-                    val profileData = hashMapOf(
-                        "username" to state.usernameInput,
-                        "profileImageUrl" to result.id,
-                        "status" to "pending" // Default status as 'pending' for admin approval
-                    )
-
+                    // Update Firestore with the image reference
                     firestore.collection("doctors")
-                        .document()
-                        .set(profileData)
+                        .document(doctorId)
+                        .update("profileImage", result.id)
                         .addOnSuccessListener {
                             _profileUiState.value = state.copy(isLoading = false, isSuccess = true)
-                            Toast.makeText(context, "Profile submitted for approval!", Toast.LENGTH_LONG).show()
+                            Toast.makeText(context, "Profile picture updated successfully!", Toast.LENGTH_LONG).show()
                         }
                         .addOnFailureListener { e ->
                             _profileUiState.value = state.copy(isLoading = false, errorMessage = e.localizedMessage)
-                            Log.e("FirestoreError", "Error uploading document: ${e.localizedMessage}", e)
+                            Log.e("FirestoreError", "Error updating profile picture: ${e.localizedMessage}", e)
                         }
                 }
             } catch (e: Exception) {
@@ -135,12 +128,10 @@ class DoctorViewModel(
         }
     }
 
-    // Function to reset the form fields
     fun clearForm() {
         _uiState.value = DoctorUiState()
     }
 
-    // Convert Uri to File
     private fun uriToFile(uri: Uri?, context: Context): File? {
         return try {
             val inputStream: InputStream? = uri?.let { context.contentResolver.openInputStream(it) }
@@ -156,4 +147,6 @@ class DoctorViewModel(
             null
         }
     }
+
+
 }

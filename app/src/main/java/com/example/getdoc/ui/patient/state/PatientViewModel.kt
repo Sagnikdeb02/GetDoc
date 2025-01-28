@@ -12,6 +12,7 @@ import com.example.getdoc.data.model.DoctorInfo
 import com.example.getdoc.data.model.PatientUiState
 import com.example.getdoc.ui.patient.state.PatientProfileUiState
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.CollectionReference
 import com.google.firebase.firestore.FirebaseFirestore
 import io.appwrite.Client
 import io.appwrite.ID
@@ -28,6 +29,7 @@ import kotlinx.coroutines.withContext
 import java.io.File
 import java.io.FileOutputStream
 import java.io.InputStream
+import com.google.firebase.firestore.DocumentReference
 
 class PatientViewModel(
     private val client: Client,
@@ -93,7 +95,7 @@ class PatientViewModel(
         }
     }
 
-    fun fetchUserProfile(userId: String) {
+    fun fetchPatientProfile(userId: String) {
         viewModelScope.launch {
             _profileUiState.value = _profileUiState.value.copy(isLoading = true)
             try {
@@ -212,29 +214,37 @@ class PatientViewModel(
     init {
         fetchDoctors()
     }
-    private fun fetchDoctors() {
+    fun fetchDoctors() {
         viewModelScope.launch {
             _isLoading.value = true
             try {
                 val snapshot = firestore.collection("doctors").get().await()
-                _doctorList.value = snapshot.documents.mapNotNull { document ->
-                    val data = document.data
-                    Log.d("FirestoreData", "Fetched doctor: $data")
-
-                    // Parse document fields safely to avoid null issues
-                    DoctorInfo(
-                        about = data?.get("about") as? String ?: "",
-                        consultingFee = (data?.get("consultingFee") as? Long)?.toInt() ?: 0,
-                        degree = data?.get("degree") as? String ?: "",
-                        dob = data?.get("dob") as? String ?: "",
-                        experience = (data?.get("experience") as? Long)?.toInt() ?: 0,
-                        location = data?.get("location") as? String ?: "",
-                        name = data?.get("name") as? String ?: "",
-                        profileImage = data?.get("profileImage").toString(),
-                        rating = (data?.get("rating") as? Double) ?: 0.0,
-                        specialization = data?.get("specialization") as? String ?: ""
-                    )
+                val doctorsList = snapshot.documents.mapNotNull { document ->
+                    try {
+                        DoctorInfo(
+                            id = document.getString("id") ?: document.id,
+                            name = document.getString("name") ?: "Unnamed Doctor",
+                            degree = document.getString("degree") ?: "N/A",
+                            specialization = document.getString("specialization") ?: "General",
+                            dob = document.getString("dob") ?: "Unknown",
+                            experience = document.getLong("experience")?.toInt() ?: 0,
+                            location = document.getString("location") ?: "No location",
+                            consultingFee = document.getLong("consultingFee")?.toInt() ?: 0,
+                            about = document.getString("about") ?: "",
+                            profileImage = document.getString("profileImage") ?: "",
+                            rating = document.getDouble("rating") ?: 0.0
+                        ).also {
+                            Log.d("FirestoreDebug", "Fetched doctor: $it")
+                        }
+                    } catch (e: Exception) {
+                        Log.e("FirestoreParseError", "Error parsing document ID ${document.id}: ${e.localizedMessage}")
+                        null
+                    }
                 }
+
+                _doctorList.value = doctorsList
+                Log.d("FirestoreDebug", "Total doctors fetched: ${doctorsList.size}")
+
             } catch (e: Exception) {
                 Log.e("Firestore", "Error fetching doctor data: ${e.localizedMessage}")
             } finally {
@@ -243,7 +253,8 @@ class PatientViewModel(
         }
     }
 
-    }
+
+}
 
 
 

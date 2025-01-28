@@ -1,6 +1,9 @@
 package com.example.getdoc.ui.doctor
 
+import android.annotation.SuppressLint
 import android.os.Build
+import android.util.Log
+import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -16,6 +19,8 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -24,30 +29,49 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import androidx.navigation.NavHostController
 import com.example.getdoc.R
 import com.example.getdoc.navigation.DoctorCredentialsScreen
 import com.example.getdoc.navigation.DoctorProfileInputScreen
+import com.example.getdoc.navigation.DoctorProfileScreen
 import com.example.getdoc.ui.doctor.profile.BottomBarComponent
-import com.example.getdoc.ui.doctor.profile.DoctorProfileInputScreen
+import com.example.getdoc.ui.doctor.profile.MyCredentialsPageComponent
+import com.example.getdoc.ui.doctor.profile.UploadDoctorProfilePictureScreen
+import com.google.firebase.firestore.FirebaseFirestore
 import java.time.DayOfWeek
 import java.time.Instant
 import java.time.ZoneId
 import java.util.Calendar
 import java.util.TimeZone
 
+@SuppressLint("StateFlowValueCalledInComposition")
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DoctorHomeScreen(
+    viewModel: DoctorViewModel,
     onHomeClick: () -> Unit,
     onAppointmentsClick: () -> Unit,
     onProfileClick: () -> Unit,
     navController: NavHostController
 ) {
+
+//    MyCredentialsPageComponent(
+//        viewModel = viewModel,
+//        onHomeClick,
+//        onAppointmentsClick,
+//        onProfileClick,
+//        modifier = Modifier
+//    )
+
+
+
+
     var calendarShow by remember { mutableStateOf(false) }
     var searchText by remember { mutableStateOf("") }
 
@@ -155,7 +179,12 @@ fun DoctorHomeScreen(
             BottomBarComponent(
                 onHomeClick = onHomeClick,
                 onAppointmentsClick = onAppointmentsClick,
-                onProfileClick = { navController.navigate(DoctorProfileInputScreen) }
+                 onProfileClick = onProfileClick
+
+
+
+
+
             )
         }
     }

@@ -20,6 +20,10 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.platform.LocalContext
+import androidx.datastore.preferences.core.booleanPreferencesKey
+import androidx.datastore.preferences.core.edit
+import androidx.datastore.preferences.core.stringPreferencesKey
+import androidx.datastore.preferences.preferencesDataStore
 import androidx.navigation.NavHostController
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
@@ -29,7 +33,16 @@ import com.example.getdoc.navigation.ChooseRoleScreen
 import com.example.getdoc.navigation.DoctorHomeScreen
 import com.example.getdoc.navigation.LoginScreen
 import com.example.getdoc.navigation.PatientHomeScreen
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
 import java.util.regex.Pattern
+
+
+// Preference keys
+private val IS_LOGGED_IN_KEY = booleanPreferencesKey("is_logged_in")
+private val USER_ROLE_KEY = stringPreferencesKey("user_role")
+private val USER_EMAIL_KEY = stringPreferencesKey("user_email")
+
 @Composable
 fun LogInScreen(
     auth: FirebaseAuth,
@@ -38,6 +51,7 @@ fun LogInScreen(
     onLoginSuccess: () -> Unit
 ) {
     val context = LocalContext.current
+    val coroutineScope = rememberCoroutineScope()
 
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
@@ -45,6 +59,21 @@ fun LogInScreen(
     var passwordError by remember { mutableStateOf("") }
     var isLoading by remember { mutableStateOf(false) }
     var passwordVisible by remember { mutableStateOf(false) }
+
+    // Auto-login if session exists
+    LaunchedEffect(Unit) {
+        val preferences = context.dataStore.data.first()
+        val isLoggedIn = preferences[IS_LOGGED_IN_KEY] ?: false
+        val savedRole = preferences[USER_ROLE_KEY] ?: ""
+
+        if (isLoggedIn) {
+            when (savedRole) {
+                "admin" -> navController.navigate(AdminHomeScreen)
+                "doctor" -> navController.navigate(DoctorHomeScreen)
+                "patient" -> navController.navigate(PatientHomeScreen)
+            }
+        }
+    }
 
     Column(
         modifier = Modifier
@@ -70,23 +99,16 @@ fun LogInScreen(
                 .fillMaxSize()
                 .padding(horizontal = 16.dp)
         ) {
-            Text(
-                text = "Sign In",
-                fontSize = 26.sp,
-                color = Color(0xFF174666),
-            )
+            Text(text = "Sign In", fontSize = 26.sp, color = Color(0xFF174666))
 
             Spacer(modifier = Modifier.height(16.dp))
             OutlinedTextField(
                 value = email,
-                onValueChange = {
-                    email = it.trim()
-                    emailError = ""
-                },
+                onValueChange = { email = it.trim(); emailError = "" },
                 label = { Text(text = "Enter Email") },
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(20.dp),
-                isError = emailError.isNotEmpty(),
+                isError = emailError.isNotEmpty()
             )
             if (emailError.isNotEmpty()) {
                 Text(text = emailError, color = Color.Red, fontSize = 12.sp)
@@ -95,10 +117,7 @@ fun LogInScreen(
             Spacer(modifier = Modifier.height(16.dp))
             OutlinedTextField(
                 value = password,
-                onValueChange = {
-                    password = it.trim()
-                    passwordError = ""
-                },
+                onValueChange = { password = it.trim(); passwordError = "" },
                 label = { Text(text = "Password") },
                 visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
                 trailingIcon = {
@@ -133,23 +152,29 @@ fun LogInScreen(
                     if (emailError.isEmpty() && passwordError.isEmpty()) {
                         isLoading = true
 
-                        // Handle admin login
                         signInAdmin(email, password, context) { role ->
                             isLoading = false
+                            coroutineScope.launch {
+                                saveLoginSession(context, email, role)
+                            }
                             onLoginSuccess()
                             navController.navigate(AdminHomeScreen) { popUpTo(LoginScreen) { inclusive = true } }
                         }
 
-                        // Handle doctor login
                         signInDoctor(firestore, email, password, context) { role ->
                             isLoading = false
+                            coroutineScope.launch {
+                                saveLoginSession(context, email, role)
+                            }
                             onLoginSuccess()
                             navController.navigate(DoctorHomeScreen) { popUpTo(LoginScreen) { inclusive = true } }
                         }
 
-                        // Handle patient login
                         signInPatient(auth, email, password, context) { role ->
                             isLoading = false
+                            coroutineScope.launch {
+                                saveLoginSession(context, email, role)
+                            }
                             onLoginSuccess()
                             navController.navigate(PatientHomeScreen) { popUpTo(LoginScreen) { inclusive = true } }
                         }
@@ -161,6 +186,7 @@ fun LogInScreen(
             ) {
                 Text(text = if (isLoading) "Signing In..." else "Sign In", fontSize = 20.sp, color = Color.White)
             }
+
             Spacer(modifier = Modifier.height(16.dp))
             Row(
                 modifier = Modifier
@@ -176,6 +202,16 @@ fun LogInScreen(
                 )
             }
         }
+    }
+}
+
+
+// Save user session in DataStore
+suspend fun saveLoginSession(context: Context, email: String, role: String) {
+    context.dataStore.edit { preferences ->
+        preferences[IS_LOGGED_IN_KEY] = true
+        preferences[USER_ROLE_KEY] = role
+        preferences[USER_EMAIL_KEY] = email
     }
 }
 

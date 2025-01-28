@@ -14,7 +14,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
+import androidx.navigation.compose.rememberNavController
 import com.example.getdoc.R
+import com.example.getdoc.navigation.DoctorCredentialsScreen
+import com.example.getdoc.navigation.DoctorProfileScreen
 import com.example.getdoc.ui.doctor.appointments.BottomBarComponent
 
 @Composable
@@ -45,6 +48,7 @@ fun BottomBarComponent(
     onProfileClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val navController = rememberNavController()
     Row(
         modifier = modifier
             .fillMaxWidth()
@@ -60,12 +64,12 @@ fun BottomBarComponent(
         BottomBarItem(
             iconResId = R.drawable.img_8,
             label = "My Appointments",
-            onClick = onAppointmentsClick
+            onClick = { navController.navigate(DoctorCredentialsScreen) }//onAppointmentsClick
         )
         BottomBarItem(
             iconResId = R.drawable.img_10,
             label = "Profile",
-            onClick = onProfileClick
+            onClick = { navController.navigate(DoctorProfileScreen) }
         )
     }
 }

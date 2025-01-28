@@ -2,10 +2,14 @@ package com.example.getdoc.ui.doctor.profile
 
 
 import android.net.Uri
+import android.util.Log
+import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.Button
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -15,14 +19,16 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import com.example.getdoc.ui.doctor.DoctorViewModel
+import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.launch
-
 @Composable
-fun DoctorProfileInputScreen(viewModel: DoctorViewModel) {
+fun UploadDoctorProfilePictureScreen(
+    viewModel: DoctorViewModel,
+    doctorId: String,
+    modifier: Modifier = Modifier
+) {
     val context = LocalContext.current
-    val coroutineScope = rememberCoroutineScope()
-
-    var username by remember { mutableStateOf("") }
+    val profileState by viewModel.profileUiState.collectAsState()
     var selectedImageUri by remember { mutableStateOf<Uri?>(null) }
 
     val imagePickerLauncher = rememberLauncherForActivityResult(
@@ -30,51 +36,66 @@ fun DoctorProfileInputScreen(viewModel: DoctorViewModel) {
         onResult = { uri -> selectedImageUri = uri }
     )
 
-    Scaffold { padding ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(padding),
-            verticalArrangement = Arrangement.Center,
-            horizontalAlignment = Alignment.CenterHorizontally
+    Column(
+        modifier = modifier
+            .fillMaxSize()
+            .padding(16.dp),
+        verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Text(
+            text = "Upload Profile Picture",
+            style = MaterialTheme.typography.titleLarge,
+            modifier = Modifier.padding(bottom = 16.dp)
+        )
+
+        Button(
+            onClick = { imagePickerLauncher.launch("image/*") },
+            modifier = Modifier.fillMaxWidth()
         ) {
-            Text("Doctor Profile Update Screen ")
-            OutlinedTextField(
-                value = username,
-                onValueChange = {
-                    username = it
-                    viewModel.updateUiState("username", it) // Update ViewModel state
-                },
-                label = { Text("Enter Username") },
-                modifier = Modifier.fillMaxWidth(0.8f)
+            Text(text = "Select Image")
+        }
+
+        selectedImageUri?.let {
+            Text(
+                text = "Selected Image: $it",
+                style = MaterialTheme.typography.bodyMedium,
+                modifier = Modifier.padding(top = 8.dp)
             )
+        }
 
-            Spacer(modifier = Modifier.height(16.dp))
+        Button(
+            onClick = {
+                selectedImageUri?.let { uri ->
+                    viewModel.updateUiState("profileImageUrl", uri.toString())
+                    viewModel.uploadDoctorProfilePicture(context, doctorId)
+                } ?: Toast.makeText(context, "Please select an image first", Toast.LENGTH_SHORT).show()
+            },
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(top = 16.dp)
+        ) {
+            Text(text = "Upload Profile Picture")
+        }
 
-            Button(
-                onClick = { imagePickerLauncher.launch("image/*") },
-                modifier = Modifier.fillMaxWidth(0.8f)
-            ) {
-                Text("Select Image")
-            }
+        if (profileState.isLoading) {
+            CircularProgressIndicator(modifier = Modifier.padding(top = 16.dp))
+        }
 
-            selectedImageUri?.let {
-                Text(text = "Selected Image: $it")
-                viewModel.updateUiState("profileImageUrl", it.toString()) // Update ViewModel state
-            }
+        profileState.errorMessage?.let {
+            Text(
+                text = "Error: $it",
+                color = MaterialTheme.colorScheme.error,
+                modifier = Modifier.padding(top = 8.dp)
+            )
+        }
 
-            Spacer(modifier = Modifier.height(16.dp))
-            Button(
-                onClick = {
-                    coroutineScope.launch {
-                        viewModel.uploadDoctorProfile(context)  // Correct method name
-                    }
-                },
-                modifier = Modifier.fillMaxWidth(0.8f)
-            ) {
-                Text("Update")
-            }
-
+        if (profileState.isSuccess) {
+            Text(
+                text = "Profile picture uploaded successfully!",
+                color = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.padding(top = 8.dp)
+            )
         }
     }
 }

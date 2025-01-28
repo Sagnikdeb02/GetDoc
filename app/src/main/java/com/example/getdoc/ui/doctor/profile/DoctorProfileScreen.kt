@@ -15,16 +15,24 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavHostController
 import com.example.getdoc.R
-
+import com.example.getdoc.navigation.LoginScreen
+import com.example.getdoc.ui.authentication.AuthenticationViewModel
+import kotlinx.coroutines.launch
 @Composable
-fun ProfilePageComponent(
+fun DoctorProfileScreen(
+    navController: NavHostController,
     modifier: Modifier = Modifier,
     onLogoutClick: () -> Unit,
     onOptionClick: (String) -> Unit,
@@ -32,6 +40,13 @@ fun ProfilePageComponent(
     onAppointmentsClick: () -> Unit,
     onProfileClick: () -> Unit,
 ) {
+    val authViewModel: AuthenticationViewModel = viewModel()
+    val context = LocalContext.current  // Move outside LaunchedEffect
+
+    LaunchedEffect(Unit) {
+        authViewModel.init(context)  // Use context safely here
+    }
+
     Column(
         modifier = modifier
             .fillMaxSize()
@@ -88,7 +103,8 @@ fun ProfilePageComponent(
         // Logout Section
         LogoutSectionComponent(
             modifier = Modifier.padding(16.dp),
-            onLogoutClick = onLogoutClick
+            viewModel = authViewModel,
+            navController = navController
         )
     }
     Column(
@@ -198,12 +214,23 @@ fun ProfileOptionItemComponent(
 @Composable
 fun LogoutSectionComponent(
     modifier: Modifier = Modifier,
-    onLogoutClick: () -> Unit
+    viewModel: AuthenticationViewModel,
+    navController: NavHostController
 ) {
+    val coroutineScope = rememberCoroutineScope()
+
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .clickable { onLogoutClick() },
+            .clickable {
+                coroutineScope.launch {
+                    viewModel.logout()
+                    navController.navigate(LoginScreen) {
+                        popUpTo(LoginScreen) { inclusive = true }
+                    }
+                }
+            }
+            .padding(16.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
@@ -216,23 +243,8 @@ fun LogoutSectionComponent(
         )
         Icon(
             imageVector = Icons.Default.ExitToApp,
-            contentDescription = "LogOut",
+            contentDescription = "Logout",
             tint = Color(0xFF1565C0)
         )
     }
-}
-
-/**
- * Preview for ProfilePageComponent
- */
-@Preview(showSystemUi = true)
-@Composable
-fun PreviewProfilePage() {
-    ProfilePageComponent(
-        onLogoutClick = { /* Handle Logout */ },
-        onOptionClick = { option -> /* Handle Option Click */ },
-        onHomeClick = { },
-    onAppointmentsClick = { },
-    onProfileClick = { },
-    )
 }

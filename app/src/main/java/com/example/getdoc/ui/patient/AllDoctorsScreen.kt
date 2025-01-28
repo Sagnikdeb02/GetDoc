@@ -21,7 +21,7 @@ import io.appwrite.Client
 
 @Composable
 fun AllDoctorsScreen(
-    state: PatientHomeUiState,
+    //state: PatientHomeUiState,
     onHomeClick: () -> Unit,
     onAppointmentsClick: () -> Unit,
     onDoctorsClick: () -> Unit,
@@ -48,7 +48,7 @@ fun AllDoctorsScreen(
 
             HeaderSection2()
             Spacer(modifier = Modifier.height(16.dp))
-            Search(query = state.searchQuery,  onQueryChange = onSearch)
+            //Search(query = state.searchQuery,  onQueryChange = onSearch)
             TopDoctorsSection(
                 PatientViewModel(client,firestore),
                 client = client
