@@ -9,6 +9,7 @@ data class PatientUiState(
     val relation: String = "Self",
     val dob: String = "",
     val profileImageUrl: String = "",
+    val location: String = "",
     val isLoading: Boolean = false,
     val isSuccess: Boolean = false,
     val errorMessage: String? = null

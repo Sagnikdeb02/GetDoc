@@ -7,6 +7,7 @@ import androidx.compose.ui.text.input.TextFieldValue
 
 data class PatientProfileUiState(
     val usernameInput: String = "",
+    val locationInput: String = "",
     val imageUri: Uri? = null,
     val profileImageBitmap: Bitmap? = null,  // Add this property to store the profile image
     val isLoading: Boolean = false,

@@ -22,20 +22,15 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.navigation.NavHostController
+import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import com.example.getdoc.R
-import com.example.getdoc.data.model.DoctorInfo
-import com.example.getdoc.navigation.PatientHomeScreen
 import com.example.getdoc.ui.patient.component.DoctorCard
-import com.example.getdoc.ui.patient.component.PatientBottomBarComponent
 import com.example.getdoc.ui.patient.state.PatientHomeUiState
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import io.appwrite.Client
 import io.appwrite.services.Storage
-import java.net.URLEncoder
-import java.nio.charset.StandardCharsets
 
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -50,7 +45,7 @@ fun PatientHomeScreen(
     onDoctorsClick: () -> Unit,
     onProfileClick: () -> Unit,
     onSearch: (String) -> Unit,
-    navController: NavHostController
+    navController: NavController
 ) {
     Scaffold(
         topBar ={
@@ -60,15 +55,6 @@ fun PatientHomeScreen(
             )
 
 
-        },
-
-        bottomBar = {
-            PatientBottomBarComponent(
-                onHomeClick = { navController.navigate(PatientHomeScreen) },
-                onAppointmentsClick = { navController.navigate("") },
-                onDoctorsClick = { navController.navigate("doctorsScreen") },
-                onProfileClick = onProfileClick
-            )
         }
     ) { paddingValues ->
         Column(
@@ -80,6 +66,7 @@ fun PatientHomeScreen(
             Search(query = homeState.searchQuery,  onQueryChange = onSearch)
             SpecialtiesSection()
             TopDoctorsSection(
+                navController,
                 viewModel,
                 client = client
             )
@@ -176,8 +163,7 @@ fun SpecialtiesSection() {
     }
 
 @Composable
-fun TopDoctorsSection(viewModel: PatientViewModel, client: Client) {
-    val navController = rememberNavController()
+fun TopDoctorsSection(navController: NavController, viewModel: PatientViewModel, client: Client) {
     val doctors by viewModel.doctorList.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
     val storage = Storage(client)

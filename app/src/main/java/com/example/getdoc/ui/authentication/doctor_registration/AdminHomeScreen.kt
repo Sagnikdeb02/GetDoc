@@ -1,9 +1,9 @@
 package com.example.getdoc.ui.authentication.doctor_registration
 
 import android.annotation.SuppressLint
-import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import android.util.Log
 import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
@@ -19,39 +19,26 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.text.font.FontWeight
+import androidx.navigation.NavHostController
 import com.google.firebase.firestore.FirebaseFirestore
 import io.appwrite.Client
-import io.appwrite.services.Storage
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.tasks.await
-import kotlinx.coroutines.withContext
-import android.util.Log
-import androidx.navigation.NavHostController
-import com.example.getdoc.navigation.AdminHomeScreen
-import com.example.getdoc.navigation.LoginScreen
-import com.example.getdoc.ui.authentication.AuthenticationViewModel
-import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+
 
 @SuppressLint("RememberReturnType")
 @Composable
 fun AdminHomeScreen(
     navController: NavHostController,
-    viewModel: AuthenticationViewModel,
     firestore: FirebaseFirestore,
     client: Client,
-    bucketId: String = "678dd5d30039f0a22428") {
-    val context = LocalContext.current.applicationContext
-
-    // Ensure init is called once
-    remember {
-        viewModel.init(context)
-    }
+    bucketId: String = "678dd5d30039f0a22428"
+) {
+    val coroutineScope = rememberCoroutineScope()
     var doctorList by remember { mutableStateOf<List<Map<String, Any>>>(emptyList()) }
     var isLoading by remember { mutableStateOf(true) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
-
-
 
     val fetchDoctorRegistrations: () -> Unit = {
         isLoading = true
@@ -79,21 +66,23 @@ fun AdminHomeScreen(
     }
 
     Column(modifier = Modifier.padding(16.dp)) {
-        Text("Admin Panel", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, fontSize = 24.sp)
+        Text("Admin Panel", fontWeight = FontWeight.Bold, fontSize = 24.sp)
 
-        val coroutineScope = rememberCoroutineScope()
-        Button(onClick = {
-            coroutineScope.launch {
-                viewModel.logout()
-                navController.navigate(LoginScreen) {
-                    popUpTo(AdminHomeScreen) { inclusive = true }
+        Spacer(modifier = Modifier.height(8.dp))
+
+        // Logout Button
+        Button(
+            onClick = {
+                coroutineScope.launch {
+                    navController.navigate("login") {
+                        popUpTo("adminHome") { inclusive = true }
+                    }
                 }
-            }
-        }) {
+            },
+            modifier = Modifier.fillMaxWidth()
+        ) {
             Text("Logout")
         }
-
-
 
         Spacer(modifier = Modifier.height(16.dp))
 
@@ -102,16 +91,17 @@ fun AdminHomeScreen(
                 CircularProgressIndicator()
             }
         } else if (errorMessage != null) {
-            Text("Error: $errorMessage", color = MaterialTheme.colorScheme.error)
-            Button(onClick = fetchDoctorRegistrations, modifier = Modifier.align(Alignment.CenterHorizontally)) {
-                Text("Retry")
+            Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxSize()) {
+                Text("Error: $errorMessage", color = MaterialTheme.colorScheme.error)
+                Spacer(modifier = Modifier.height(8.dp))
+                Button(onClick = fetchDoctorRegistrations) { Text("Retry") }
             }
         } else if (doctorList.isEmpty()) {
             Text("No doctor registrations found.", modifier = Modifier.align(Alignment.CenterHorizontally))
         } else {
-            LazyColumn {
+            LazyColumn(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 items(doctorList) { doctor ->
-                    DoctorCard(firestore, client, bucketId, doctor, onStatusUpdated = {
+                    DoctorStatusCard(firestore, client, bucketId, doctor, onStatusUpdated = {
                         fetchDoctorRegistrations()
                     })
                 }
@@ -121,26 +111,29 @@ fun AdminHomeScreen(
 }
 
 @Composable
-fun DoctorCard(
+fun DoctorStatusCard(
     firestore: FirebaseFirestore,
     client: Client,
     bucketId: String,
     doctor: Map<String, Any>,
     onStatusUpdated: () -> Unit
 ) {
-    val context = LocalContext.current
+    val storage = io.appwrite.services.Storage(client)
     var imageData by remember { mutableStateOf<ByteArray?>(null) }
     var isLoading by remember { mutableStateOf(true) }
     var showDialog by remember { mutableStateOf(false) }
     var selectedStatus by remember { mutableStateOf("") }
 
-    val storage = Storage(client)
+    val doctorId = doctor["id"].toString()
+    val doctorStatus = doctor["status"].toString()
+    val licenseImageId = doctor["licenseUrl"].toString()
+    val context = LocalContext.current
 
-    LaunchedEffect(doctor["licenseImageId"].toString()) {
+    LaunchedEffect(licenseImageId) {
         isLoading = true
         try {
             val result = withContext(Dispatchers.IO) {
-                storage.getFileDownload(bucketId, doctor["licenseImageId"].toString())
+                storage.getFileDownload(bucketId, licenseImageId)
             }
             imageData = result
         } catch (e: Exception) {
@@ -157,6 +150,10 @@ fun DoctorCard(
         elevation = CardDefaults.cardElevation(4.dp)
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
+            Text("Doctor Details", fontWeight = FontWeight.Bold, fontSize = 18.sp)
+            Spacer(modifier = Modifier.height(8.dp))
+
+            // Show Doctor Image (License)
             if (isLoading) {
                 Box(
                     modifier = Modifier
@@ -170,7 +167,7 @@ fun DoctorCard(
                 imageData?.let {
                     Image(
                         bitmap = convertImageByteArrayToBitmap(it).asImageBitmap(),
-                        contentDescription = doctor["name"].toString(),
+                        contentDescription = "License Image",
                         contentScale = ContentScale.Crop,
                         modifier = Modifier
                             .fillMaxWidth()
@@ -182,29 +179,36 @@ fun DoctorCard(
             Spacer(modifier = Modifier.height(8.dp))
             Text("Name: ${doctor["name"]}", fontWeight = FontWeight.Bold)
             Text("Email: ${doctor["email"]}")
-            Text("Status: ${doctor["status"]}", fontWeight = FontWeight.SemiBold)
+            Text("Degree: ${doctor["degree"]}")
+            Text("Specialization: ${doctor["specialization"]}")
+            Text("Status: $doctorStatus", fontWeight = FontWeight.Bold)
 
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(12.dp))
 
-            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
-                Button(
-                    onClick = {
-                        selectedStatus = "approved"
-                        showDialog = true
-                    },
-                    colors = ButtonDefaults.buttonColors(MaterialTheme.colorScheme.primary)
+            if (doctorStatus == "pending") {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceEvenly
                 ) {
-                    Text("Approve")
-                }
+                    Button(
+                        onClick = {
+                            selectedStatus = "approved"
+                            showDialog = true
+                        },
+                        colors = ButtonDefaults.buttonColors(MaterialTheme.colorScheme.primary)
+                    ) {
+                        Text("Approve")
+                    }
 
-                Button(
-                    onClick = {
-                        selectedStatus = "declined"
-                        showDialog = true
-                    },
-                    colors = ButtonDefaults.buttonColors(MaterialTheme.colorScheme.error)
-                ) {
-                    Text("Decline")
+                    Button(
+                        onClick = {
+                            selectedStatus = "declined"
+                            showDialog = true
+                        },
+                        colors = ButtonDefaults.buttonColors(MaterialTheme.colorScheme.error)
+                    ) {
+                        Text("Decline")
+                    }
                 }
             }
         }
@@ -218,10 +222,7 @@ fun DoctorCard(
             confirmButton = {
                 Button(onClick = {
                     showDialog = false
-                    updateDoctorStatus(firestore, doctor["id"].toString(), selectedStatus) {
-                        Toast.makeText(context, "Doctor ${selectedStatus}d successfully!", Toast.LENGTH_SHORT).show()
-                        onStatusUpdated()
-                    }
+                    processDoctorApproval(firestore, doctor, selectedStatus, onStatusUpdated, context)
                 }) {
                     Text("Yes")
                 }
@@ -235,9 +236,46 @@ fun DoctorCard(
     }
 }
 
+fun processDoctorApproval(
+    firestore: FirebaseFirestore,
+    doctor: Map<String, Any>,
+    status: String,
+    onStatusUpdated: () -> Unit,
+    context: android.content.Context
+) {
+    val doctorId = doctor["id"].toString()
+
+    if (status == "approved") {
+        val approvedDoctorInfo = doctor.toMutableMap()
+        approvedDoctorInfo.remove("licenseUrl") // Remove confidential license info
+        approvedDoctorInfo["status"] = "approved"
+
+        firestore.collection("doctors").document(doctorId)
+            .set(approvedDoctorInfo)
+            .addOnSuccessListener {
+                firestore.collection("doctor_registrations").document(doctorId).delete() // Remove from pending list
+                Toast.makeText(context, "Doctor approved and added to system!", Toast.LENGTH_SHORT).show()
+                onStatusUpdated()
+            }
+            .addOnFailureListener { e ->
+                Log.e("AdminHomeScreen", "Failed to approve doctor: ${e.message}")
+            }
+    } else {
+        firestore.collection("doctor_registrations").document(doctorId)
+            .update("status", "declined", "rejectionReason", "Admin review failed")
+            .addOnSuccessListener { onStatusUpdated() }
+    }
+}
+
 fun updateDoctorStatus(firestore: FirebaseFirestore, doctorId: String, status: String, onStatusUpdated: () -> Unit) {
-    firestore.collection("doctor_registrations").document(doctorId)
-        .update("status", status)
+    val updateData = if (status == "declined") {
+        mapOf("status" to status, "rejectionReason" to "Admin review failed")
+    } else {
+        mapOf("status" to status)
+    }
+
+    firestore.collection("doctors").document(doctorId)
+        .update(updateData)
         .addOnSuccessListener {
             Log.d("AdminHomeScreen", "Doctor status updated to $status")
             onStatusUpdated()
@@ -246,7 +284,6 @@ fun updateDoctorStatus(firestore: FirebaseFirestore, doctorId: String, status: S
             Log.e("AdminHomeScreen", "Failed to update doctor status: ${e.message}")
         }
 }
-
 fun convertImageByteArrayToBitmap(imageData: ByteArray): Bitmap {
     return BitmapFactory.decodeByteArray(imageData, 0, imageData.size)
 }

@@ -111,7 +111,7 @@ fun AddPatientScreen(viewModel: PatientViewModel ,
 
             CustomButton(
                 buttonText = "Save",
-                onClick = { viewModel.submitPatientProfile() }
+                onClick = { viewModel.submitAddPatient() }
             )
         }
     }

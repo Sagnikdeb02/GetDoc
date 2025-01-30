@@ -7,6 +7,7 @@ import android.net.Uri
 import android.util.Log
 import android.widget.Toast
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.example.getdoc.data.model.DoctorInfo
 import com.example.getdoc.data.model.PatientUiState
@@ -35,14 +36,22 @@ class PatientViewModel(
     private val client: Client,
     private val firestore: FirebaseFirestore
 ) : ViewModel() {
-
+    class Factory(private val client: Client, private val firestore: FirebaseFirestore) : ViewModelProvider.Factory {
+        override fun <T : ViewModel> create(modelClass: Class<T>): T {
+            if (modelClass.isAssignableFrom(PatientViewModel::class.java)) {
+                @Suppress("UNCHECKED_CAST")
+                return PatientViewModel(client, firestore) as T
+            }
+            throw IllegalArgumentException("Unknown ViewModel class")
+        }
+    }
     private val _uiState = MutableStateFlow(PatientUiState())
     val uiState: StateFlow<PatientUiState> get() = _uiState
 
     private val _profileUiState = MutableStateFlow(PatientProfileUiState())
     val profileUiState: StateFlow<PatientProfileUiState> get() = _profileUiState
 
-    fun submitPatientProfile() {
+    fun submitAddPatient() {
         val state = _uiState.value
         _uiState.value = state.copy(isLoading = true, errorMessage = null)
 
@@ -90,37 +99,65 @@ class PatientViewModel(
         }
         _profileUiState.value = when (field) {
             "username" -> _profileUiState.value.copy(usernameInput = value)
+            "location" -> _profileUiState.value.copy(locationInput = value)
             "profileImageUrl" -> _profileUiState.value.copy(imageUri = Uri.parse(value))
             else -> _profileUiState.value
         }
     }
+    fun fetchPatientProfile() {
+        val userId = FirebaseAuth.getInstance().currentUser?.uid
+        if (userId.isNullOrEmpty()) {
+            _profileUiState.value = _profileUiState.value.copy(
+                isLoading = false,
+                errorMessage = "User not authenticated"
+            )
+            return
+        }
 
-    fun fetchPatientProfile(userId: String) {
         viewModelScope.launch {
-            _profileUiState.value = _profileUiState.value.copy(isLoading = true)
+            _profileUiState.value = _profileUiState.value.copy(isLoading = true, errorMessage = null)
+
             try {
-                val userSnapshot = firestore.collection("patients").document(userId).get().await()
-                val username = userSnapshot.getString("username") ?: "Unknown"
-                val imageId = userSnapshot.getString("profileImageUrl")
+                // Fetch patient data from Firestore
+                val snapshot = firestore.collection("patients").document(userId).get().await()
+                if (snapshot.exists()) {
+                    val username = snapshot.getString("username") ?: ""
+                    val location = snapshot.getString("location") ?: ""
+                    val profileImageId = snapshot.getString("profileImageUrl") ?: ""
 
-                _profileUiState.value = _profileUiState.value.copy(usernameInput = username)
+                    var profileBitmap: Bitmap? = null
 
-                if (!imageId.isNullOrEmpty()) {
-                    val storage = Storage(client)
-                    val imageData = withContext(Dispatchers.IO) {
-                        storage.getFileDownload(bucketId = "678dd5d30039f0a22428", fileId = imageId)
+                    if (profileImageId.isNotEmpty()) {
+                        // Fetch image from Appwrite Storage
+                        val storage = Storage(client)
+                        val imageData = withContext(Dispatchers.IO) {
+                            storage.getFileDownload(bucketId = "678dd5d30039f0a22428", fileId = profileImageId)
+                        }
+                        profileBitmap = convertImageByteArrayToBitmap(imageData)
                     }
-                    val bitmap = convertImageByteArrayToBitmap(imageData)
-                    _profileUiState.value = _profileUiState.value.copy(profileImageBitmap = bitmap)
+
+                    // Update UI state with retrieved data
+                    _profileUiState.value = _profileUiState.value.copy(
+                        isLoading = false,
+                        usernameInput = username,
+                        locationInput = location,
+                        profileImageBitmap = profileBitmap
+                    )
+                } else {
+                    _profileUiState.value = _profileUiState.value.copy(
+                        isLoading = false,
+                        errorMessage = "Profile not found"
+                    )
                 }
             } catch (e: Exception) {
-                Log.e("FirestoreError", "Error fetching user data: ${e.localizedMessage}", e)
-                _profileUiState.value = _profileUiState.value.copy(errorMessage = "Failed to load profile")
-            } finally {
-                _profileUiState.value = _profileUiState.value.copy(isLoading = false)
+                _profileUiState.value = _profileUiState.value.copy(
+                    isLoading = false,
+                    errorMessage = e.localizedMessage
+                )
             }
         }
     }
+
 
     fun uploadPatientProfile(context: Context) {
 
@@ -158,6 +195,7 @@ class PatientViewModel(
                     // Prepare Firestore data
                     val profileData = hashMapOf(
                         "username" to state.usernameInput,
+                        "location" to state.locationInput,
                         "profileImageUrl" to result.id
                     )
 
@@ -222,7 +260,7 @@ class PatientViewModel(
                 val doctorsList = snapshot.documents.mapNotNull { document ->
                     try {
                         DoctorInfo(
-                            id = document.getString("id") ?: document.id,
+                            userId = document.id,
                             name = document.getString("name") ?: "Unnamed Doctor",
                             degree = document.getString("degree") ?: "N/A",
                             specialization = document.getString("specialization") ?: "General",

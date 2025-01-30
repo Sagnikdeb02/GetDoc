@@ -16,11 +16,14 @@ import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
 
 @Composable
-fun PatientProfileInputScreen(viewModel: PatientViewModel) {
+fun PatientProfileInputScreen(
+    viewModel: PatientViewModel
+) {
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
 
     var username by remember { mutableStateOf("") }
+    var location by remember { mutableStateOf("") }
     var selectedImageUri by remember { mutableStateOf<Uri?>(null) }
 
     val imagePickerLauncher = rememberLauncherForActivityResult(
@@ -45,6 +48,17 @@ fun PatientProfileInputScreen(viewModel: PatientViewModel) {
                     viewModel.updateUiState("username", it) // Update ViewModel state
                 },
                 label = { Text("Enter Username") },
+                modifier = Modifier.fillMaxWidth(0.8f)
+            )
+
+            Spacer(modifier = Modifier.height(16.dp))
+            OutlinedTextField(
+                value = location,
+                onValueChange = {
+                    location = it
+                    viewModel.updateUiState("location", it) // Update ViewModel state
+                },
+                label = { Text("Enter Location") },
                 modifier = Modifier.fillMaxWidth(0.8f)
             )
 
@@ -79,3 +93,4 @@ fun PatientProfileInputScreen(viewModel: PatientViewModel) {
         }
     }
 }
+

@@ -6,10 +6,8 @@ import android.util.Log
 import android.widget.Toast
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.getdoc.ui.doctor.state.DoctorHomeScreenUiState
-import com.example.getdoc.ui.doctor.state.DoctorProfileScreenUiState
-import com.example.getdoc.ui.doctor.state.DoctorProfileUiState
 import com.example.getdoc.ui.doctor.state.DoctorCredentialScreenUiState
+import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import io.appwrite.Client
 import io.appwrite.ID
@@ -22,73 +20,163 @@ import kotlinx.coroutines.launch
 import java.io.File
 import java.io.FileOutputStream
 import java.io.InputStream
+
 class DoctorViewModel(
     private val client: Client,
-    private val firestore: FirebaseFirestore
+    val firestore: FirebaseFirestore
 ) : ViewModel() {
 
-    // TODO: Remove this
     private val _uiState = MutableStateFlow(DoctorCredentialScreenUiState())
     val uiState: StateFlow<DoctorCredentialScreenUiState> get() = _uiState
 
-    // TODO: Remove this
-    private val _profileUiState = MutableStateFlow(DoctorProfileUiState())
-    val profileUiState: StateFlow<DoctorProfileUiState> get() = _profileUiState
-
-    private val _homeScreenUiState = MutableStateFlow(DoctorHomeScreenUiState())
-    val homeScreenUiState = _homeScreenUiState.asStateFlow()
-    private val _profileScreenUiState = MutableStateFlow(DoctorProfileScreenUiState())
-    val profileScreenUiState = _profileScreenUiState.asStateFlow()
-    private val _credentialScreenUiState = MutableStateFlow(DoctorCredentialScreenUiState())
-    val credentialScreenUiState = _credentialScreenUiState.asStateFlow()
-
-
-    private fun loadDoctorCredentials() {
-        firestore.collection("doctors")
+    init {
+        fetchDoctorStatus()
     }
 
-    private fun loadAppointments() {
+    fun fetchDoctorStatus() {
+        val userId = FirebaseAuth.getInstance().currentUser?.uid ?: return
 
+        firestore.collection("doctors").document(userId)
+            .get()  // Force fetch latest data first
+            .addOnSuccessListener { document ->
+                val status = document.getString("status") ?: "pending"
+                val rejectionReason = document.getString("rejectionReason") ?: ""
+
+                _uiState.value = _uiState.value.copy(status = status, rejectionReason = rejectionReason)
+                Log.d("DoctorViewModel", "Forced fetch status: $status")
+            }
+
+        // Also set snapshot listener for real-time updates
+        firestore.collection("doctor_registrations").document(userId)
+            .addSnapshotListener { snapshot, error ->
+                if (error != null) {
+                    Log.e("DoctorViewModel", "Error fetching status: ${error.message}")
+                    return@addSnapshotListener
+                }
+                snapshot?.let {
+                    val status = it.getString("status") ?: "pending"
+                    val rejectionReason = it.getString("rejectionReason") ?: ""
+
+                    Log.d("DoctorViewModel", "Realtime status update: $status")
+                    _uiState.value = _uiState.value.copy(status = status, rejectionReason = rejectionReason)
+                }
+            }
     }
 
-
-    fun submitDoctorCredentialProfile() {
+    /**
+     * Submits the doctor's credentials for admin approval.
+     */
+    fun submitDoctorCredentialProfile(context: Context, licenseUri: Uri) {
         val state = _uiState.value
         _uiState.value = state.copy(isLoading = true, errorMessage = null)
 
-        val experienceValue = state.dob.takeIf { it.length == 10 && it.contains("-") }
-            ?.split("-")?.firstOrNull()?.toIntOrNull()?.let { 2025 - it } ?: 0
-        val feeValue = state.fee.toIntOrNull() ?: 0
+        val userId = FirebaseAuth.getInstance().currentUser?.uid ?: run {
+            _uiState.value = state.copy(isLoading = false, errorMessage = "User not authenticated")
+            Toast.makeText(context, "Error: User not authenticated", Toast.LENGTH_SHORT).show()
+            return
+        }
 
-        // Generate a valid document ID (NO SPACES OR SPECIAL CHARACTERS)
-        val uniqueId = state.name.replace(" ", "_") + "_" + state.dob.replace("/", "_")
+        viewModelScope.launch {
+            try {
+                val licenseFile = uriToFile(licenseUri, context) ?: run {
+                    _uiState.value = state.copy(isLoading = false, errorMessage = "Failed to process license file")
+                    Toast.makeText(context, "Error: Failed to process license file", Toast.LENGTH_SHORT).show()
+                    return@launch
+                }
 
-        val doctorInfo = mapOf(
-            "id" to uniqueId,
-            "name" to state.name,
-            "degree" to state.degree,
-            "specialization" to state.speciality,
-            "dob" to state.dob,
-            "experience" to experienceValue,
-            "location" to state.address,
-            "consultingFee" to feeValue,
-            "about" to state.aboutYou,
-            "rating" to 0.0
+                val storage = Storage(client)
+                val inputFile = InputFile.fromFile(licenseFile)
+
+                // Upload license file to Appwrite storage using userId as fileId
+                val result = storage.createFile(
+                    bucketId = "678dd5d30039f0a22428",
+                    fileId = userId,
+                    file = inputFile
+                )
+
+                val licenseUrl = result.id
+                if (licenseUrl.isEmpty()) {
+                    _uiState.value = state.copy(isLoading = false, errorMessage = "License upload failed")
+                    Toast.makeText(context, "Error: License upload failed", Toast.LENGTH_SHORT).show()
+                    return@launch
+                }
+
+                // Prepare doctor profile data
+                val doctorInfo = mapOf(
+                    "id" to userId,
+                    "name" to (state.name ?: ""),
+                    "degree" to (state.degree ?: ""),
+                    "specialization" to (state.speciality ?: ""),
+                    "dob" to (state.dob ?: ""),
+                    "location" to (state.address ?: ""),
+                    "consultingFee" to (state.fee?.toIntOrNull() ?: 0),
+                    "about" to (state.aboutYou ?: ""),
+                    "licenseUrl" to licenseUrl,
+                    "status" to "pending",
+                    "rating" to 0.0
+                )
+
+                // Save doctor info in Firestore
+                firestore.collection("doctor_registrations").document(userId)
+                    .set(doctorInfo)
+                    .addOnSuccessListener {
+                        _uiState.value = _uiState.value.copy(isLoading = false, isSuccess = true)
+                        Toast.makeText(context, "Profile submitted for review!", Toast.LENGTH_LONG).show()
+                    }
+                    .addOnFailureListener { e ->
+                        _uiState.value = state.copy(isLoading = false, errorMessage = "Firestore error: ${e.localizedMessage}")
+                        Toast.makeText(context, "Error: ${e.localizedMessage}", Toast.LENGTH_SHORT).show()
+                    }
+
+            } catch (e: Exception) {
+                _uiState.value = state.copy(isLoading = false, errorMessage = "Upload failed: ${e.message}")
+                Toast.makeText(context, "Upload failed: ${e.message}", Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
+    fun updateDoctorProfile(context: Context) {
+        val userId = FirebaseAuth.getInstance().currentUser?.uid ?: return
+        val state = _uiState.value
+
+        val updatedData = mapOf(
+            "name" to (state.name ?: ""),
+            "degree" to (state.degree ?: ""),
+            "specialization" to (state.speciality ?: ""),
+            "dob" to (state.dob ?: ""),
+            "location" to (state.address ?: ""),
+            "consultingFee" to (state.fee?.toIntOrNull() ?: 0),
+            "about" to (state.aboutYou ?: "")
         )
 
-        firestore.collection("doctors")
-            .document(uniqueId)
-            .set(doctorInfo)
+        firestore.collection("doctors").document(userId)
+            .update(updatedData)
             .addOnSuccessListener {
-                _uiState.value = _uiState.value.copy(isLoading = false, isSuccess = true)
-                Log.d("Firestore", "Doctor profile successfully uploaded")
+                Toast.makeText(context, "Profile updated successfully!", Toast.LENGTH_LONG).show()
             }
             .addOnFailureListener { e ->
-                _uiState.value = _uiState.value.copy(isLoading = false, errorMessage = e.localizedMessage)
-                Log.e("FirestoreError", "Error uploading document: ${e.localizedMessage}", e)
+                Toast.makeText(context, "Update failed: ${e.localizedMessage}", Toast.LENGTH_SHORT).show()
             }
     }
 
+
+    /**
+     * Converts Uri to a File for Appwrite storage upload.
+     */
+    private fun uriToFile(uri: Uri, context: Context): File? {
+        return try {
+            val inputStream: InputStream? = context.contentResolver.openInputStream(uri)
+            val tempFile = File.createTempFile("upload_", ".jpg", context.cacheDir)
+            inputStream?.copyTo(FileOutputStream(tempFile))
+            tempFile
+        } catch (e: Exception) {
+            Log.e("DoctorViewModel", "Failed to convert Uri to File: ${e.message}")
+            null
+        }
+    }
+
+    /**
+     * Updates UI state fields dynamically.
+     */
     fun updateUiState(field: String, value: String) {
         _uiState.value = when (field) {
             "name" -> _uiState.value.copy(name = value)
@@ -100,74 +188,9 @@ class DoctorViewModel(
             "aboutYou" -> _uiState.value.copy(aboutYou = value)
             else -> _uiState.value
         }
-        _profileUiState.value = when (field) {
-            "username" -> _profileUiState.value.copy(usernameInput = value)
-            "profileImageUrl" -> _profileUiState.value.copy(imageUri = Uri.parse(value))
-            else -> _profileUiState.value
-        }
-    }
-
-    fun uploadDoctorProfilePicture(context: Context, doctorId: String) {
-        val state = _profileUiState.value
-        _profileUiState.value = state.copy(isLoading = true, errorMessage = null)
-
-        if (state.imageUri == null) {
-            _profileUiState.value = state.copy(isLoading = false, errorMessage = "Please select an image")
-            Toast.makeText(context, "Please select an image to upload", Toast.LENGTH_LONG).show()
-            return
-        }
-
-        viewModelScope.launch {
-            try {
-                val imageFile = uriToFile(state.imageUri, context)
-                if (imageFile != null) {
-                    val storage = Storage(client)
-                    val inputFile = InputFile.fromFile(imageFile)
-                    val result = storage.createFile(
-                        bucketId = "678e94b20023a8f92be0",
-                        fileId = ID.unique(),
-                        file = inputFile
-                    )
-
-                    // Update Firestore with the image reference
-                    firestore.collection("doctors")
-                        .document(doctorId)
-                        .update("profileImage", result.id)
-                        .addOnSuccessListener {
-                            _profileUiState.value = state.copy(isLoading = false, isSuccess = true)
-                            Toast.makeText(context, "Profile picture updated successfully!", Toast.LENGTH_LONG).show()
-                        }
-                        .addOnFailureListener { e ->
-                            _profileUiState.value = state.copy(isLoading = false, errorMessage = e.localizedMessage)
-                            Log.e("FirestoreError", "Error updating profile picture: ${e.localizedMessage}", e)
-                        }
-                }
-            } catch (e: Exception) {
-                _profileUiState.value = state.copy(isLoading = false, errorMessage = e.message)
-                Toast.makeText(context, "Error: ${e.message}", Toast.LENGTH_LONG).show()
-            }
-        }
     }
 
     fun clearForm() {
         _uiState.value = DoctorCredentialScreenUiState()
     }
-
-    private fun uriToFile(uri: Uri?, context: Context): File? {
-        return try {
-            val inputStream: InputStream? = uri?.let { context.contentResolver.openInputStream(it) }
-            val tempFile = File.createTempFile("upload_", ".jpg", context.cacheDir)
-            inputStream?.use { input ->
-                FileOutputStream(tempFile).use { output ->
-                    input.copyTo(output)
-                }
-            }
-            tempFile
-        } catch (e: Exception) {
-            Log.e("DoctorViewModel", "Failed to convert Uri to File: ${e.message}")
-            null
-        }
-    }
 }
-
-

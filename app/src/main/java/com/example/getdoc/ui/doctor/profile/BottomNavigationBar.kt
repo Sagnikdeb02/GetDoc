@@ -20,6 +20,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.navigation.compose.rememberNavController
 import com.example.getdoc.R
 import com.example.getdoc.navigation.DoctorCredentialsScreen
@@ -59,7 +60,8 @@ fun DoctorBottomNavigationBar(
                     modifier = Modifier.size(25.dp)
                 )
             },
-            label = { Text("Home") }
+            label = { Text("Home",
+                fontSize = 9.sp) }
         )
         NavigationBarItem(
             selected = selectedNavigationItem == DoctorBottomNavigationItem.Appointments,
@@ -70,11 +72,12 @@ fun DoctorBottomNavigationBar(
             icon = {
                 Image(
                     painter = painterResource(id = R.drawable.round_calendar_month_24),
-                    contentDescription = "Home",
+                    contentDescription = "appointment",
                     modifier = Modifier.size(25.dp)
                 )
             },
-            label = { Text("Appointments") }
+            label = { Text("Appointments",
+                fontSize = 9.sp) }
         )
         NavigationBarItem(
             selected = selectedNavigationItem == DoctorBottomNavigationItem.Profile,
@@ -85,11 +88,12 @@ fun DoctorBottomNavigationBar(
             icon = {
                 Image(
                     painter = painterResource(id = R.drawable.round_person_24),
-                    contentDescription = "Home",
+                    contentDescription = "profile",
                     modifier = Modifier.size(25.dp)
                 )
             },
-            label = { Text("Profile") }
+            label = { Text("Profile",
+                fontSize = 9.sp) }
         )
     }
 }

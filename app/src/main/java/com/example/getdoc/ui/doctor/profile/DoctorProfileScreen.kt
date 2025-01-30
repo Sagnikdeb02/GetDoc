@@ -49,6 +49,7 @@ fun DoctorProfileScreen(
     modifier: Modifier = Modifier,
     onLogoutClick: () -> Unit,
     onOptionClick: (DoctorProfileOption) -> Unit,
+    onEditClick: () -> Unit
 ) {
     // TODO: Remove this after implementing authentication
     val viewModel: AuthenticationViewModel = viewModel()
@@ -94,7 +95,7 @@ fun DoctorProfileScreen(
         ) {
             ProfileInfoRowComponent(
                 modifier = Modifier.padding(16.dp),
-                onEditClick = { /* Handle Edit */ }
+                onEditClick = { onEditClick() }
             )
 
             Spacer(modifier = Modifier.height(40.dp))
@@ -140,18 +141,18 @@ fun ProfileInfoRowComponent(
 
             Column {
                 Text(
-                    text = "Christopher",
+                    text = "",
                     fontSize = 20.sp,
                     fontWeight = FontWeight.Bold,
                     color = Color.Black
                 )
                 Text(
-                    text = "01787985785",
+                    text = "",
                     fontSize = 16.sp,
                     color = Color.Gray
                 )
                 Text(
-                    text = "Sylhet",
+                    text = "",
                     fontSize = 16.sp,
                     color = Color.Gray
                 )
@@ -162,9 +163,10 @@ fun ProfileInfoRowComponent(
         Icon(
             imageVector = Icons.Default.Edit,
             contentDescription = "Edit",
-            modifier = Modifier.size(24.dp),
+            modifier = Modifier
+                .size(24.dp)
+                .clickable { onEditClick() },
             tint = Color.Black,
-            //onClick = onEditClick
         )
     }
 }

@@ -1,126 +1,131 @@
 package com.example.getdoc.ui.doctor.profile
 
+import android.net.Uri
 import android.util.Log
 import android.widget.Toast
-import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
-import androidx.compose.runtime.Composable
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.dp
-import com.example.getdoc.R
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.Text
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.getdoc.R
 import com.example.getdoc.ui.doctor.DoctorViewModel
 import com.example.getdoc.ui.doctor.appointments.HeaderComponent
-import com.google.firebase.auth.FirebaseAuth
+import kotlinx.coroutines.launch
 
-/**
- * A composable function representing the credentials page for a user.
- *
- * @param onHomeClick Lambda for handling the "Home" button click in the bottom bar.
- * @param onAppointmentsClick Lambda for handling the "Appointments" button click in the bottom bar.
- * @param onProfileClick Lambda for handling the "Profile" button click in the bottom bar.
- */
 @Composable
 fun MyCredentialsPageComponent(
-    viewModel: DoctorViewModel ,
-    onHomeClick: () -> Unit,
-    onAppointmentsClick: () -> Unit,
-    onProfileClick: () -> Unit,
+    viewModel: DoctorViewModel,
     modifier: Modifier = Modifier
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    val context = LocalContext.current
+    val coroutineScope = rememberCoroutineScope()
+    var licenseUri by remember { mutableStateOf<Uri?>(null) }
     var showDialog by remember { mutableStateOf(false) }
+    LaunchedEffect(uiState.status) {
+        Log.d("MyCredentialsPage", "UI Updated: ${uiState.status}")
+    }
+
+    val filePickerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent()
+    ) { uri: Uri? -> licenseUri = uri }
 
     Column(
-        modifier = modifier
-            .fillMaxSize()
-            .background(Color(0xFFF0F3F5)),
+        modifier = modifier.fillMaxSize().background(Color(0xFFF8F9FA)),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         HeaderComponent(title = "My Credentials", iconResId = R.drawable.img_9)
 
+        // **Submission Status at the top**
+        Card(
+            modifier = Modifier.fillMaxWidth().padding(16.dp),
+            colors = CardDefaults.cardColors(
+                when (uiState.status) {
+                    "approved" -> Color(0xFFE0F2F1)
+                    "pending" -> Color(0xFFFFF3E0)
+                    "declined" -> Color(0xFFFFEBEE)
+                    else -> Color(0xFFF5F5F5)
+                }
+            ),
+            elevation = CardDefaults.cardElevation(4.dp)
+        ) {
+            Column(
+                modifier = Modifier.padding(16.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text(
+                    text = "Submission Status: ${uiState.status?.uppercase()}",
+                    fontSize = 18.sp,
+                    color = Color.Black,
+                    style = MaterialTheme.typography.titleMedium
+                )
+                if (uiState.status == "declined") {
+                    Text(
+                        text = "Rejection Reason: ${uiState.rejectionReason}",
+                        color = Color.Red,
+                        fontSize = 14.sp
+                    )
+                }
+            }
+        }
+
         LazyColumn(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
+            modifier = Modifier.fillMaxWidth().weight(1f).padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            item {
-                FormFieldComponent(
-                    label = "Enter Your Full Name",
-                    value = uiState.name,
-                    onValueChange = { viewModel.updateUiState("name", it) }
+            item { FormFieldComponent("Full Name", uiState.name ?: "", { viewModel.updateUiState("name", it) }) }
+            item { FormFieldComponent("Degree", uiState.degree ?: "", { viewModel.updateUiState("degree", it) }) }
+            item { FormFieldComponent("Speciality", uiState.speciality ?: "", { viewModel.updateUiState("speciality", it) }) }
+            item { FormFieldComponent("DOB", uiState.dob ?: "", { viewModel.updateUiState("dob", it) }) }
+            item { FormFieldComponent("Clinic Address", uiState.address ?: "", { viewModel.updateUiState("address", it) }) }
+            item { FormFieldComponent("Consultation Fee", uiState.fee ?: "", { viewModel.updateUiState("fee", it) }) }
+            item { FormFieldComponent("About You", uiState.aboutYou ?: "", { viewModel.updateUiState("aboutYou", it) }) }
+        }
+
+        Column(
+            modifier = Modifier.fillMaxWidth().padding(16.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            if (uiState.status == "approved") {
+                Text(
+                    text = "Please fill all the fields before updating your profile.",
+                    fontSize = 14.sp,
+                    color = Color.Red,
+                    modifier = Modifier.padding(bottom = 8.dp)
                 )
-            }
-            item {
-                FormFieldComponent(
-                    label = "Enter Your Degree",
-                    value = uiState.degree,
-                    onValueChange = { viewModel.updateUiState("degree", it) }
-                )
-            }
-            item {
-                FormFieldComponent(
-                    label = "Enter Your Speciality",
-                    value = uiState.speciality,
-                    onValueChange = { viewModel.updateUiState("speciality", it) }
-                )
-            }
-            item {
-                FormFieldComponent(
-                    label = "Enter Your DOB",
-                    value = uiState.dob,
-                    onValueChange = { viewModel.updateUiState("dob", it) }
-                )
-            }
-            item {
-                FormFieldComponent(
-                    label = "Enter Your Clinic Address",
-                    value = uiState.address,
-                    onValueChange = { viewModel.updateUiState("address", it) }
-                )
-            }
-            item {
-                FormFieldComponent(
-                    label = "Enter Your Consultation Fee",
-                    value = uiState.fee,
-                    onValueChange = { viewModel.updateUiState("fee", it) }
-                )
-            }
-            item {
-                FormFieldComponent(
-                    label = "About You",
-                    value = uiState.aboutYou,
-                    onValueChange = { viewModel.updateUiState("aboutYou", it) }
-                )
-            }
-            item {
+                Button(
+                    onClick = {
+                        coroutineScope.launch {
+                            viewModel.updateDoctorProfile(context)
+                        }
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = ButtonDefaults.buttonColors(Color.Blue)
+                ) {
+                    Text("Update Profile")
+                }
+            } else {
+                Button(
+                    onClick = { filePickerLauncher.launch("image/*") },
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = ButtonDefaults.buttonColors(Color.Gray)
+                ) {
+                    Text("Upload License")
+                }
+                Spacer(modifier = Modifier.height(8.dp))
                 Row(
                     horizontalArrangement = Arrangement.SpaceBetween,
                     modifier = Modifier.fillMaxWidth()
@@ -128,123 +133,52 @@ fun MyCredentialsPageComponent(
                     Button(
                         onClick = { showDialog = true },
                         modifier = Modifier.weight(1f),
-                        colors = ButtonDefaults.buttonColors(Color(0xFF174666))
+                        colors = ButtonDefaults.buttonColors(Color.Red)
                     ) {
-                        Text(text = "Cancel")
+                        Text("Cancel")
                     }
-                    val context = LocalContext.current
                     Spacer(modifier = Modifier.width(16.dp))
                     Button(
                         onClick = {
-                            viewModel.submitDoctorCredentialProfile()
+                            if (licenseUri == null) {
+                                Toast.makeText(context, "Please select a license file!", Toast.LENGTH_SHORT).show()
+                            } else {
+                                viewModel.submitDoctorCredentialProfile(context, licenseUri!!)
+                            }
                         },
                         modifier = Modifier.weight(1f),
-                        colors = ButtonDefaults.buttonColors(Color(0xFF174666))
+                        colors = ButtonDefaults.buttonColors(Color.Blue)
                     ) {
-                        Text(text = "Submit")
+                        Text(if (uiState.status == "declined") "Resubmit" else "Submit")
                     }
-
-
-// Show a Toast based on the upload result
-                    LaunchedEffect(key1 = uiState.isSuccess, key2 = uiState.errorMessage) {
-                        if (uiState.isSuccess) {
-                            Toast.makeText(context, "Credentials submitted successfully!", Toast.LENGTH_LONG).show()
-                        } else if (uiState.errorMessage != null) {
-                            Toast.makeText(context, "Error: ${uiState.errorMessage}", Toast.LENGTH_LONG).show()
-                        }
-                    }
-
-
-
-
                 }
             }
-
-            item {
-                if (uiState.isLoading) {
-                    CircularProgressIndicator()
-                }
-            }
-
-            item {
-                uiState.errorMessage?.let {
-                    Text(text = it, color = Color.Red)
-                }
-            }
-        }
-
-        if (showDialog) {
-            AlertDialog(
-                onDismissRequest = { showDialog = false },
-                title = { Text("Confirm Cancel") },
-                text = { Text("Are you sure you want to clear the form?") },
-                confirmButton = {
-                    Button(onClick = {
-                        viewModel.clearForm()
-                        showDialog = false
-                    }) {
-                        Text("Yes")
-                    }
-                },
-                dismissButton = {
-                    Button(onClick = { showDialog = false }) {
-                        Text("No")
-                    }
-                }
-            )
-        }
-
-        Column(
-            modifier = Modifier.fillMaxSize(),
-            verticalArrangement = Arrangement.Bottom
-        ) {
-            BottomBarComponent(
-                onHomeClick = onHomeClick,
-                onAppointmentsClick = onAppointmentsClick,
-                onProfileClick = onProfileClick
-            )
         }
     }
 }
 
 @Composable
-fun FormFieldComponent(
-    label: String,
-    value: String,
-    onValueChange: (String) -> Unit,
-    modifier: Modifier = Modifier
-) {
+fun FormFieldComponent(label: String, value: String, onValueChange: (String) -> Unit) {
     Column(
-        modifier = modifier
-            .fillMaxWidth()
-            .padding(vertical = 8.dp)
+        modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp)
     ) {
-        Text(
-            text = label,
-            fontSize = 16.sp,
-            color = Color.Black,
-            modifier = Modifier.padding(bottom = 4.dp)
-        )
+        Text(text = label, fontSize = 16.sp, color = Color.Black, modifier = Modifier.padding(bottom = 4.dp))
 
-        BasicTextField(
-            value = value, // Directly use the state passed from ViewModel
-            onValueChange = onValueChange, // Update ViewModel state
-            modifier = Modifier
-                .fillMaxWidth()
-                .clip(RoundedCornerShape(20.dp))
-                .border(
-                    BorderStroke(width = 1.dp, color = Color.Gray),
-                    shape = RoundedCornerShape(20.dp)
-                )
-                .background(Color.White)
-                .padding(8.dp)
-                .height(40.dp),
-            singleLine = true,
-            textStyle = TextStyle(
-                color = Color.Black,
-                fontSize = 16.sp
+        Card(
+            shape = RoundedCornerShape(8.dp),
+            colors = CardDefaults.cardColors(containerColor = Color.White),
+            elevation = CardDefaults.cardElevation(2.dp),
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            BasicTextField(
+                value = value,
+                onValueChange = onValueChange,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(12.dp),
+                singleLine = true,
+                textStyle = TextStyle(color = Color.Black, fontSize = 16.sp)
             )
-        )
+        }
     }
 }
-  

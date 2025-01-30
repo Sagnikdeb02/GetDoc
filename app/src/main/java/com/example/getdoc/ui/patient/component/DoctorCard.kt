@@ -19,9 +19,11 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.navigation.NavController
 import androidx.navigation.NavHostController
 import com.example.getdoc.R
 import com.example.getdoc.data.model.DoctorInfo
+import com.example.getdoc.navigation.DoctorDetailsScreen
 import io.appwrite.services.Storage
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -32,7 +34,7 @@ fun DoctorCard(
     doctor: DoctorInfo,
     storage: Storage,
     bucketId: String,
-    navController: NavHostController // Pass NavHostController here
+    navController: NavController // ✅ Pass NavController here
 ) {
     var imageData by remember { mutableStateOf<ByteArray?>(null) }
     var isLoading by remember { mutableStateOf(true) }
@@ -63,15 +65,23 @@ fun DoctorCard(
             .padding(vertical = 8.dp)
             .clickable {
                 try {
-                    val encodedDoctorId = URLEncoder.encode(doctor.id, StandardCharsets.UTF_8.toString())
-                    navController.navigate("DoctorDetailsScreen/$encodedDoctorId")
+                    if (navController.currentDestination != null) { // ✅ Ensure NavController is ready
+                        if (doctor.userId.isNotEmpty()) {
+                            val encodedDoctorId = URLEncoder.encode(doctor.userId, StandardCharsets.UTF_8.toString())
+                            Log.d("Navigation", "Navigating to doctor_details/$encodedDoctorId")
+                            navController.navigate("doctor_details/$encodedDoctorId")
+                        } else {
+                            Log.e("Navigation", "Error: Doctor ID is empty!")
+                        }
+                    } else {
+                        Log.e("Navigation", "Error: NavController is not set!")
+                    }
                 } catch (e: Exception) {
                     Log.e("Navigation", "Error encoding doctor ID: ${e.localizedMessage}")
                 }
             },
         elevation = CardDefaults.cardElevation(4.dp)
     ) {
-        // Card Content (Keep as-is)
         Row(modifier = Modifier.padding(16.dp)) {
             if (isLoading) {
                 CircularProgressIndicator(modifier = Modifier.size(60.dp))
@@ -80,25 +90,21 @@ fun DoctorCard(
                     Image(
                         bitmap = BitmapFactory.decodeByteArray(imageData, 0, imageData!!.size).asImageBitmap(),
                         contentDescription = "Doctor Image",
-                        modifier = Modifier
-                            .size(60.dp)
-                            .clip(CircleShape),
+                        modifier = Modifier.size(60.dp).clip(CircleShape),
                         contentScale = ContentScale.Crop
                     )
                 } else {
                     Image(
                         painter = painterResource(id = R.drawable.doctors),
                         contentDescription = "Default Profile Picture",
-                        modifier = Modifier
-                            .size(60.dp)
-                            .clip(CircleShape),
+                        modifier = Modifier.size(60.dp).clip(CircleShape),
                         contentScale = ContentScale.Crop
                     )
                 }
             }
             Spacer(modifier = Modifier.width(16.dp))
             Column {
-                Text(text = "Dr ${doctor.name}", fontWeight = FontWeight.Bold, fontSize = 18.sp)
+                Text(text = "Dr. ${doctor.name}", fontWeight = FontWeight.Bold, fontSize = 18.sp)
                 Text(text = doctor.specialization, fontSize = 14.sp, color = Color.Gray)
                 Text(text = doctor.location, fontSize = 12.sp, color = Color.Gray)
                 Row(verticalAlignment = Alignment.CenterVertically) {

@@ -35,42 +35,31 @@ fun AppNavigation(modifier: Modifier = Modifier, client: Client, firestore: Fire
     val authViewModel: AuthViewModel = viewModel()
     val authState by authViewModel.authState.collectAsStateWithLifecycle()
 
-
-
     NavHost(navController = navController, startDestination = SplashScreen) {
+        // Splash Screen
         composable<SplashScreen> {
             SplashScreen(
                 onSplashComplete = {
                     when (authState) {
                         is AuthState.Authenticated -> {
-                            when((authState as AuthState.Authenticated).role) {
-                                Role.ADMIN -> {
-                                    navController.navigate(AdminHomeScreen)
-                                }
-                                Role.DOCTOR -> {
-                                    navController.navigate(DoctorHomeScreen)
-                                }
-                                Role.PATIENT -> {
-                                    navController.navigate(PatientHomeScreen)
-                                }
+                            val userRole = (authState as AuthState.Authenticated).role
+                            when (userRole) {
+                                Role.ADMIN -> navController.navigate(AdminHomeScreen) { popUpTo(0) { inclusive = true } }
+                                Role.DOCTOR -> navController.navigate(DoctorHomeScreen) { popUpTo(0) { inclusive = true } }
+                                Role.PATIENT -> navController.navigate(PatientHomeScreen) { popUpTo(0) { inclusive = true } }
                             }
                         }
-                        is AuthState.Error -> {
-                            navController.navigate(LoginScreen)
+                        is AuthState.Error, AuthState.Uninitialized -> {
+                            navController.navigate(LoginScreen) { popUpTo(0) { inclusive = true } }
                         }
-                        AuthState.Loading -> {
-
-                        }
-                        AuthState.Uninitialized -> {
-
-                        }
-                        AuthState.VerificationEmailSent -> {
-                            navController.navigate(WaitingForVerificationScreen)
-                        }
+                        AuthState.Loading -> { /* Stay on splash screen */ }
+                        AuthState.VerificationEmailSent -> navController.navigate(WaitingForVerificationScreen)
+                        AuthState.PendingApproval, is AuthState.Rejected -> navController.navigate(LoginScreen)
                     }
                 }
             )
         }
+
         composable<WaitingForVerificationScreen> {
             LaunchedEffect(authState) {
                 if (authState is AuthState.Authenticated) {
@@ -97,16 +86,40 @@ fun AppNavigation(modifier: Modifier = Modifier, client: Client, firestore: Fire
         }
 
         composable<LoginScreen> {
+            LaunchedEffect(Unit) {
+                authViewModel.ensureAdminExists()  // Ensures admin exists only when LoginScreen is shown
+            }
             LogInScreen(
                 viewModel = authViewModel,
                 onLoginSuccess = {
-                    navController.navigate(ChooseRoleScreen) {
-                        popUpTo(LoginScreen) { inclusive = true }
+                    if (authState is AuthState.Authenticated) {
+                        val userRole = (authState as AuthState.Authenticated).role
+                        when (userRole) {
+                            Role.ADMIN -> {
+                                navController.navigate(AdminHomeScreen) {
+                                    popUpTo(LoginScreen) { inclusive = true }
+                                }
+                            }
+                            Role.DOCTOR -> {
+                                navController.navigate(DoctorHomeScreen) {
+                                    popUpTo(LoginScreen) { inclusive = true }
+                                }
+                            }
+                            Role.PATIENT -> {
+                                navController.navigate(PatientHomeScreen) {
+                                    popUpTo(LoginScreen) { inclusive = true }
+                                }
+                            }
+                        }
+                    } else {
+                        navController.navigate(LoginScreen) // Ensure login screen reloads if authentication fails
                     }
                 },
                 onSignUpClick = { navController.navigate(ChooseRoleScreen) }
             )
         }
+
+
         composable<ChooseRoleScreen> {
             ChooseRoleScreen(
                 navController = navController,
@@ -132,7 +145,6 @@ fun AppNavigation(modifier: Modifier = Modifier, client: Client, firestore: Fire
                 client = client,
                 bucketId = "678dd5d30039f0a22428",
                 navController = navController,
-                viewModel = AuthenticationViewModel(),
                 firestore = firestore,
             )
         }
@@ -152,10 +164,10 @@ fun AppNavigation(modifier: Modifier = Modifier, client: Client, firestore: Fire
 //            navController = navController
 //        )
 
-        patientNavigation(
-            client = client,
-            firestore = firestore,
-            navController = navController
-        )
+        composable<PatientHomeScreen> {
+            PatientNavigation(
+                client = client,
+                firestore = firestore
+            )
     }
-}
+}}

@@ -5,6 +5,4 @@ import com.example.getdoc.data.model.DoctorInfo
 data class DoctorProfileScreenUiState(
     val profileImageUrl: String = "",
     val doctorUsername: String = "",
-    val location: String = "",
-    val phoneNumber: String = "",
 )

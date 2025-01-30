@@ -25,7 +25,8 @@ import com.example.getdoc.ui.doctor.profile.DoctorBottomNavigationBar
 import com.example.getdoc.ui.doctor.profile.DoctorProfileOption
 import com.example.getdoc.ui.doctor.profile.DoctorProfileScreen
 import com.example.getdoc.ui.doctor.profile.MyCredentialsPageComponent
-import com.example.getdoc.ui.doctor.profile.UploadDoctorProfilePictureScreen
+import com.example.getdoc.ui.doctor.profile.ProfileUpdateScreen
+import com.example.getdoc.ui.patient.PatientViewModel
 import com.google.firebase.firestore.FirebaseFirestore
 import io.appwrite.Client
 import kotlinx.serialization.Serializable
@@ -79,33 +80,17 @@ fun DoctorNavigation(
             composable<DoctorCredentialsScreen> {
                 MyCredentialsPageComponent(
                     viewModel = DoctorViewModel(client, firestore),
-                    onHomeClick = {
-                        // Navigate to home screen
-                        navController.navigate(DoctorHomeScreen) {
-                            popUpTo(DoctorCredentialsScreen) { inclusive = true }
-                        }
-                    },
-                    onAppointmentsClick = {
-                        // Navigate to appointments screen
-                        navController.navigate(PatientAppointmentScreen)
-                    },
-                    onProfileClick = { navController.navigate(DoctorProfileScreen) },
                     modifier = Modifier.fillMaxSize()
                 )
             }
 
-
-            composable(
-                route = "UploadDoctorProfilePictureScreen/{doctorId}",
-                arguments = listOf(navArgument("doctorId") { type = NavType.StringType })
-            ) { backStackEntry ->
-                val doctorId = backStackEntry.arguments?.getString("doctorId") ?: ""
-                UploadDoctorProfilePictureScreen(
-                    viewModel = DoctorViewModel(client,firestore), // Pass your DoctorViewModel instance
-                    doctorId = doctorId
-                )
-            }
-
+           composable<DoctorProfileUpdateScreen> {
+               ProfileUpdateScreen(
+                   viewModel = DoctorViewModel(client, firestore),
+                   client = client,
+                   modifier = Modifier.fillMaxSize()
+               )
+           }
 
             composable<DoctorProfileScreen> {
                 DoctorProfileScreen(
@@ -117,21 +102,27 @@ fun DoctorNavigation(
                             DoctorProfileOption.MY_CREDENTIALS -> {
                                 navController.navigate(DoctorCredentialsScreen)
                             }
+
                             DoctorProfileOption.CHANGE_CONTACT -> {
 
                             }
+
                             DoctorProfileOption.CHANGE_PASSWORD -> {
 
                             }
+
                             DoctorProfileOption.ABOUT_US -> {
 
                             }
+
                             DoctorProfileOption.HELP -> {
 
                             }
                         }
 
-                    }
+                    },
+                    modifier = modifier,
+                    onEditClick = {navController.navigate(DoctorProfileUpdateScreen)}
                 )
             }
         }

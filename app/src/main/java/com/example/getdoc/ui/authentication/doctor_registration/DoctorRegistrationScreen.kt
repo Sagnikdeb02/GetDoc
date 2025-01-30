@@ -103,11 +103,11 @@ fun DoctorRegistrationScreen(
             Text(text = "Selected Image: $it")
         }
 
-        Button(
-            onClick = {
-                if (doctorName.isNotEmpty() && email.isNotEmpty() && password.isNotEmpty() && confirmPassword == password && selectedImageUri != null) {
-                    isSubmitting = true
-                    coroutineScope.launch {
+//        Button(
+//            onClick = {
+//                if (doctorName.isNotEmpty() && email.isNotEmpty() && password.isNotEmpty() && confirmPassword == password && selectedImageUri != null) {
+//                    isSubmitting = true
+//                    coroutineScope.launch {
 //                        uploadDoctorLicense(
 //                            doctorName = doctorName,
 //                            email = email,
@@ -134,17 +134,17 @@ fun DoctorRegistrationScreen(
 //                                ).show()
 //                            }
 //                        )
-                    }
-                } else {
-                    Toast.makeText(context, "Please fill all fields correctly!", Toast.LENGTH_SHORT)
-                        .show()
-                }
-            },
-            modifier = Modifier.fillMaxWidth(),
-            enabled = !isSubmitting
-        ) {
-            Text(text = if (isSubmitting) "Submitting..." else "Submit for Approval")
-        }
+//                    }
+//                } else {
+//                    Toast.makeText(context, "Please fill all fields correctly!", Toast.LENGTH_SHORT)
+//                        .show()
+//                }
+//            },
+//            modifier = Modifier.fillMaxWidth(),
+//            enabled = !isSubmitting
+//        ) {
+//            Text(text = if (isSubmitting) "Submitting..." else "Submit for Approval")
+//        }
 
         if (registrationStatus == "pending") {
             Spacer(modifier = Modifier.height(20.dp))

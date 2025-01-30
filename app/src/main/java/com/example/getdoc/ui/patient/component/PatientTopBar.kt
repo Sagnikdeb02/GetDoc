@@ -25,7 +25,7 @@ fun PatientTopBar(viewModel: PatientViewModel = viewModel(), userId: String) {
     val profileState by viewModel.profileUiState.collectAsState()
 
     LaunchedEffect(userId) {
-        viewModel.fetchPatientProfile(userId)
+        viewModel.fetchPatientProfile()
     }
 
     TopAppBar(

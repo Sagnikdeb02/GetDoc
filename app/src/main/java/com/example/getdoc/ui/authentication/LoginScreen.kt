@@ -62,10 +62,32 @@ fun LogInScreen(
 
     val authState by viewModel.authState.collectAsStateWithLifecycle()
     LaunchedEffect(authState) {
-        if (authState is AuthState.Authenticated) {
-            onLoginSuccess()
+        when (authState) {
+            is AuthState.Authenticated -> {
+                val userRole = (authState as AuthState.Authenticated).role
+                when (userRole) {
+                    Role.ADMIN -> {
+                       onLoginSuccess()
+                    }
+                    Role.DOCTOR -> {
+                       onLoginSuccess()
+                    }
+                    Role.PATIENT -> {
+                       onLoginSuccess()
+                    }
+                }
+            }
+
+            is AuthState.Error -> {}
+            AuthState.Loading -> {}
+            AuthState.PendingApproval -> {}
+            is AuthState.Rejected -> {}
+            AuthState.Uninitialized -> {}
+            AuthState.VerificationEmailSent -> {}
         }
     }
+
+
 
 
     Column(

@@ -10,12 +10,14 @@ package com.example.getdoc.data.model
  * @property consultingFee The doctor's consulting fee. e.g. 1000, 2000, etc.
  */
 data class DoctorInfo(
-    val id: String = "",  // Unique identifier for the doctor
+    val userId: String = "", // ✅ This should be the Firebase UID of the doctor
     val about: String = "",
     val consultingFee: Int = 0,
     val degree: String = "",
     val dob: String = "",
     val experience: Int = 0,
+    val licenseUrl: String = "",
+    val status: String = "",
     val location: String = "",
     val name: String = "",
     val profileImage: String = "",
