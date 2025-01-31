@@ -1,5 +1,7 @@
 package com.example.getdoc.ui.theme.ui.patient.appointments
 
+import android.app.DatePickerDialog
+import android.content.Context
 import android.util.Log
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyRow
@@ -10,33 +12,45 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.navigation.NavController
 import com.example.getdoc.data.model.DoctorInfo
 import com.example.getdoc.ui.patient.component.CustomAppBar
 import com.example.getdoc.ui.patient.component.CustomButton
+import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
+import java.util.Calendar
 
 @Composable
 fun BookingDoctorScreen(
     doctorId: String,
-    selectedDate: String,
-    onDateSelected: (String) -> Unit,
-    onBackClick: () -> Unit,
-    onProceedClick: () -> Unit,
-    firestore: FirebaseFirestore
+    navController: NavController,
+    firestore: FirebaseFirestore,
+    onBackClick: () -> Unit
 ) {
+    val context = LocalContext.current
     var doctor by remember { mutableStateOf<DoctorInfo?>(null) }
     var isLoading by remember { mutableStateOf(true) }
+    var selectedDate by remember { mutableStateOf(getTodayDate()) }
+    var availableSlots by remember { mutableStateOf(generateSlots()) }
+    var bookedSlots by remember { mutableStateOf<List<String>>(emptyList()) }
+    var selectedSlot by remember { mutableStateOf("") }
+    var isSlotBooked by remember { mutableStateOf(false) }
 
-    // Fetch Doctor Info from Firestore using doctorId
-    LaunchedEffect(doctorId) {
+    // 🔹 Fetch Doctor Info from Firestore
+    LaunchedEffect(doctorId, selectedDate) {
         firestore.collection("doctors").document(doctorId)
             .get()
             .addOnSuccessListener { document ->
                 if (document.exists()) {
                     doctor = document.toObject(DoctorInfo::class.java)
+                    fetchAvailableSlots(firestore, doctorId, selectedDate) { slots, booked ->
+                        availableSlots = slots
+                        bookedSlots = booked
+                    }
                     isLoading = false
                     Log.d("Firestore", "Doctor Info Loaded: ${doctor?.name}")
                 } else {
@@ -51,12 +65,7 @@ fun BookingDoctorScreen(
     }
 
     Scaffold(
-        topBar = {
-            CustomAppBar(
-                title = "Book Now",
-                onBackClick = onBackClick
-            )
-        },
+        topBar = { CustomAppBar(title = "Book Appointment", onBackClick = onBackClick) },
         content = { paddingValues ->
             Column(
                 modifier = Modifier
@@ -67,7 +76,7 @@ fun BookingDoctorScreen(
                 if (isLoading) {
                     CircularProgressIndicator(modifier = Modifier.align(Alignment.CenterHorizontally))
                 } else if (doctor != null) {
-                    // ✅ Doctor's Information Section
+                    // ✅ Doctor's Info
                     Text(
                         text = "Dr. ${doctor!!.name}",
                         style = MaterialTheme.typography.titleLarge,
@@ -80,128 +89,218 @@ fun BookingDoctorScreen(
 
                     Spacer(modifier = Modifier.height(16.dp))
 
-                    // ✅ Date Selection Section
-                    Text(
-                        text = "Choose A Date",
-                        style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 18.sp
-                    )
+                    // ✅ Date Picker
+                    Text("Choose A Date", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, fontSize = 18.sp)
                     Spacer(modifier = Modifier.height(8.dp))
-                    LazyRow(
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+
+                    Button(
+                        onClick = {
+                            showDatePicker(context) { newDate ->
+                                selectedDate = newDate
+                                fetchAvailableSlots(firestore, doctorId, selectedDate) { slots, booked ->
+                                    availableSlots = slots
+                                    bookedSlots = booked
+                                    isSlotBooked = bookedSlots.contains(selectedSlot)
+                                }
+                            }
+                        },
+                        shape = RoundedCornerShape(8.dp)
                     ) {
-                        val dates = listOf("Today", "Tomorrow", "12 June", "13 June", "14 June")
-                        items(dates) { date ->
-                            DateButton(
-                                text = date,
-                                isSelected = selectedDate == date,
-                                onClick = { onDateSelected(date) }
-                            )
+                        Text("Select Date: $selectedDate")
+                    }
+
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    // ✅ Slot Selection
+                    Text("Available Slots", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, fontSize = 16.sp)
+
+                    if (availableSlots.isEmpty()) {
+                        Text("No slots available", color = Color.Red)
+                    } else {
+                        LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            items(availableSlots) { slot ->
+                                SlotButton(
+                                    text = slot,
+                                    isSelected = selectedSlot == slot,
+                                    isUnavailable = bookedSlots.contains(slot),
+                                    onClick = {
+                                        selectedSlot = slot
+                                        isSlotBooked = bookedSlots.contains(slot)
+                                    }
+                                )
+                            }
                         }
                     }
 
-                    Spacer(modifier = Modifier.height(16.dp))
-
-                    // ✅ Slots Available and Time Section
-                    Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(vertical = 16.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
-                        Text(
-                            text = "Slots Available",
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 16.sp
-                        )
-                        Spacer(modifier = Modifier.height(8.dp))
-                        Text(
-                            text = "9 Slots Available",
-                            fontSize = 14.sp,
-                            color = Color.Gray
-                        )
-                        Spacer(modifier = Modifier.height(4.dp))
-                        Text(
-                            text = "4 PM - 6 PM",
-                            fontSize = 14.sp,
-                            fontWeight = FontWeight.Bold
-                        )
+                    // 🚨 Show warning if the selected slot is booked
+                    if (isSlotBooked) {
+                        SlotUnavailableWarning()
                     }
 
-                    Spacer(modifier = Modifier.height(16.dp))
-
-                    // ✅ Terms and Conditions
-                    Text(
-                        text = "Terms And Conditions",
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold
-                    )
-                    Text(
-                        text = "The document governing the contractual relationship between the provider of a service and its user. On the web, this document is often also called 'Terms of Service' (ToS).",
-                        style = MaterialTheme.typography.bodyMedium,
-                        fontSize = 14.sp,
-                        modifier = Modifier.padding(top = 4.dp)
-                    )
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier.padding(vertical = 8.dp)
-                    ) {
-                        Checkbox(
-                            checked = true,
-                            onCheckedChange = { /* Handle checkbox */ },
-                            colors = CheckboxDefaults.colors(
-                                checkedColor = MaterialTheme.colorScheme.primary,
-                                uncheckedColor = Color.Gray,
-                                checkmarkColor = Color.White
-                            )
-                        )
-                        Text(
-                            text = "Share All Previous Medical Files With The Doctor",
-                            fontSize = 14.sp,
-                            color = Color.Gray
-                        )
-                    }
                     Spacer(modifier = Modifier.height(16.dp))
 
                     // ✅ Proceed Button
                     CustomButton(
                         buttonText = "Proceed",
-                        onClick = onProceedClick
+                        onClick = {
+                            if (selectedSlot.isNotEmpty() && !isSlotBooked) {
+                                saveAppointment(firestore, doctorId, selectedDate, selectedSlot)
+                                navController.navigate("proceed_screen/$doctorId/$selectedDate/$selectedSlot")
+                            } else {
+                                Log.e("Booking", "No slot selected or slot is already booked!")
+                            }
+                        }
                     )
                 } else {
-                    // Show error message if doctor is not found
-                    Text(
-                        text = "Doctor not found!",
-                        style = MaterialTheme.typography.bodyLarge,
-                        color = Color.Red,
-                        modifier = Modifier.align(Alignment.CenterHorizontally)
-                    )
+                    Text("Doctor not found!", color = Color.Red, modifier = Modifier.align(Alignment.CenterHorizontally))
                 }
             }
         }
     )
 }
 
+// 🔹 Show Slot Unavailable Warning
 @Composable
-fun DateButton(text: String, isSelected: Boolean, onClick: () -> Unit) {
+fun SlotUnavailableWarning() {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(8.dp),
+        colors = CardDefaults.cardColors(containerColor = Color(0xFFFFE0E0))
+    ) {
+        Column(modifier = Modifier.padding(12.dp)) {
+            Text("⚠️ Slot Not Available", color = Color.Red, fontWeight = FontWeight.Bold, fontSize = 16.sp)
+            Text("Please select another time slot.", color = Color.Black)
+        }
+    }
+}
+
+// 🔹 Fetch available slots for a doctor on a selected date
+fun fetchAvailableSlots(firestore: FirebaseFirestore, doctorId: String, selectedDate: String, onResult: (List<String>, List<String>) -> Unit) {
+    firestore.collection("appointments")
+        .whereEqualTo("doctorId", doctorId)
+        .whereEqualTo("date", selectedDate)
+        .get()
+        .addOnSuccessListener { result ->
+            val bookedSlots = result.documents.mapNotNull { it.getString("timeSlot") }
+            val allSlots = generateSlots()
+            val availableSlots = allSlots.filterNot { bookedSlots.contains(it) }
+
+            Log.d("Firestore", "Available Slots on $selectedDate: $availableSlots")
+            Log.d("Firestore", "Booked Slots on $selectedDate: $bookedSlots")
+
+            onResult(availableSlots, bookedSlots)
+        }
+        .addOnFailureListener { e ->
+            Log.e("Firestore", "Error fetching available slots: ${e.message}")
+        }
+}
+
+// 🔹 Slot Button UI
+@Composable
+fun SlotButton(text: String, isSelected: Boolean, isUnavailable: Boolean, onClick: () -> Unit) {
     Button(
         onClick = onClick,
-        modifier = Modifier
-            .wrapContentWidth()
-            .height(40.dp)
-            .padding(horizontal = 4.dp),
         shape = RoundedCornerShape(8.dp),
         colors = ButtonDefaults.buttonColors(
-            containerColor = if (isSelected) MaterialTheme.colorScheme.primary else Color(0xFFE0F7FA)
-        )
+            containerColor = when {
+                isUnavailable -> Color.Gray
+                isSelected -> MaterialTheme.colorScheme.primary
+                else -> Color(0xFFE0F7FA)
+            }
+        ),
+        enabled = !isUnavailable
     ) {
-        Text(
-            text = text,
-            fontSize = 14.sp,
-            color = if (isSelected) Color.White else Color(0xFF00796B)
-        )
+        Text(text, fontSize = 14.sp, color = if (isUnavailable) Color.White else Color(0xFF00796B))
     }
+}
+
+// 🔹 Fetch available slots for a doctor on a selected date
+fun fetchAvailableSlots(firestore: FirebaseFirestore, doctorId: String, selectedDate: String, onResult: (List<String>) -> Unit) {
+    firestore.collection("appointments").document(doctorId)
+        .collection(selectedDate)
+        .get()
+        .addOnSuccessListener { result ->
+            val bookedSlots = result.documents.mapNotNull { it.id }
+            Log.d("Firestore", "Booked Slots on $selectedDate: $bookedSlots") // ✅ Debugging Log
+
+            val allSlots = generateSlots()
+            val availableSlots = allSlots.filterNot { bookedSlots.contains(it) }
+
+            Log.d("Firestore", "Available Slots on $selectedDate: $availableSlots") // ✅ Debugging Log
+
+            onResult(availableSlots)
+        }
+        .addOnFailureListener { e ->
+            Log.e("Firestore", "Error fetching available slots: ${e.message}")
+        }
+}
+
+// 🔹 Save appointment to Firestore
+fun saveAppointment(firestore: FirebaseFirestore, doctorId: String, selectedDate: String, selectedSlot: String) {
+    val patientId = FirebaseAuth.getInstance().currentUser?.uid ?: return
+    val appointmentData = hashMapOf(
+        "time" to selectedSlot,
+        "patientId" to patientId,
+        "status" to "Booked",
+        "bookingId" to "${doctorId}_$selectedSlot"
+    )
+
+    firestore.collection("appointments").document(doctorId)
+        .collection(selectedDate)
+        .document(selectedSlot)
+        .set(appointmentData)
+        .addOnSuccessListener {
+            Log.d("Firestore", "Appointment booked successfully!")
+        }
+        .addOnFailureListener { e ->
+            Log.e("Firestore", "Failed to book appointment: ${e.message}")
+        }
+}
+
+// 🔹 Slot Button UI
+@Composable
+fun SlotButton(text: String, isSelected: Boolean, onClick: () -> Unit) {
+    Button(
+        onClick = onClick,
+        shape = RoundedCornerShape(8.dp),
+        colors = ButtonDefaults.buttonColors(containerColor = if (isSelected) MaterialTheme.colorScheme.primary else Color(0xFFE0F7FA))
+    ) {
+        Text(text, fontSize = 14.sp, color = if (isSelected) Color.White else Color(0xFF00796B))
+    }
+}
+
+// 🔹 Show date picker
+fun showDatePicker(context: Context, onDateSelected: (String) -> Unit) {
+    val calendar = Calendar.getInstance()
+    DatePickerDialog(
+        context,
+        { _, year, month, dayOfMonth ->
+            onDateSelected(String.format("%02d-%02d-%04d", dayOfMonth, month + 1, year))
+        },
+        calendar.get(Calendar.YEAR),
+        calendar.get(Calendar.MONTH),
+        calendar.get(Calendar.DAY_OF_MONTH)
+    ).show()
+}
+
+// 🔹 Generate slots dynamically
+fun generateSlots(): List<String> {
+    val slots = mutableListOf<String>()
+    var hour = 16  // Start at 4 PM
+    var minute = 0
+    for (i in 1..20) {
+        slots.add(String.format("%02d:%02d", hour, minute))
+        minute += 20
+        if (minute >= 60) {
+            minute = 0
+            hour++
+        }
+    }
+    return slots
+}
+
+// 🔹 Get today's date
+fun getTodayDate(): String {
+    val calendar = Calendar.getInstance()
+    return String.format("%02d-%02d-%04d", calendar.get(Calendar.DAY_OF_MONTH), calendar.get(Calendar.MONTH) + 1, calendar.get(Calendar.YEAR))
 }

@@ -10,7 +10,7 @@ package com.example.getdoc.data.model
  * @property consultingFee The doctor's consulting fee. e.g. 1000, 2000, etc.
  */
 data class DoctorInfo(
-    val userId: String = "", // ✅ This should be the Firebase UID of the doctor
+    val userId: String = "",
     val about: String = "",
     val consultingFee: Int = 0,
     val degree: String = "",
@@ -21,7 +21,10 @@ data class DoctorInfo(
     val location: String = "",
     val name: String = "",
     val profileImage: String = "",
-    val rating: Double = 0.0,
+    val rating: Double = 0.0, // ✅ Store the average rating as a Double
+    val ratingsList: List<Int> = emptyList(), // ✅ Store individual ratings as List<Int> (if needed)
+    val reviews: List<String> = emptyList(),
     val specialization: String = "",
     val isApproved: Boolean = false
 )
+

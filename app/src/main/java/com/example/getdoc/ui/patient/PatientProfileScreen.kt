@@ -135,29 +135,7 @@ fun PatientProfileScreen(
     }
 
 }
-@Composable
-fun ProfileOptionItem(option: String) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 8.dp)
-            .clickable { },
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Text(
-            text = option,
-            fontSize = 16.sp,
-            color = Color.Black
-        )
-        Icon(
-            painter = painterResource(id = R.drawable.img_11), // Replace with your arrow resource
-            contentDescription = "Arrow",
-            tint = Color.Black,
-            modifier = Modifier.size(20.dp)
-        )
-    }
-}
+
 @Composable
 fun PatientProfileInfoRowComponent(
     modifier: Modifier = Modifier,

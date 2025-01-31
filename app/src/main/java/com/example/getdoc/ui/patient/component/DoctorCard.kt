@@ -23,7 +23,6 @@ import androidx.navigation.NavController
 import androidx.navigation.NavHostController
 import com.example.getdoc.R
 import com.example.getdoc.data.model.DoctorInfo
-import com.example.getdoc.navigation.DoctorDetailsScreen
 import io.appwrite.services.Storage
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext

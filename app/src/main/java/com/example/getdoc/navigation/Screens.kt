@@ -18,19 +18,13 @@ import kotlinx.serialization.Serializable
 @Serializable data object PatientAppointmentScreen
 @Serializable data object SearchDoctorScreen
 @Serializable data object AllDoctorsScreen
-@Serializable data object AboutDoctorScreen
-@Serializable data object DoctorDetailsScreen
-@Serializable data object PatientBookAppointmentScreen
-@Serializable data object AddPatientScreen
-@Serializable data object PatientPaymentScreen
-@Serializable data object PatientReviewScreen
 @Serializable data object PatientProfileScreen
 @Serializable data object PatientProfileInputScreen
 @Serializable data object AppointmentConfirmationScreen
+@Serializable data object PatientProfileUpdateScreen
 
 
-@Serializable data object PatientDetailsScreen
 @Serializable data object DoctorProfileScreen
 @Serializable data object DoctorProfileUpdateScreen
 @Serializable data object DoctorCredentialsScreen
-@Serializable data object DoctorAvailabilityScreen
+

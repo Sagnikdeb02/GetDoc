@@ -2,6 +2,8 @@ package com.example.getdoc.ui.patient.appointment
 
 import android.util.Log
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -34,6 +36,13 @@ fun DoctorDetailsScreen(
             }
         }
     }
+    var reviews by remember { mutableStateOf(listOf<Review>()) }
+
+    LaunchedEffect(doctorId) {
+        val fetchedReviews = fetchDoctorReviews(doctorId) // Fetch reviews
+        reviews = fetchedReviews // Update state with fetched reviews
+    }
+
 
     Scaffold(
         topBar = {
@@ -66,11 +75,7 @@ fun DoctorDetailsScreen(
                         Text(text = "About: ${it.about}")
                         Spacer(modifier = Modifier.height(16.dp))
 
-                        // Approval Status
-                        Text(
-                            text = if (it.isApproved) "✅ Approved Doctor" else "⏳ Pending Approval",
-                            color = if (it.isApproved) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error
-                        )
+
 
                         Spacer(modifier = Modifier.height(16.dp))
 
@@ -93,6 +98,7 @@ fun DoctorDetailsScreen(
                                 Text("Call")
                             }
                         }
+                        DoctorReviewsScreen(doctorId)
                     } ?: run {
                         // If doctor not found
                         Text(

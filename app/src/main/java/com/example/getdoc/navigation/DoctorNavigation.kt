@@ -63,17 +63,8 @@ fun DoctorNavigation(
 
                 // TODO: add patient lists in the home screen
                 DoctorHomeScreen(
-                    viewModel = DoctorViewModel(client,firestore),
-                    onHomeClick = {
-
-                    },
-                    onAppointmentsClick = {
-                        navController.navigate(DoctorCredentialsScreen)//(AppointmentConfirmationScreen)
-                    },
-                    onProfileClick = {
-                        navController.navigate(DoctorProfileScreen)
-                    },
-                    navController = navController,
+                    firestore = firestore,
+                    navController = navController
                 )
             }
 
