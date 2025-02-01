@@ -201,7 +201,9 @@ fun PatientNavigation(
                     onLogoutClick = {},
                     onEditClick = {navController.navigate(PatientProfileUpdateScreen)},
                     onOptionClick = {},
-                    patientViewModel = PatientViewModel(client, firestore)
+                    patientViewModel = PatientViewModel(client, firestore),
+                    firestore = firestore,
+                    client = client
                 )
             }
             composable<PatientAppointmentScreen> {

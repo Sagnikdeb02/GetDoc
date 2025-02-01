@@ -4,25 +4,36 @@ import Appointment
 import android.annotation.SuppressLint
 import android.util.Log
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
 import com.example.getdoc.R
+import com.example.getdoc.convertImageByteArrayToBitmap
+import com.example.getdoc.data.model.PatientInfo
+import com.example.getdoc.fetchProfilePictureDynamically
+import com.example.getdoc.fetchUsernameDynamically
+import com.example.getdoc.ui.patient.appointment.compareDates
+import com.example.getdoc.ui.theme.ui.patient.appointments.getTodayDate
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
+import io.appwrite.Client
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -31,20 +42,25 @@ import java.util.*
 @Composable
 fun DoctorHomeScreen(
     firestore: FirebaseFirestore,
-    navController: NavHostController
+    navController: NavHostController,
+    client: Client
 ) {
     var isCalendarVisible by remember { mutableStateOf(false) }
     var selectedDate by remember { mutableStateOf("") }
     var appointments by remember { mutableStateOf<List<Appointment>>(emptyList()) }
     val doctorId = FirebaseAuth.getInstance().currentUser?.uid
-
-    // Date Picker State
-    val appointmentDatePickerState = rememberDatePickerState()
-
-    // Fetch all appointments on screen load or status change
+    val todayDate = getTodayDate()
+    var username by remember { mutableStateOf("Loading...") }
+    var profileImage by remember { mutableStateOf<ByteArray?>(null) }
+    var userId = FirebaseAuth.getInstance().currentUser?.uid ?: ""
+    LaunchedEffect(userId) {
+        username = fetchUsernameDynamically(firestore, userId)
+        profileImage = fetchProfilePictureDynamically(client, firestore, userId)
+    }
+    // Fetch appointments when doctor ID or selected date changes
     LaunchedEffect(doctorId, selectedDate) {
         doctorId?.let {
-            fetchAppointments(firestore, it, selectedDate) { fetchedAppointments ->
+            fetchAppointments(firestore, it, selectedDate, todayDate) { fetchedAppointments ->
                 appointments = fetchedAppointments
             }
         }
@@ -56,10 +72,43 @@ fun DoctorHomeScreen(
             .background(Color(0xFFF0F4F7))
             .padding(16.dp)
     ) {
-        // Header
-        Header()
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            // Profile Image
+            Box(
+                modifier = Modifier
+                    .size(40.dp)
+                    .clip(CircleShape)
+                    .background(Color.LightGray),
+                contentAlignment = Alignment.Center
+            ) {
+                profileImage?.let {
+                    Image(
+                        bitmap = convertImageByteArrayToBitmap(it).asImageBitmap(),
+                        contentDescription = "Profile Picture",
+                        modifier = Modifier.size(40.dp).clip(CircleShape)
+                    )
+                } ?: Icon(
+                    painter = painterResource(id = R.drawable.profile),  // Default profile icon
+                    contentDescription = "Default Profile",
+                    modifier = Modifier.size(40.dp),
+                    tint = Color.Gray
+                )
+            }
 
-        Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.width(8.dp))
+
+            // Username
+            Text(
+                text = "Hi, $username",
+                fontSize = 18.sp,
+                fontWeight = FontWeight.Bold
+            )
+        }
+
+        Spacer(modifier = Modifier.height(30.dp))
 
         // Calendar and Appointments Title
         Row(
@@ -84,16 +133,17 @@ fun DoctorHomeScreen(
 
         Spacer(modifier = Modifier.height(8.dp))
 
-        // Show Date Picker
+        // Date Picker
+        val datePickerState = rememberDatePickerState()
+
         AnimatedVisibility(isCalendarVisible) {
             Column {
-                DatePicker(state = appointmentDatePickerState)
+                DatePicker(state = datePickerState)
                 Button(
                     onClick = {
-                        val selectedMillis = appointmentDatePickerState.selectedDateMillis
-                        if (selectedMillis != null) {
-                            selectedDate = convertMillisToDate(selectedMillis)
-                            fetchAppointments(firestore, doctorId ?: "", selectedDate) { fetchedAppointments ->
+                        datePickerState.selectedDateMillis?.let { millis ->
+                            selectedDate = convertMillisToDate(millis)
+                            fetchAppointments(firestore, doctorId ?: "", selectedDate, todayDate) { fetchedAppointments ->
                                 appointments = fetchedAppointments
                             }
                         }
@@ -108,8 +158,12 @@ fun DoctorHomeScreen(
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // Display Appointments
-        if (appointments.isEmpty()) {
+        // **Filter Appointments** (Excluding Declined + Past Dates)
+        val filteredAppointments = appointments.filter {
+            it.patientInfo.status == "approved" && compareDates(it.date, todayDate) >= 0
+        }
+
+        if (filteredAppointments.isEmpty()) {
             Text(
                 text = "No appointments available",
                 color = Color.Gray,
@@ -117,12 +171,12 @@ fun DoctorHomeScreen(
             )
         } else {
             LazyColumn {
-                items(appointments) { appointment ->
+                items(filteredAppointments) { appointment ->
                     AppointmentCard(
                         appointment = appointment,
                         onDecline = {
-                            updateAppointmentStatus(firestore, appointment.id, "Declined") {
-                                fetchAppointments(firestore, doctorId ?: "", selectedDate) { updatedAppointments ->
+                            updateAppointmentStatus(firestore, appointment.id, "declined") {
+                                fetchAppointments(firestore, doctorId ?: "", selectedDate, todayDate) { updatedAppointments ->
                                     appointments = updatedAppointments
                                 }
                             }
@@ -150,14 +204,15 @@ fun AppointmentCard(
             Text("Gender: ${appointment.patientInfo.gender}", fontSize = 14.sp, color = Color.Gray)
             Text("Age: ${appointment.patientInfo.age} years", fontSize = 14.sp, color = Color.Gray)
             Text("Relation: ${appointment.patientInfo.relation}", fontSize = 14.sp, color = Color.Gray)
-
             Text("Date: ${appointment.date}", fontSize = 14.sp, color = Color.Gray)
             Text("Time: ${appointment.timeSlot}", fontSize = 14.sp, color = Color.Gray)
-            Text("Status: ${appointment.patientInfo.status}", fontSize = 14.sp, color = Color(0xFF2E7D32))
+
+            val statusColor = Color(0xFF2E7D32) // Approved status color
+            Text("Status: ${appointment.patientInfo.status}", fontSize = 14.sp, color = statusColor)
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            // Only Decline Button (Doctors cannot approve)
+            // Show Decline Button ONLY for Approved Appointments
             Button(
                 onClick = onDecline,
                 colors = ButtonDefaults.buttonColors(containerColor = Color.Red),
@@ -169,43 +224,40 @@ fun AppointmentCard(
     }
 }
 
+// 🔹 Fetch Future Appointments, Excluding Declined Ones
 fun fetchAppointments(
     firestore: FirebaseFirestore,
     doctorId: String,
     date: String,
+    todayDate: String,
     onResult: (List<Appointment>) -> Unit
 ) {
-    val query = if (date.isEmpty()) {
-        firestore.collection("appointments")
-            .whereEqualTo("doctorId", doctorId)
-            .whereIn("patientInfo.status", listOf("approved", "pending"))
-    } else {
-        firestore.collection("appointments")
-            .whereEqualTo("doctorId", doctorId)
-            .whereEqualTo("date", date)
-            .whereIn("patientInfo.status", listOf("approved", "pending"))
-    }
-
-    query.get()
+    firestore.collection("appointments")
+        .whereEqualTo("doctorId", doctorId)
+        .whereIn("patientInfo.status", listOf("approved")) // ✅ Filter only approved appointments
+        .get()
         .addOnSuccessListener { result ->
             val appointments = result.documents.mapNotNull { document ->
                 try {
                     val appointment = document.toObject(Appointment::class.java)?.copy(id = document.id)
 
-                    // ✅ Extract patientInfo manually (to avoid Firestore conversion error)
                     val patientData = document.get("patientInfo") as? Map<String, Any>
                     val patientInfo = patientData?.let {
                         PatientInfo(
                             firstName = it["firstName"] as? String ?: "",
                             lastName = it["lastName"] as? String ?: "",
                             gender = it["gender"] as? String ?: "",
-                            age = it["age"]?.toString() ?: "0",  // ✅ Ensure age is converted properly
+                            age = it["age"]?.toString() ?: "0",
                             relation = it["relation"] as? String ?: "",
-                            status = it["status"] as? String ?: "pending"
+                            status = it["status"] as? String ?: "approved"
                         )
                     } ?: PatientInfo()
 
-                    appointment?.copy(patientInfo = patientInfo)
+                    if (compareDates(appointment?.date, todayDate) >= 0) {
+                        appointment?.copy(patientInfo = patientInfo)
+                    } else {
+                        null
+                    }
                 } catch (e: Exception) {
                     Log.e("Firestore", "Error parsing appointment: ${e.message}")
                     null
@@ -219,15 +271,19 @@ fun fetchAppointments(
         }
 }
 
-
 fun updateAppointmentStatus(
     firestore: FirebaseFirestore,
     appointmentId: String,
     newStatus: String,
     function: () -> Unit
 ) {
+    val updateData = mapOf(
+        "patientInfo.status" to newStatus,  // ✅ Update inside patientInfo
+        "status" to newStatus               // ✅ Update root status field
+    )
+
     firestore.collection("appointments").document(appointmentId)
-        .update("patientInfo.status", newStatus) // ✅ Update inside patientInfo
+        .update(updateData)
         .addOnSuccessListener {
             Log.d("Firestore", "Appointment status updated to $newStatus")
             function()
@@ -238,32 +294,25 @@ fun updateAppointmentStatus(
 }
 
 
-data class PatientInfo(
-    val firstName: String = "",
-    val lastName: String = "",
-    val gender: String = "",
-    val age: String = "0",  // ✅ Changed from Int to String to match Firestore
-    val relation: String = "",
-    val status: String = "approved"
-)
 
-
-
-
+fun convertMillisToDate(millis: Long): String {
+    val dateFormat = SimpleDateFormat("dd-MM-yyyy", Locale.getDefault())
+    return dateFormat.format(Date(millis))
+}
 @Composable
 fun Header() {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 8.dp),
-        horizontalArrangement = Arrangement.SpaceBetween,
+            .padding(vertical = 12.dp),
+        horizontalArrangement = Arrangement.Center,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Text("Doctor Home", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = Color.Black)
+        Text(
+            text = "Doctor Home",
+            fontSize = 22.sp,
+            fontWeight = FontWeight.Bold,
+            color = Color.Black
+        )
     }
-}
-
-fun convertMillisToDate(millis: Long): String {
-    val dateFormat = SimpleDateFormat("dd-MM-yyyy", Locale.getDefault())
-    return dateFormat.format(Date(millis))
 }

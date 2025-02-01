@@ -20,6 +20,7 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.example.getdoc.ui.doctor.DoctorHomeScreen
 import com.example.getdoc.ui.doctor.DoctorViewModel
+import com.example.getdoc.ui.doctor.profile.AppointmentScreen
 import com.example.getdoc.ui.doctor.profile.BottomBarComponent
 import com.example.getdoc.ui.doctor.profile.DoctorBottomNavigationBar
 import com.example.getdoc.ui.doctor.profile.DoctorProfileOption
@@ -49,14 +50,14 @@ fun DoctorNavigation(
         bottomBar = {
             DoctorBottomNavigationBar(
                 onHomeClick = { navController.navigate(DoctorHomeScreen) },
-                onAppointmentsClick = { navController.navigate(DoctorCredentialsScreen) },
+                onAppointmentsClick = { navController.navigate(AppointmentsScreen) },
                 onProfileClick = { navController.navigate(DoctorProfileScreen) }
             )
         }
     ) { innerPadding ->
         NavHost(
             navController = navController,
-            startDestination = DoctorProfileScreen,
+            startDestination = DoctorHomeScreen,
             modifier = Modifier.padding(innerPadding)
         ) {
             composable<DoctorHomeScreen> {
@@ -64,7 +65,8 @@ fun DoctorNavigation(
                 // TODO: add patient lists in the home screen
                 DoctorHomeScreen(
                     firestore = firestore,
-                    navController = navController
+                    navController = navController,
+                    client = client
                 )
             }
 
@@ -75,13 +77,13 @@ fun DoctorNavigation(
                 )
             }
 
-           composable<DoctorProfileUpdateScreen> {
-               ProfileUpdateScreen(
-                   viewModel = DoctorViewModel(client, firestore),
-                   client = client,
-                   modifier = Modifier.fillMaxSize()
-               )
-           }
+            composable<DoctorProfileUpdateScreen> {
+                ProfileUpdateScreen(
+                    viewModel = DoctorViewModel(client, firestore),
+                    client = client,
+                    modifier = Modifier.fillMaxSize()
+                )
+            }
 
             composable<DoctorProfileScreen> {
                 DoctorProfileScreen(
@@ -113,11 +115,20 @@ fun DoctorNavigation(
 
                     },
                     modifier = modifier,
-                    onEditClick = {navController.navigate(DoctorProfileUpdateScreen)}
+                    onEditClick = { navController.navigate(DoctorProfileUpdateScreen) },
+                    firestore = firestore,
+                    client = client
                 )
+            }
+
+            composable<AppointmentsScreen> {
+                AppointmentScreen(
+                    firestore = firestore,
+                    navController = navController
+                )
+
             }
         }
     }
-
 }
 

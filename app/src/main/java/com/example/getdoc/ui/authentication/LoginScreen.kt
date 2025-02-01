@@ -66,26 +66,22 @@ fun LogInScreen(
             is AuthState.Authenticated -> {
                 val userRole = (authState as AuthState.Authenticated).role
                 when (userRole) {
-                    Role.ADMIN -> {
-                       onLoginSuccess()
-                    }
-                    Role.DOCTOR -> {
-                       onLoginSuccess()
-                    }
-                    Role.PATIENT -> {
-                       onLoginSuccess()
-                    }
+                    Role.ADMIN -> onLoginSuccess()
+                    Role.DOCTOR -> onLoginSuccess()
+                    Role.PATIENT -> onLoginSuccess()
                 }
             }
+            is AuthState.Error -> {
+                Toast.makeText(context, "Login failed: ${(authState as AuthState.Error).message}", Toast.LENGTH_LONG).show()
+            }
+            AuthState.PendingApproval -> {
+                Toast.makeText(context, "Waiting for admin approval", Toast.LENGTH_LONG).show()
+            }
 
-            is AuthState.Error -> {}
-            AuthState.Loading -> {}
-            AuthState.PendingApproval -> {}
-            is AuthState.Rejected -> {}
-            AuthState.Uninitialized -> {}
-            AuthState.VerificationEmailSent -> {}
+            else -> {}
         }
     }
+
 
 
 

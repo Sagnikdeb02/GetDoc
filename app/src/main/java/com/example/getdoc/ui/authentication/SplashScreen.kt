@@ -20,9 +20,13 @@ import kotlinx.coroutines.delay
 @Composable
 fun SplashScreen(
     modifier: Modifier = Modifier,
-    onSplashComplete: () -> Unit
+    onSplashComplete: () -> Unit,
+    authViewModel: AuthViewModel
 ) {
+
+
     LaunchedEffect(Unit) {
+        authViewModel.loadUserData() // Ensures user is authenticated on app restart
         delay(2000) // Simulate splash screen delay
         onSplashComplete()
     }

@@ -44,19 +44,44 @@ fun AppNavigation(modifier: Modifier = Modifier, client: Client, firestore: Fire
                         is AuthState.Authenticated -> {
                             val userRole = (authState as AuthState.Authenticated).role
                             when (userRole) {
-                                Role.ADMIN -> navController.navigate(AdminHomeScreen) { popUpTo(0) { inclusive = true } }
-                                Role.DOCTOR -> navController.navigate(DoctorHomeScreen) { popUpTo(0) { inclusive = true } }
-                                Role.PATIENT -> navController.navigate(PatientHomeScreen) { popUpTo(0) { inclusive = true } }
+                                Role.ADMIN -> navController.navigate(AdminHomeScreen) {
+                                    popUpTo(0) {
+                                        inclusive = true
+                                    }
+                                }
+
+                                Role.DOCTOR -> navController.navigate(DoctorHomeScreen) {
+                                    popUpTo(0) {
+                                        inclusive = true
+                                    }
+                                }
+
+                                Role.PATIENT -> navController.navigate(PatientHomeScreen) {
+                                    popUpTo(
+                                        0
+                                    ) { inclusive = true }
+                                }
                             }
                         }
+
                         is AuthState.Error, AuthState.Uninitialized -> {
                             navController.navigate(LoginScreen) { popUpTo(0) { inclusive = true } }
                         }
-                        AuthState.Loading -> { /* Stay on splash screen */ }
-                        AuthState.VerificationEmailSent -> navController.navigate(WaitingForVerificationScreen)
-                        AuthState.PendingApproval, is AuthState.Rejected -> navController.navigate(LoginScreen)
+
+                        AuthState.Loading -> { /* Stay on splash screen */
+                        }
+
+                        AuthState.VerificationEmailSent -> navController.navigate(
+                            WaitingForVerificationScreen
+                        )
+
+                        AuthState.PendingApproval, is AuthState.Rejected -> navController.navigate(
+                            LoginScreen
+                        )
                     }
-                }
+                },
+                modifier = modifier,
+                authViewModel = AuthViewModel()
             )
         }
 
@@ -158,11 +183,6 @@ fun AppNavigation(modifier: Modifier = Modifier, client: Client, firestore: Fire
             )
         }
 
-//        doctorNavigation(
-//            client = client,
-//            firestore = firestore,
-//            navController = navController
-//        )
 
         composable<PatientHomeScreen> {
             PatientNavigation(

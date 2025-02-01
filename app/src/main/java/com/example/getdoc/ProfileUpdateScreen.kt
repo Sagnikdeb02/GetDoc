@@ -167,7 +167,7 @@ private suspend fun uploadProfileData(
             if (imageFile != null) {
                 val inputFile = InputFile.fromFile(imageFile)
                 val result = storage.createFile(
-                    bucketId = "your-bucket-id",
+                    bucketId = "678dd5d30039f0a22428",
                     fileId = ID.unique(),
                     file = inputFile
                 )

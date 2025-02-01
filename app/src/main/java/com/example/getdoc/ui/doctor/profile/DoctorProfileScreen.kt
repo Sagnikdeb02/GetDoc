@@ -1,5 +1,6 @@
 package com.example.getdoc.ui.doctor.profile
 
+import android.annotation.SuppressLint
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -10,6 +11,7 @@ import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.ExitToApp
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.ui.layout.ContentScale
@@ -18,19 +20,30 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import com.example.getdoc.R
+import com.example.getdoc.convertImageByteArrayToBitmap
+import com.example.getdoc.fetchProfilePictureDynamically
+import com.example.getdoc.fetchUsernameDynamically
 import com.example.getdoc.navigation.LoginScreen
 import com.example.getdoc.ui.authentication.AuthenticationViewModel
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FirebaseFirestore
+import io.appwrite.Client
 import kotlinx.coroutines.launch
 
 
@@ -44,43 +57,31 @@ enum class DoctorProfileOption(
     HELP("Help")
 }
 
+@SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @Composable
 fun DoctorProfileScreen(
     modifier: Modifier = Modifier,
     onLogoutClick: () -> Unit,
     onOptionClick: (DoctorProfileOption) -> Unit,
-    onEditClick: () -> Unit
+    onEditClick: () -> Unit,
+    firestore:FirebaseFirestore,
+    client: Client
 ) {
     // TODO: Remove this after implementing authentication
     val viewModel: AuthenticationViewModel = viewModel()
     val context = LocalContext.current
+    var username by remember { mutableStateOf("Loading...") }
+    var profileImage by remember { mutableStateOf<ByteArray?>(null) }
+    var userId = FirebaseAuth.getInstance().currentUser?.uid ?: ""
+    LaunchedEffect(userId) {
+        username = fetchUsernameDynamically(firestore, userId)
+        profileImage = fetchProfilePictureDynamically(client, firestore, userId)
+    }
     LaunchedEffect(Unit) {
         viewModel.init(context)
     }
 
     Scaffold(
-        modifier = modifier,
-        topBar = {
-            // Header
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(60.dp)
-                    .background(Color(0xFF1565C0))
-                    .padding(horizontal = 8.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                Text(
-                    text = "Profile",
-                    fontSize = 24.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = Color.White,
-                    modifier = Modifier.padding(10.dp)
-                )
-                Image(painter = painterResource(id = R.drawable.img_9), contentDescription = "")
-            }
-        },
         bottomBar = {
             // Logout Section
             LogoutSectionComponent(
@@ -90,10 +91,62 @@ fun DoctorProfileScreen(
     ) {
         Column(
             modifier = Modifier
-                .fillMaxSize()
-                .padding(it)
+                .fillMaxWidth()
+                .padding(vertical = 16.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            ProfileInfoRowComponent(
+            // 🔹 Profile Heading
+            Text(
+                text = "Profile",
+                fontSize = 30.sp,  // Increased Font Size
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.primary
+            )
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // 🔹 Profile Section
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                // 🔹 Profile Image
+                Box(
+                    modifier = Modifier
+                        .size(100.dp)  // Increased Profile Picture Size
+                        .clip(CircleShape)
+                        .background(Color.LightGray),
+                    contentAlignment = Alignment.Center
+                ) {
+                    profileImage?.let {
+                        Image(
+                            bitmap = convertImageByteArrayToBitmap(it).asImageBitmap(),
+                            contentDescription = "Profile Picture",
+                            modifier = Modifier
+                                .size(100.dp)  // Adjusted Size
+                                .clip(CircleShape)
+                        )
+                    } ?: Icon(
+                        painter = painterResource(id = R.drawable.profile),  // Default Profile Icon
+                        contentDescription = "Default Profile",
+                        modifier = Modifier.size(70.dp),  // Adjusted Default Icon Size
+                        tint = Color.Gray
+                    )
+                }
+
+                Spacer(modifier = Modifier.width(16.dp))
+
+                // 🔹 Username Display
+                Text(
+                    text = username,
+                    fontSize = 24.sp,  // Increased Font Size
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+                Spacer(modifier = Modifier.height(20.dp))
+            }
+            DoctorProfileInfoRowComponent(
                 modifier = Modifier.padding(16.dp),
                 onEditClick = { onEditClick() }
             )
@@ -116,57 +169,28 @@ fun DoctorProfileScreen(
  * Profile Info Row component
  */
 @Composable
-fun ProfileInfoRowComponent(
+fun DoctorProfileInfoRowComponent(
     modifier: Modifier = Modifier,
     onEditClick: () -> Unit
 ) {
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .size(80.dp),
+            .height(80.dp)
+            .padding(horizontal = 16.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceBetween
     ) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Image(
-                painter = painterResource(id = R.drawable.img_7),
-                contentDescription = "Profile Picture",
-                modifier = Modifier
-                    .size(70.dp)
-                    .clip(CircleShape),
-                contentScale = ContentScale.Crop
-            )
-
-            Spacer(modifier = Modifier.width(16.dp))
-
-            Column {
-                Text(
-                    text = "",
-                    fontSize = 20.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = Color.Black
-                )
-                Text(
-                    text = "",
-                    fontSize = 16.sp,
-                    color = Color.Gray
-                )
-                Text(
-                    text = "",
-                    fontSize = 16.sp,
-                    color = Color.Gray
-                )
-            }
-        }
+        Spacer(modifier = Modifier.width(10.dp))
 
         // Edit Icon
         Icon(
             imageVector = Icons.Default.Edit,
             contentDescription = "Edit",
             modifier = Modifier
-                .size(24.dp)
+                .size(35.dp)
                 .clickable { onEditClick() },
-            tint = Color.Black,
+            tint = Color.Black
         )
     }
 }

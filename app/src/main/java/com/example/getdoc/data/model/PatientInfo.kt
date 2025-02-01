@@ -20,5 +20,10 @@ data class PatientInfo(
     val lastName: String = "",
     val age: String = "",
     val gender: String = "",
-    val username: String = ""
+    val username: String = "",
+    val relation: String = "Self",
+    val dob: String = "",
+    val profileImageUrl: String = "",
+    val location: String = "",
+    val status: String = "pending"
 )
