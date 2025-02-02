@@ -26,7 +26,7 @@ import java.util.regex.Pattern
 @Composable
 fun LogInScreen(
     viewModel: AuthViewModel,
-    onLoginSuccess: () -> Unit,
+    onLoginSuccess: (role: Role) -> Unit,
     onSignUpClick: () -> Unit,
 ) {
     val context = LocalContext.current
@@ -45,15 +45,9 @@ fun LogInScreen(
             is AuthState.Authenticated -> {
                 val userRole = (authState as AuthState.Authenticated).role
                 when (userRole) {
-                    Role.ADMIN -> {
-                        onLoginSuccess()
-                    }
-                    Role.DOCTOR -> {
-                        onLoginSuccess()
-                    }
-                    Role.PATIENT -> {
-                        onLoginSuccess()
-                    }
+                    Role.ADMIN -> onLoginSuccess(Role.ADMIN)
+                    Role.DOCTOR -> onLoginSuccess(Role.DOCTOR)
+                    Role.PATIENT -> onLoginSuccess(Role.PATIENT)
                 }
             }
 

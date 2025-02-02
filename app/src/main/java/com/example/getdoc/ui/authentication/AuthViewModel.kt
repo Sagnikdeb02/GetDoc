@@ -81,54 +81,8 @@ class AuthViewModel : ViewModel() {
                             _authState.value = AuthState.Error("User data not found")
                             return@addOnSuccessListener
                         }
+                        loadUserData()
 
-                        val roleString = document.getString("role") ?: Role.PATIENT.name
-                        val role = Role.valueOf(roleString)
-
-                        when (role) {
-                            Role.ADMIN -> {
-                                _authState.value = AuthState.Authenticated(user, role)
-                                Log.d("AuthViewModel", "Admin logged in")
-                            }
-
-                            Role.DOCTOR -> {
-                                db.collection("doctors").document(userEmail).get()
-                                    .addOnSuccessListener { doctorDocument ->
-                                        if (doctorDocument.exists()) {
-                                            val status = doctorDocument.getString("status") ?: "pending"
-                                            when (status) {
-                                                "approved" -> {
-                                                    _authState.value = AuthState.Authenticated(user, role)
-                                                    Log.d("AuthViewModel", "Doctor Approved: ${doctorDocument.data}")
-                                                }
-                                                "pending" -> {
-                                                    _authState.value = AuthState.PendingApproval
-                                                    Log.d("AuthViewModel", "Doctor Pending Approval")
-                                                }
-                                                "declined" -> {
-                                                    val rejectionReason = doctorDocument.getString("rejectionReason") ?: "No reason provided"
-                                                    _authState.value = AuthState.Rejected(rejectionReason)
-                                                    Log.d("AuthViewModel", "Doctor Rejected: $rejectionReason")
-                                                }
-                                            }
-                                        } else {
-                                            _authState.value = AuthState.Error("Doctor profile not found")
-                                        }
-                                    }
-                            }
-
-                            Role.PATIENT -> {
-                                db.collection("patients").document(userEmail).get()
-                                    .addOnSuccessListener { patientDocument ->
-                                        if (patientDocument.exists()) {
-                                            _authState.value = AuthState.Authenticated(user, role)
-                                            Log.d("AuthViewModel", "Patient data: ${patientDocument.data}")
-                                        } else {
-                                            _authState.value = AuthState.Error("Patient profile not found")
-                                        }
-                                    }
-                            }
-                        }
                     }
                     .addOnFailureListener {
                         _authState.value = AuthState.Error("Error fetching user role: ${it.message}")
@@ -218,12 +172,9 @@ class AuthViewModel : ViewModel() {
     }
 
 
-    fun signOutUser(navController: NavHostController) {
+    fun signOutUser() {
         firebaseAuth.signOut()
         _authState.value = AuthState.Uninitialized
-        navController.navigate(LoginScreen) {
-            popUpTo(0) { inclusive = true }
-        }
     }
 
 }

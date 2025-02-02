@@ -1,4 +1,5 @@
 package com.example.getdoc.ui.patient
+
 import android.annotation.SuppressLint
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -57,6 +58,7 @@ enum class PatientProfileOption(
     ABOUT_US("About Us"),
     HELP("Help")
 }
+
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -79,8 +81,7 @@ fun PatientProfileScreen(
 
     Scaffold(
 
-
-                bottomBar = {
+        bottomBar = {
             // Logout Section
             LogoutSectionComponent(
                 onLogoutClick = onLogoutClick
@@ -105,7 +106,7 @@ fun PatientProfileScreen(
 
             // 🔹 Profile Section
             Column(
-                 horizontalAlignment = Alignment.CenterHorizontally,
+                horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.Center,
                 modifier = Modifier.fillMaxWidth()
             ) {
@@ -162,7 +163,8 @@ fun PatientProfileScreen(
             }
         }
 
-}}
+    }
+}
 
 
 @Composable
@@ -192,9 +194,7 @@ fun PatientProfileInfoRowComponent(
     ) {
 
 
-            Spacer(modifier = Modifier.width(10.dp))
-
-
+        Spacer(modifier = Modifier.width(10.dp))
 
 
         // Edit Icon
@@ -206,5 +206,6 @@ fun PatientProfileInfoRowComponent(
                 .clickable { onEditClick() },
             tint = Color.Black
         )
-    }}
+    }
+}
 

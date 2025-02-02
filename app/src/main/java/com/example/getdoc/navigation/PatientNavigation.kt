@@ -5,13 +5,18 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.navigation
 import androidx.navigation.compose.rememberNavController
+import com.example.getdoc.ui.authentication.AuthState
+import com.example.getdoc.ui.authentication.AuthViewModel
 import com.example.getdoc.ui.doctor.DoctorViewModel
 import com.example.getdoc.ui.doctor.profile.DoctorBottomNavigationBar
 import com.example.getdoc.ui.doctor.profile.ProfileUpdateScreen
@@ -42,10 +47,18 @@ data object PatientNavigation
 fun PatientNavigation(
     client: Client,
     firestore: FirebaseFirestore,
+    authViewModel: AuthViewModel,
     modifier: Modifier = Modifier,
+    onLogoutClick: () -> Unit
 ) {
 
     val navController = rememberNavController()
+    val authState by authViewModel.authState.collectAsStateWithLifecycle()
+    LaunchedEffect(authState) {
+        if (authState is AuthState.Uninitialized) {
+            onLogoutClick()
+        }
+    }
 
     Scaffold(
         modifier = modifier,
@@ -177,7 +190,9 @@ fun PatientNavigation(
             }
             composable<PatientProfileScreen> {
                 PatientProfileScreen(
-                    onLogoutClick = {},
+                    onLogoutClick = {
+                        authViewModel.signOutUser()
+                    },
                     onEditClick = {navController.navigate(PatientProfileUpdateScreen)},
                     onOptionClick = {},
                     patientViewModel = PatientViewModel(client, firestore),

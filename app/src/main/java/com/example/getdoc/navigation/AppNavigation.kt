@@ -24,6 +24,7 @@ import com.example.getdoc.ui.authentication.doctor_registration.AdminHomeScreen
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import io.appwrite.Client
+import kotlinx.coroutines.delay
 
 @Composable
 fun AppNavigation(modifier: Modifier = Modifier, client: Client, firestore: FirebaseFirestore) {
@@ -38,6 +39,7 @@ fun AppNavigation(modifier: Modifier = Modifier, client: Client, firestore: Fire
     NavHost(navController = navController, startDestination = SplashScreen) {
         composable<SplashScreen> {
             LaunchedEffect(authState) {
+                delay(1000)
                 when (authState) {
                     is AuthState.Authenticated -> {
                         val userRole = (authState as AuthState.Authenticated).role
@@ -65,6 +67,7 @@ fun AppNavigation(modifier: Modifier = Modifier, client: Client, firestore: Fire
                     AuthState.PendingApproval, is AuthState.Rejected -> navController.navigate(LoginScreen)
                 }
             }
+            SplashScreen()
         }
         composable<WaitingForVerificationScreen> {
             LaunchedEffect(authState) {
@@ -98,8 +101,11 @@ fun AppNavigation(modifier: Modifier = Modifier, client: Client, firestore: Fire
             LogInScreen(
                 viewModel = authViewModel,
                 onLoginSuccess = {
-
-                        authViewModel.loadUserData() // Ensure auth state is updated after login
+                    when (it) {
+                        Role.ADMIN -> navController.navigate(AdminHomeScreen)
+                        Role.DOCTOR -> navController.navigate(DoctorHomeScreen)
+                        Role.PATIENT -> navController.navigate(PatientHomeScreen)
+                    }
 
                 },
                 onSignUpClick = { navController.navigate(ChooseRoleScreen) }
@@ -154,7 +160,13 @@ fun AppNavigation(modifier: Modifier = Modifier, client: Client, firestore: Fire
         composable<PatientHomeScreen> {
             PatientNavigation(
                 client = client,
-                firestore = firestore
+                firestore = firestore,
+                authViewModel = authViewModel,
+                onLogoutClick = {
+                    navController.navigate(LoginScreen) {
+                        popUpTo(0) { inclusive = true }
+                    }
+                }
             )
         }
     }}
