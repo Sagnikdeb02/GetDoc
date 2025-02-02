@@ -11,6 +11,7 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
@@ -47,6 +48,7 @@ import io.appwrite.Client
 import io.appwrite.services.Storage
 
 
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PatientHomeScreen(
@@ -54,16 +56,17 @@ fun PatientHomeScreen(
     viewModel: PatientViewModel,
     firestore: FirebaseFirestore,
     client: Client,
-    onHomeClick: () -> Unit,
-    onAppointmentsClick: () -> Unit,
-    onDoctorsClick: () -> Unit,
-    onProfileClick: () -> Unit,
-    onSearch: (String) -> Unit,
     navController: NavController
 ) {
+    var searchQuery by remember { mutableStateOf("") }
+    var selectedSpecialization by remember { mutableStateOf("All") }
+    val specializations = listOf("All", "Cardiology", "Dermatology", "Neurology", "Orthopedics")
+    val doctors by viewModel.doctorList.collectAsState()
+    val isLoading by viewModel.isLoading.collectAsState()
     var username by remember { mutableStateOf("Loading...") }
     var profileImage by remember { mutableStateOf<ByteArray?>(null) }
     var userId = FirebaseAuth.getInstance().currentUser?.uid ?: ""
+
     LaunchedEffect(userId) {
         username = fetchUsernameDynamically(firestore, userId)
         profileImage = fetchProfilePictureDynamically(client, firestore, userId)
@@ -92,15 +95,13 @@ fun PatientHomeScreen(
                                     modifier = Modifier.size(40.dp).clip(CircleShape)
                                 )
                             } ?: Icon(
-                                painter = painterResource(id = R.drawable.profile),  // Default profile icon
+                                painter = painterResource(id = R.drawable.profile),
                                 contentDescription = "Default Profile",
                                 modifier = Modifier.size(40.dp),
                                 tint = Color.Gray
                             )
                         }
-
                         Spacer(modifier = Modifier.width(8.dp))
-
                         // Username
                         Text(
                             text = "Hi, $username",
@@ -111,30 +112,42 @@ fun PatientHomeScreen(
                 }
             )
         }
-    ){ paddingValues ->
+    ) { paddingValues ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
         ) {
-
-            Search(query = homeState.searchQuery,  onQueryChange = onSearch)
-            SpecialtiesSection()
+            Search(query = searchQuery, onQueryChange = { searchQuery = it })
+            FilterBar(selectedSpecialization, specializations) { selectedSpecialization = it }
             TopDoctorsSection(
                 navController,
                 viewModel,
-                client = client
+                client = client,
+                firestore
             )
         }
     }
 }
 
 @Composable
-fun Search(
-    query: String,
-    onQueryChange: (String) -> Unit,
-    modifier: Modifier = Modifier
-) {
+fun FilterBar(selected: String, specializations: List<String>, onFilterSelected: (String) -> Unit) {
+    Row(
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        specializations.forEach { spec ->
+            FilterChip(
+                selected = selected == spec,
+                onClick = { onFilterSelected(spec) },
+                label = { Text(spec) }
+            )
+        }
+    }
+}
+
+@Composable
+fun Search(query: String, onQueryChange: (String) -> Unit, modifier: Modifier = Modifier) {
     OutlinedTextField(
         value = query,
         onValueChange = onQueryChange,
@@ -149,76 +162,12 @@ fun Search(
 }
 
 
-
-
 @Composable
-fun SpecialtiesSection() {
-    Column(
-        modifier = Modifier.padding(16.dp)
-    ) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
-            Text(text = "Top Specialties", style = MaterialTheme.typography.headlineSmall)
-            Text(text = "View All", color = MaterialTheme.colorScheme.primary)
-        }
-        Spacer(modifier = Modifier.height(8.dp))
-        Row(
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            repeat(4) {
-                Card(
-                    modifier = Modifier
-                        .size(80.dp)
-                        .weight(1f),
-                    elevation = CardDefaults.cardElevation(4.dp)
-                ) {
-                    Column(
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.Center,
-                        modifier = Modifier.fillMaxSize()
-                    ) {
-                        Image(
-                            painter = painterResource(id = R.drawable.ic_launcher_foreground), // Placeholder image
-                            contentDescription = null,
-                            modifier = Modifier.size(40.dp)
-                        )
-                        Text(text = "Specialty", fontSize = 12.sp)
-                    }
-                }
-            }
-        }
-        Spacer(modifier = Modifier.height(8.dp))
-        Row(
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-
-                Card(
-                    modifier = Modifier
-                        .size(80.dp)
-                        .weight(1f),
-                    elevation = CardDefaults.cardElevation(4.dp)
-                ) {
-                    Column(
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.Center,
-                        modifier = Modifier.fillMaxSize()
-                    ) {
-                        Image(
-                            painter = painterResource(id = R.drawable.ic_launcher_foreground), // Placeholder image
-                            contentDescription = null,
-                            modifier = Modifier.size(40.dp)
-                        )
-                        Text(text = "Specialty", fontSize = 12.sp)
-                    }
-                }
-            }
-        }
-    }
-
-@Composable
-fun TopDoctorsSection(navController: NavController, viewModel: PatientViewModel, client: Client) {
+fun TopDoctorsSection(
+    navController: NavController,
+    viewModel: PatientViewModel,
+    client: Client,
+    firestore: FirebaseFirestore) {
     val doctors by viewModel.doctorList.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
     val storage = Storage(client)
@@ -247,9 +196,10 @@ fun TopDoctorsSection(navController: NavController, viewModel: PatientViewModel,
                 items(doctors) { doctor ->
                     DoctorCard(
                         doctor = doctor,
-                        storage = Storage(client),
                         bucketId = "678e94b20023a8f92be0",
-                        navController = navController // Pass NavController here
+                        navController = navController ,
+                        client = client,
+                        firestore = firestore
                     )
 
                 }

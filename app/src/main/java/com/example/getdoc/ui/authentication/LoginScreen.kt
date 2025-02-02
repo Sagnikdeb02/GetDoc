@@ -1,11 +1,9 @@
 package com.example.getdoc.ui.authentication
 
-import android.content.Context
-import android.widget.Toast
+
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.text.ClickableText
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -14,35 +12,16 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.platform.LocalContext
-import androidx.datastore.preferences.core.booleanPreferencesKey
-import androidx.datastore.preferences.core.edit
-import androidx.datastore.preferences.core.stringPreferencesKey
-import androidx.datastore.preferences.preferencesDataStore
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.navigation.NavHostController
-import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.firestore.FirebaseFirestore
 import com.example.getdoc.R
-import com.example.getdoc.navigation.AdminHomeScreen
-import com.example.getdoc.navigation.ChooseRoleScreen
-import com.example.getdoc.navigation.DoctorHomeScreen
-import com.example.getdoc.navigation.LoginScreen
-import com.example.getdoc.navigation.PatientHomeScreen
-import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.launch
 import java.util.regex.Pattern
 
 
-// Preference keys
-private val IS_LOGGED_IN_KEY = booleanPreferencesKey("is_logged_in")
-private val USER_ROLE_KEY = stringPreferencesKey("user_role")
-private val USER_EMAIL_KEY = stringPreferencesKey("user_email")
 
 @Composable
 fun LogInScreen(
@@ -66,22 +45,26 @@ fun LogInScreen(
             is AuthState.Authenticated -> {
                 val userRole = (authState as AuthState.Authenticated).role
                 when (userRole) {
-                    Role.ADMIN -> onLoginSuccess()
-                    Role.DOCTOR -> onLoginSuccess()
-                    Role.PATIENT -> onLoginSuccess()
+                    Role.ADMIN -> {
+                        onLoginSuccess()
+                    }
+                    Role.DOCTOR -> {
+                        onLoginSuccess()
+                    }
+                    Role.PATIENT -> {
+                        onLoginSuccess()
+                    }
                 }
             }
-            is AuthState.Error -> {
-                Toast.makeText(context, "Login failed: ${(authState as AuthState.Error).message}", Toast.LENGTH_LONG).show()
-            }
-            AuthState.PendingApproval -> {
-                Toast.makeText(context, "Waiting for admin approval", Toast.LENGTH_LONG).show()
-            }
 
-            else -> {}
+            is AuthState.Error -> {}
+            AuthState.Loading -> {}
+            AuthState.PendingApproval -> {}
+            is AuthState.Rejected -> {}
+            AuthState.Uninitialized -> {}
+            AuthState.VerificationEmailSent -> {}
         }
     }
-
 
 
 
@@ -192,83 +175,9 @@ fun LogInScreen(
 }
 
 
-// Save user session in DataStore
-suspend fun saveLoginSession(context: Context, email: String, role: String) {
-    context.dataStore.edit { preferences ->
-        preferences[IS_LOGGED_IN_KEY] = true
-        preferences[USER_ROLE_KEY] = role
-        preferences[USER_EMAIL_KEY] = email
-    }
-}
 
 // Helper function to validate email format
 fun isValidEmail(email: String): Boolean {
     val emailPattern = "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$"
     return Pattern.compile(emailPattern).matcher(email).matches()
-}
-
-fun signInAdmin(
-    email: String,
-    password: String,
-    context: Context,
-    onSignInSuccess: (String) -> Unit
-) {
-    if (email.trim().lowercase() == "admin@getdoc.com" && password == "admin123") {
-        onSignInSuccess("admin")
-        Toast.makeText(context, "Admin login successful!", Toast.LENGTH_LONG).show()
-    } else {
-        Toast.makeText(context, "Invalid admin credentials", Toast.LENGTH_LONG).show()
-    }
-}
-
-fun signInDoctor(
-    firestore: FirebaseFirestore,
-    email: String,
-    password: String,
-    context: Context,
-    onSignInSuccess: (String) -> Unit
-) {
-    firestore.collection("doctor_registrations")
-        .whereEqualTo("email", email)
-        .whereEqualTo("password", password) // Checking directly as per your requirements
-        .get()
-        .addOnSuccessListener { documents ->
-            if (!documents.isEmpty) {
-                val document = documents.documents[0]
-                val status = document.getString("status") ?: "pending"
-                if (status == "approved") {
-                    onSignInSuccess("doctor")
-                    Toast.makeText(context, "Doctor login successful!", Toast.LENGTH_LONG).show()
-                } else {
-                    Toast.makeText(context, "Your registration is pending approval", Toast.LENGTH_LONG).show()
-                }
-            } else {
-                Toast.makeText(context, "Doctor not found or incorrect credentials", Toast.LENGTH_LONG).show()
-            }
-        }
-        .addOnFailureListener {
-            Toast.makeText(context, "Error fetching registration", Toast.LENGTH_LONG).show()
-        }
-}
-
-fun signInPatient(
-    auth: FirebaseAuth,
-    email: String,
-    password: String,
-    context: Context,
-    onSignInSuccess: (String) -> Unit
-) {
-    auth.signInWithEmailAndPassword(email, password).addOnCompleteListener { task ->
-        if (task.isSuccessful) {
-            val user = auth.currentUser
-            if (user?.isEmailVerified == true) {
-                onSignInSuccess("patient")
-                Toast.makeText(context, "Patient login successful!", Toast.LENGTH_LONG).show()
-            } else {
-                Toast.makeText(context, "Please verify your email first", Toast.LENGTH_LONG).show()
-            }
-        } else {
-            Toast.makeText(context, "Sign-in failed: ${task.exception?.message}", Toast.LENGTH_LONG).show()
-        }
-    }
 }

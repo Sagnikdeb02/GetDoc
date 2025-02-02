@@ -19,6 +19,8 @@ import com.example.getdoc.ui.patient.TopDoctorsSection
 import com.example.getdoc.ui.patient.appointment.AddPatientScreen
 
 import com.google.firebase.FirebaseApp
+import com.google.firebase.appcheck.FirebaseAppCheck
+import com.google.firebase.appcheck.playintegrity.PlayIntegrityAppCheckProviderFactory
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import io.appwrite.Client
@@ -26,6 +28,7 @@ import io.appwrite.Client
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
+
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         FirebaseApp.initializeApp(this)  // Initialize Firebase
@@ -33,36 +36,7 @@ class MainActivity : ComponentActivity() {
         val firestore = FirebaseFirestore.getInstance()
         val client = Client(this).setProject("678dd5bc0024c854ef06")
         setContent {
-
            AppNavigation(Modifier ,client,firestore)
-
-//            MyCredentialsPageComponent(
-//                onHomeClick = {
-//
-//                },
-//                onAppointmentsClick = {
-//                },
-//                onProfileClick = {
-//
-//                }
-//            )
-
-
-//            AddPatientScreen(
-//                viewModel= PatientViewModel(client,firestore),
-//                onBackClick = {}
-//            )
-
-
-//            PatientProfileInputScreen(
-//                viewModel= PatientViewModel(client,firestore),
-//          )
-
-//           DoctorProfileInputScreen(
-//               viewModel= DoctorViewModel(client,firestore),
-//           )
-
-  //        TopDoctorsSection(PatientViewModel(client,firestore),client)
         }
     }
 }

@@ -29,12 +29,8 @@ class AuthViewModel : ViewModel() {
 
 
     init {
-        firebaseAuth.addAuthStateListener { firebaseAuth ->
-            val user = firebaseAuth.currentUser
-            if (user != null) {
-                loadUserData()
-            }
-        }
+
+        loadUserData()
     }
 
     fun ensureAdminExists() {
@@ -65,94 +61,83 @@ class AuthViewModel : ViewModel() {
                 }
         }
     }
+
     fun signInUser(email: String, password: String) {
         _authState.value = AuthState.Loading
 
         firebaseAuth.signInWithEmailAndPassword(email, password)
             .addOnSuccessListener { authResult ->
                 val user = authResult.user
+                val userEmail = user?.email
 
-                if (user == null || user.email.isNullOrEmpty()) {
+                if (userEmail == null) {
                     _authState.value = AuthState.Error("Authentication failed: No email found")
                     return@addOnSuccessListener
                 }
 
-                val userEmail = user.email!!
+                db.collection("users").document(userEmail).get()
+                    .addOnSuccessListener { document ->
+                        if (!document.exists()) {
+                            _authState.value = AuthState.Error("User data not found")
+                            return@addOnSuccessListener
+                        }
 
-                // 🔹 Ensure FirebaseAuth reloads the latest user session
-                user.reload().addOnCompleteListener { reloadTask ->
-                    if (!reloadTask.isSuccessful) {
-                        _authState.value = AuthState.Error("Failed to reload user data")
-                        return@addOnCompleteListener
-                    }
+                        val roleString = document.getString("role") ?: Role.PATIENT.name
+                        val role = Role.valueOf(roleString)
 
-                    db.collection("users").document(userEmail).get()
-                        .addOnSuccessListener { document ->
-                            if (!document.exists()) {
-                                _authState.value = AuthState.Error("User data not found")
-                                return@addOnSuccessListener
+                        when (role) {
+                            Role.ADMIN -> {
+                                _authState.value = AuthState.Authenticated(user, role)
+                                Log.d("AuthViewModel", "Admin logged in")
                             }
 
-                            val roleString = document.getString("role") ?: Role.PATIENT.name
-                            val role = Role.valueOf(roleString)
-
-                            when (role) {
-                                Role.ADMIN -> {
-                                    _authState.value = AuthState.Authenticated(user, role)
-                                    Log.d("AuthViewModel", "✅ Admin logged in successfully")
-                                }
-
-                                Role.DOCTOR -> {
-                                    db.collection("doctors").document(userEmail).get()
-                                        .addOnSuccessListener { doctorDocument ->
-                                            if (!doctorDocument.exists()) {
-                                                _authState.value = AuthState.Error("Doctor profile not found")
-                                                return@addOnSuccessListener
-                                            }
-
+                            Role.DOCTOR -> {
+                                db.collection("doctors").document(userEmail).get()
+                                    .addOnSuccessListener { doctorDocument ->
+                                        if (doctorDocument.exists()) {
                                             val status = doctorDocument.getString("status") ?: "pending"
                                             when (status) {
                                                 "approved" -> {
                                                     _authState.value = AuthState.Authenticated(user, role)
-                                                    Log.d("AuthViewModel", "✅ Doctor Approved & logged in")
+                                                    Log.d("AuthViewModel", "Doctor Approved: ${doctorDocument.data}")
                                                 }
                                                 "pending" -> {
                                                     _authState.value = AuthState.PendingApproval
-                                                    Log.d("AuthViewModel", "⏳ Doctor Pending Approval")
+                                                    Log.d("AuthViewModel", "Doctor Pending Approval")
                                                 }
                                                 "declined" -> {
                                                     val rejectionReason = doctorDocument.getString("rejectionReason") ?: "No reason provided"
                                                     _authState.value = AuthState.Rejected(rejectionReason)
-                                                    Log.d("AuthViewModel", "❌ Doctor Rejected: $rejectionReason")
+                                                    Log.d("AuthViewModel", "Doctor Rejected: $rejectionReason")
                                                 }
                                             }
+                                        } else {
+                                            _authState.value = AuthState.Error("Doctor profile not found")
                                         }
-                                }
+                                    }
+                            }
 
-                                Role.PATIENT -> {
-                                    db.collection("patients").document(userEmail).get()
-                                        .addOnSuccessListener { patientDocument ->
-                                            if (!patientDocument.exists()) {
-                                                _authState.value = AuthState.Error("Patient profile not found")
-                                                return@addOnSuccessListener
-                                            }
-
+                            Role.PATIENT -> {
+                                db.collection("patients").document(userEmail).get()
+                                    .addOnSuccessListener { patientDocument ->
+                                        if (patientDocument.exists()) {
                                             _authState.value = AuthState.Authenticated(user, role)
-                                            Log.d("AuthViewModel", "✅ Patient logged in successfully")
+                                            Log.d("AuthViewModel", "Patient data: ${patientDocument.data}")
+                                        } else {
+                                            _authState.value = AuthState.Error("Patient profile not found")
                                         }
-                                }
+                                    }
                             }
                         }
-                        .addOnFailureListener {
-                            _authState.value = AuthState.Error("Error fetching user role: ${it.message}")
-                        }
-                }
+                    }
+                    .addOnFailureListener {
+                        _authState.value = AuthState.Error("Error fetching user role: ${it.message}")
+                    }
             }
             .addOnFailureListener {
                 _authState.value = AuthState.Error(it.message ?: "Unknown authentication error")
             }
     }
-
 
 
 

@@ -21,15 +21,10 @@ import androidx.navigation.NavController
 import com.example.getdoc.ui.patient.component.DoctorCard
 import com.google.firebase.firestore.FirebaseFirestore
 import io.appwrite.Client
+import io.appwrite.services.Storage
 
 @Composable
 fun AllDoctorsScreen(
-    //state: PatientHomeUiState,
-    onHomeClick: () -> Unit,
-    onAppointmentsClick: () -> Unit,
-    onDoctorsClick: () -> Unit,
-    onProfileClick: () -> Unit,
-    onSearch: (String) -> Unit,
     firestore: FirebaseFirestore,
     client: Client,
     navController: NavController
@@ -54,9 +49,10 @@ fun AllDoctorsScreen(
                 items(doctorList) { doctor ->
                     DoctorCard(
                         doctor = doctor,
-                        storage = io.appwrite.services.Storage(client),
-                        bucketId = "your-bucket-id",
-                        navController = navController // ✅ Pass NavController properly
+                        bucketId = "678dd5d30039f0a22428",
+                        navController = navController,
+                        client = client,
+                        firestore = firestore,
                     )
                 }
 

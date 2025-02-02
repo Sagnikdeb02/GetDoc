@@ -7,9 +7,11 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.modifier.modifierLocalConsumer
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
@@ -18,6 +20,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.navigation
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import com.example.getdoc.ui.authentication.AuthViewModel
 import com.example.getdoc.ui.doctor.DoctorHomeScreen
 import com.example.getdoc.ui.doctor.DoctorViewModel
 import com.example.getdoc.ui.doctor.profile.AppointmentScreen
@@ -86,40 +89,28 @@ fun DoctorNavigation(
             }
 
             composable<DoctorProfileScreen> {
-                DoctorProfileScreen(
-                    onLogoutClick = {
+                val viewModel: AuthViewModel = viewModel()
 
-                    },
+                DoctorProfileScreen(
+                    navController = navController,
+                    firestore = firestore,
+                    client = client,
                     onOptionClick = { option ->
                         when (option) {
-                            DoctorProfileOption.MY_CREDENTIALS -> {
-                                navController.navigate(DoctorCredentialsScreen)
-                            }
-
-                            DoctorProfileOption.CHANGE_CONTACT -> {
-
-                            }
-
-                            DoctorProfileOption.CHANGE_PASSWORD -> {
-
-                            }
-
-                            DoctorProfileOption.ABOUT_US -> {
-
-                            }
-
-                            DoctorProfileOption.HELP -> {
-
-                            }
+                            DoctorProfileOption.MY_CREDENTIALS -> navController.navigate(DoctorCredentialsScreen)
+                            DoctorProfileOption.CHANGE_CONTACT -> navController.navigate("change_contact")
+                            DoctorProfileOption.CHANGE_PASSWORD -> navController.navigate("change_password")
+                            DoctorProfileOption.ABOUT_US -> navController.navigate("about_us")
+                            DoctorProfileOption.HELP -> navController.navigate("help")
                         }
-
                     },
-                    modifier = modifier,
-                    onEditClick = { navController.navigate(DoctorProfileUpdateScreen) },
-                    firestore = firestore,
-                    client = client
+                    onEditClick = {
+                        navController.navigate("edit_doctor_profile")
+                    }
                 )
             }
+
+
 
             composable<AppointmentsScreen> {
                 AppointmentScreen(

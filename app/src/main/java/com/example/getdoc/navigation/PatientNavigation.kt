@@ -75,21 +75,6 @@ fun PatientNavigation(
 
                 PatientHomeScreen(
                     patientHomeUiState,
-                    onHomeClick = {
-                        navController.navigate(PatientHomeScreen)
-                    },
-                    onAppointmentsClick = {
-                        navController.navigate(AppointmentConfirmationScreen)
-                    },
-                    onDoctorsClick = {
-                        navController.navigate(SearchDoctorScreen)
-                    },
-                    onProfileClick = {
-                        navController.navigate(PatientProfileScreen)
-                    },
-                    onSearch = { query ->
-                        // Handle search logic here
-                    },
                     viewModel = PatientViewModel(client, firestore),
                     firestore = firestore,
                     client = client,
@@ -98,15 +83,9 @@ fun PatientNavigation(
 
             composable<AllDoctorsScreen> {
                 AllDoctorsScreen(
-                    onHomeClick = {},
-                    onAppointmentsClick = {},
-                    onDoctorsClick = {},
-                    onProfileClick = {},
-                    onSearch = {},
                     firestore = firestore,
                     client = client,
-                    navController = navController,
-                    // state = TODO()
+                    navController = navController
                 )
             }
 
