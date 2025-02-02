@@ -14,7 +14,6 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.TextStyle
@@ -35,8 +34,13 @@ fun MyCredentialsPageComponent(
     val coroutineScope = rememberCoroutineScope()
     var licenseUri by remember { mutableStateOf<Uri?>(null) }
     var showDialog by remember { mutableStateOf(false) }
-    LaunchedEffect(uiState.status) {
-        Log.d("MyCredentialsPage", "UI Updated: ${uiState.status}")
+
+    // **Fetch the latest doctor status from Firestore**
+    LaunchedEffect(uiState.id) {
+        uiState.id?.let {
+            viewModel.fetchDoctorStatus(it)
+        }
+        Log.d("MyCredentialsPage", "UI Updated: Status -> ${uiState.status}")
     }
 
     val filePickerLauncher = rememberLauncherForActivityResult(
@@ -49,14 +53,14 @@ fun MyCredentialsPageComponent(
     ) {
         HeaderComponent(title = "My Credentials", iconResId = R.drawable.img_9)
 
-        // **Submission Status at the top**
+        // **Submission Status Card**
         Card(
             modifier = Modifier.fillMaxWidth().padding(16.dp),
             colors = CardDefaults.cardColors(
                 when (uiState.status) {
-                    "approved" -> Color(0xFFE0F2F1)
-                    "pending" -> Color(0xFFFFF3E0)
-                    "declined" -> Color(0xFFFFEBEE)
+                    "approved" -> Color(0xFFE0F2F1)  // Greenish for approved
+                    "pending" -> Color(0xFFFFF3E0)   // Yellowish for pending
+                    "declined" -> Color(0xFFFFEBEE)  // Reddish for declined
                     else -> Color(0xFFF5F5F5)
                 }
             ),
@@ -72,11 +76,12 @@ fun MyCredentialsPageComponent(
                     color = Color.Black,
                     style = MaterialTheme.typography.titleMedium
                 )
-                if (uiState.status == "declined") {
+
+                if (uiState.status == "declined" && !uiState.rejectionReason.isNullOrEmpty()) {
                     Text(
-                        text = "Rejection Reason: ${uiState.rejectionReason}",
-                        color = Color.Red,
-                        fontSize = 14.sp
+                        text = "Reason: ${uiState.rejectionReason}",
+                        fontSize = 14.sp,
+                        color = Color.Red
                     )
                 }
             }
@@ -95,61 +100,64 @@ fun MyCredentialsPageComponent(
             item { FormFieldComponent("About You", uiState.aboutYou ?: "", { viewModel.updateUiState("aboutYou", it) }) }
         }
 
-        Column(
-            modifier = Modifier.fillMaxWidth().padding(16.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            if (uiState.status == "approved") {
-                Text(
-                    text = "Please fill all the fields before updating your profile.",
-                    fontSize = 14.sp,
-                    color = Color.Red,
-                    modifier = Modifier.padding(bottom = 8.dp)
-                )
-                Button(
-                    onClick = {
-                        coroutineScope.launch {
-                            viewModel.updateDoctorProfile(context)
-                        }
-                    },
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = ButtonDefaults.buttonColors(Color.Blue)
-                ) {
-                    Text("Update Profile")
-                }
-            } else {
-                Button(
-                    onClick = { filePickerLauncher.launch("image/*") },
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = ButtonDefaults.buttonColors(Color.Gray)
-                ) {
-                    Text("Upload License")
-                }
-                Spacer(modifier = Modifier.height(8.dp))
-                Row(
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Button(
-                        onClick = { showDialog = true },
-                        modifier = Modifier.weight(1f),
-                        colors = ButtonDefaults.buttonColors(Color.Red)
-                    ) {
-                        Text("Cancel")
-                    }
-                    Spacer(modifier = Modifier.width(16.dp))
+        // **Only show actions if NOT DECLINED**
+        if (uiState.status != "declined") {
+            Column(
+                modifier = Modifier.fillMaxWidth().padding(16.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                if (uiState.status == "approved") {
+                    Text(
+                        text = "Please fill all the fields before updating your profile.",
+                        fontSize = 14.sp,
+                        color = Color.Red,
+                        modifier = Modifier.padding(bottom = 8.dp)
+                    )
                     Button(
                         onClick = {
-                            if (licenseUri == null) {
-                                Toast.makeText(context, "Please select a license file!", Toast.LENGTH_SHORT).show()
-                            } else {
-                                viewModel.submitDoctorCredentialProfile(context, licenseUri!!)
+                            coroutineScope.launch {
+                                viewModel.updateDoctorProfile(context)
                             }
                         },
-                        modifier = Modifier.weight(1f),
+                        modifier = Modifier.fillMaxWidth(),
                         colors = ButtonDefaults.buttonColors(Color.Blue)
                     ) {
-                        Text(if (uiState.status == "declined") "Resubmit" else "Submit")
+                        Text("Update Profile")
+                    }
+                } else {
+                    Button(
+                        onClick = { filePickerLauncher.launch("image/*") },
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = ButtonDefaults.buttonColors(Color.Gray)
+                    ) {
+                        Text("Upload License")
+                    }
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Row(
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Button(
+                            onClick = { showDialog = true },
+                            modifier = Modifier.weight(1f),
+                            colors = ButtonDefaults.buttonColors(Color.Red)
+                        ) {
+                            Text("Cancel")
+                        }
+                        Spacer(modifier = Modifier.width(16.dp))
+                        Button(
+                            onClick = {
+                                if (licenseUri == null) {
+                                    Toast.makeText(context, "Please select a license file!", Toast.LENGTH_SHORT).show()
+                                } else {
+                                    viewModel.submitDoctorCredentialProfile(context, licenseUri!!)
+                                }
+                            },
+                            modifier = Modifier.weight(1f),
+                            colors = ButtonDefaults.buttonColors(Color.Blue)
+                        ) {
+                            Text(if (uiState.status == "declined") "Resubmit" else "Submit")
+                        }
                     }
                 }
             }

@@ -10,12 +10,10 @@ import com.example.getdoc.ui.doctor.state.DoctorCredentialScreenUiState
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import io.appwrite.Client
-import io.appwrite.ID
 import io.appwrite.models.InputFile
 import io.appwrite.services.Storage
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import java.io.File
 import java.io.FileOutputStream
@@ -26,38 +24,54 @@ class DoctorViewModel(
     val firestore: FirebaseFirestore
 ) : ViewModel() {
 
+    private val auth = FirebaseAuth.getInstance()
+
     private val _uiState = MutableStateFlow(DoctorCredentialScreenUiState())
     val uiState: StateFlow<DoctorCredentialScreenUiState> get() = _uiState
 
     init {
-        fetchDoctorStatus()
+        val userId = auth.currentUser?.uid
+        if (userId != null) {
+            fetchDoctorStatus(userId)
+        } else {
+            Log.e("DoctorViewModel", "User ID is null, cannot fetch doctor status.")
+        }
     }
 
-    fun fetchDoctorStatus() {
-        val userId = FirebaseAuth.getInstance().currentUser?.uid ?: return
+    fun fetchDoctorStatus(userId: String) {
+        Log.d("DoctorViewModel", "Fetching doctor status for user: $userId")
 
-        firestore.collection("doctors").document(userId)
-            .get()  // Force fetch latest data first
+        // 🔹 Fetch Latest Data Once
+        firestore.collection("doctor_registrations").document(userId)
+            .get()
             .addOnSuccessListener { document ->
-                val status = document.getString("status") ?: "pending"
-                val rejectionReason = document.getString("rejectionReason") ?: ""
+                if (document.exists()) {
+                    val status = document.getString("status") ?: "pending"
+                    val rejectionReason = document.getString("rejectionReason") ?: ""
 
-                _uiState.value = _uiState.value.copy(status = status, rejectionReason = rejectionReason)
-                Log.d("DoctorViewModel", "Forced fetch status: $status")
+                    _uiState.value = _uiState.value.copy(status = status, rejectionReason = rejectionReason)
+                    Log.d("DoctorViewModel", "Fetched doctor status: $status, Reason: $rejectionReason")
+                } else {
+                    Log.e("DoctorViewModel", "Document does not exist for user: $userId")
+                }
+            }
+            .addOnFailureListener { exception ->
+                Log.e("DoctorViewModel", "Error fetching doctor status", exception)
             }
 
-        // Also set snapshot listener for real-time updates
+        // 🔹 Listen for Real-time Updates
         firestore.collection("doctor_registrations").document(userId)
             .addSnapshotListener { snapshot, error ->
                 if (error != null) {
-                    Log.e("DoctorViewModel", "Error fetching status: ${error.message}")
+                    Log.e("DoctorViewModel", "Error fetching real-time status: ${error.message}")
                     return@addSnapshotListener
                 }
+
                 snapshot?.let {
                     val status = it.getString("status") ?: "pending"
                     val rejectionReason = it.getString("rejectionReason") ?: ""
 
-                    Log.d("DoctorViewModel", "Realtime status update: $status")
+                    Log.d("DoctorViewModel", "Realtime status update: $status, Reason: $rejectionReason")
                     _uiState.value = _uiState.value.copy(status = status, rejectionReason = rejectionReason)
                 }
             }

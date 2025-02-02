@@ -1,6 +1,7 @@
 package com.example.getdoc.ui.doctor.state
 
 data class DoctorCredentialScreenUiState(
+    val id: String? = null,
     val name: String? = null,
     val degree: String? = null,
     val speciality: String? = null,
@@ -9,9 +10,10 @@ data class DoctorCredentialScreenUiState(
     val fee: String? = null,
     val aboutYou: String? = null,
     val licenseUrl: String? = null,
-    val status: String? = null,  // ✅ Change to nullable to avoid wrong default
-    val rejectionReason: String? = null, // Keep this as it is
+    val status: String = "pending",  // 🔹 Set default value instead of null
+    val rejectionReason: String? = null,
     val isLoading: Boolean = false,
     val isSuccess: Boolean = false,
     val errorMessage: String? = null
 )
+
