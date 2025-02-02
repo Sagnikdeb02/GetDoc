@@ -11,6 +11,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
+import com.example.getdoc.ui.authentication.AdminHomeScreen
 import com.example.getdoc.ui.authentication.AuthState
 import com.example.getdoc.ui.authentication.AuthViewModel
 import com.example.getdoc.ui.authentication.AuthenticationViewModel
@@ -20,7 +21,6 @@ import com.example.getdoc.ui.authentication.RegistrationScreen
 import com.example.getdoc.ui.authentication.Role
 import com.example.getdoc.ui.authentication.SplashScreen
 import com.example.getdoc.ui.authentication.WaitingForVerificationScreen
-import com.example.getdoc.ui.authentication.doctor_registration.AdminHomeScreen
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import io.appwrite.Client
@@ -147,7 +147,14 @@ fun AppNavigation(modifier: Modifier = Modifier, client: Client, firestore: Fire
         composable<DoctorHomeScreen> {
             DoctorNavigation(
                 client = client,
-                firestore = firestore
+                firestore = firestore,
+                authViewModel = authViewModel,
+                modifier = Modifier,
+                onLogoutClick = {
+                    navController.navigate(LoginScreen) {
+                        popUpTo(0) { inclusive = true }
+                    }
+                }
             )
         }
 

@@ -49,7 +49,9 @@ fun DoctorProfileScreen(
     firestore: FirebaseFirestore,
     client: Client,
     onOptionClick: (DoctorProfileOption) -> Unit,
-    onEditClick: () -> Unit
+    onEditClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    onLogoutClick: () -> Unit
 ) {
     val viewModel: AuthenticationViewModel = viewModel()
     val context = LocalContext.current
@@ -94,11 +96,11 @@ fun DoctorProfileScreen(
                     .fillMaxWidth(0.9f)
                     .padding(16.dp)
                     .clip(RoundedCornerShape(20.dp))
-                    .background(Color(0xFFFFFFFF)) // Pure White
+                    .background(Color(0xFFFFFFFF))
                     .border(
                         3.dp,
                         Brush.linearGradient(
-                            listOf(Color(0xFFC2E9FB), Color(0xFFA1C4FD)) // Light Cyan to Soft Blue
+                            listOf(Color(0xFFC2E9FB), Color(0xFFA1C4FD))
                         ),
                         RoundedCornerShape(20.dp)
                     )
@@ -114,7 +116,7 @@ fun DoctorProfileScreen(
                         modifier = Modifier
                             .size(130.dp)
                             .clip(CircleShape)
-                            .background(Color(0xFFF3F4F6)) // Light Gray Background
+                            .background(Color(0xFFF3F4F6))
                             .border(4.dp, Brush.linearGradient(listOf(Color(0xFF60A5FA), Color(0xFF8B5CF6))), CircleShape),
                         contentAlignment = Alignment.Center
                     ) {
@@ -176,7 +178,7 @@ fun DoctorProfileScreen(
             Spacer(modifier = Modifier.height(40.dp))
 
             // Logout Button
-            LogoutSectionComponent { /* Implement logout function here */ }
+            LogoutSectionComponent { onLogoutClick() }
         }
     }
 }

@@ -177,12 +177,6 @@ fun PatientNavigation(
                     firestore = firestore
                 )
             }
-
-
-
-
-
-
             composable<PatientProfileInputScreen> {
                 PatientProfileInputScreen(
                     viewModel = PatientViewModel(client, firestore)
