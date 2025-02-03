@@ -1,4 +1,4 @@
-package com.example.getdoc.ui.authentication.doctor_registration
+package com.example.getdoc.ui.authentication
 
 import android.annotation.SuppressLint
 import android.graphics.Bitmap
