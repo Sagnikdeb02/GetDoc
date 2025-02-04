@@ -1,9 +1,11 @@
 package com.example.getdoc.ui.patient.appointment
 
 import android.util.Log
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.DateRange
@@ -14,6 +16,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.RectangleShape
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -21,10 +25,14 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.example.getdoc.R
+import com.example.getdoc.convertImageByteArrayToBitmap
 import com.example.getdoc.data.model.DoctorInfo
+import com.example.getdoc.fetchProfilePictureDynamically
 import com.example.getdoc.ui.patient.component.CustomAppBar
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
+import io.appwrite.Client
+
 @Composable
 fun ProceedScreen(
     doctorId: String,
@@ -32,11 +40,13 @@ fun ProceedScreen(
     selectedSlot: String,
     navController: NavController,
     firestore: FirebaseFirestore,
-    onBackClick: () -> Unit
+    onBackClick: () -> Unit,
+    client: Client,
 ) {
     var doctor by remember { mutableStateOf<DoctorInfo?>(null) }
     var isLoading by remember { mutableStateOf(true) }
     var patient by remember { mutableStateOf<Map<String, String>?>(null) }
+    var profileImage by remember { mutableStateOf<ByteArray?>(null) }
 
     // Retrieve patient info from back stack if available
     val savedStateHandle = navController.currentBackStackEntry?.savedStateHandle
@@ -59,6 +69,8 @@ fun ProceedScreen(
                 Log.e("Firestore", "Error fetching doctor details: ${e.message}")
                 isLoading = false
             }
+        profileImage = fetchProfilePictureDynamically(client, firestore, doctorId)
+
     }
 
     // If new patient info is available, update patient state
@@ -91,6 +103,22 @@ fun ProceedScreen(
                         )
                     ) {
                         Column(modifier = Modifier.padding(16.dp)) {
+                            Box(
+                                modifier = Modifier
+                                    .size(80.dp)
+                                    .clip(shape = CircleShape)
+                                    .background(Color.LightGray),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                profileImage?.let {
+                                    Image(
+                                        bitmap = convertImageByteArrayToBitmap(it).asImageBitmap(),
+                                        contentDescription = "Doctor Profile Picture",
+                                        modifier = Modifier.size(80.dp).clip(CircleShape)
+                                    )
+                                } ?: Text("No Image", color = Color.Gray)
+                            }
+
                             Text("Dr. ${doctor!!.name}", fontWeight = FontWeight.Bold, fontSize = 20.sp)
                             Text("Specialization: ${doctor!!.specialization}")
                             Text("Experience: ${doctor!!.experience} years")

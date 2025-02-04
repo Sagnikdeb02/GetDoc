@@ -22,92 +22,75 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.example.getdoc.R
+import com.example.getdoc.UserProfileDisplayDynamically
+import com.example.getdoc.convertImageByteArrayToBitmap
 import com.example.getdoc.data.model.DoctorInfo
+import com.example.getdoc.fetchProfilePictureDynamically
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
+import io.appwrite.Client
 import java.text.SimpleDateFormat
 import java.util.*
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AppointmentsScreen(
     navController: NavController,
-    firestore: FirebaseFirestore
+    firestore: FirebaseFirestore,
+    client: Client
 ) {
     val userId = FirebaseAuth.getInstance().currentUser?.uid ?: return
 
-    var selectedTabIndex by remember { mutableStateOf(0) }  // ✅ Manage Tab State
+    var selectedTabIndex by remember { mutableStateOf(0) }  // Manage Tab State
     var activeAppointments by remember { mutableStateOf<List<Appointment>?>(null) }
     var previousAppointments by remember { mutableStateOf<List<Appointment>?>(null) }
+    var declinedAppointments by remember { mutableStateOf<List<Appointment>?>(null) }
 
-    // 🔹 Fetch Appointments
     LaunchedEffect(userId) {
-        fetchAppointments(firestore, userId) { active, previous ->
+        fetchAppointments(firestore, userId) { active, previous, declined ->
             activeAppointments = active
             previousAppointments = previous
+            declinedAppointments = declined
         }
     }
 
     Scaffold(
         topBar = {
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp) // Added padding
-            ) {
-                Text(
-                    text = "My Appointments",
-                    style = MaterialTheme.typography.headlineSmall
-                )
+            Box(modifier = Modifier.fillMaxWidth().padding(16.dp)) {
+                Text(text = "My Appointments", style = MaterialTheme.typography.headlineSmall)
             }
         }
     ) { paddingValues ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues)
-        ) {
-            // ✅ Updated Tab Section with Local State Management
-            TabSection(selectedTabIndex = selectedTabIndex, onTabChange = { index ->
-                selectedTabIndex = index
-            })
+        Column(modifier = Modifier.fillMaxSize().padding(paddingValues)) {
+            TabSection(selectedTabIndex = selectedTabIndex, onTabChange = { index -> selectedTabIndex = index })
 
-            // 🔹 Display Active or Previous Appointments
             when (selectedTabIndex) {
-                0 -> {
-                    if (activeAppointments == null) {
-                        LoadingIndicator()
-                    } else {
-                        ActiveAppointmentsList(activeAppointments!!)
-                    }
-                }
-                1 -> {
-                    if (previousAppointments == null) {
-                        LoadingIndicator()
-                    } else {
-                        PreviousAppointmentsList(previousAppointments!!)
-                    }
-                }
+                0 -> if (activeAppointments == null) LoadingIndicator() else ActiveAppointmentsList(activeAppointments!!, client)
+                1 -> if (previousAppointments == null) LoadingIndicator() else PreviousAppointmentsList(previousAppointments!!, client)
+                2 -> if (declinedAppointments == null) LoadingIndicator() else DeclinedAppointmentsList(declinedAppointments!!, client)
             }
         }
     }
 }
-
 // 🔹 Previous Appointments List (With Review Option)
 @Composable
-fun PreviousAppointmentsList(appointments: List<Appointment>) {
+fun PreviousAppointmentsList(appointments: List<Appointment>,client: Client) {
     if (appointments.isEmpty()) {
         NoAppointmentsMessage()
     } else {
         LazyColumn(modifier = Modifier.padding(16.dp)) {
             items(appointments) { appointment ->
-                AppointmentCard(appointment, showReviewSection = true)
+                AppointmentCard(
+                    appointment, showReviewSection = true,
+                    firestore = FirebaseFirestore.getInstance(),
+                    client = client
+                )
             }
         }
     }
@@ -121,8 +104,15 @@ fun NoAppointmentsMessage() {
     }
 }
 @Composable
-fun AppointmentCard(appointment: Appointment, showReviewSection: Boolean) {
+fun AppointmentCard(appointment: Appointment, showReviewSection: Boolean, firestore: FirebaseFirestore, client: Client) {
     val doctorId = appointment.doctorId ?: ""  // ✅ Ensure doctorId is set properly
+
+    var doctorProfileImage by remember { mutableStateOf<ByteArray?>(null) }
+
+    // Fetch the doctor's profile picture dynamically
+    LaunchedEffect(doctorId) {
+        doctorProfileImage = fetchProfilePictureDynamically(client, firestore, doctorId)
+    }
 
     Card(
         modifier = Modifier
@@ -143,27 +133,40 @@ fun AppointmentCard(appointment: Appointment, showReviewSection: Boolean) {
                     brush = Brush.verticalGradient( // Apply a vertical gradient
                         colors = listOf(
                             Color(0xFFFFFFFF), // Pure white
-                            Color(0xFFF0F7FB) // Even lighter gray for a subtle effect
+                            Color(0xFFF0F7FB) // Light background for effect
                         )
                     ),
                     shape = RoundedCornerShape(16.dp) // Match the card's shape
                 )
-
         ) {
             Column(modifier = Modifier.padding(16.dp)) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Image(
-                        painter = painterResource(
-                            id = if (appointment.doctorInfo?.profileImage.isNullOrEmpty())
-                                R.drawable.ic_launcher_foreground
-                            else R.drawable.ic_launcher_foreground
-                        ),
-                        contentDescription = "Doctor Profile",
+
+                    // 🔹 Display the Doctor's Profile Picture
+                    Box(
                         modifier = Modifier
                             .size(60.dp)
                             .clip(CircleShape)
-                    )
+                            .background(Color.LightGray),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        doctorProfileImage?.let {
+                            Image(
+                                bitmap = convertImageByteArrayToBitmap(it).asImageBitmap(),
+                                contentDescription = "Doctor Profile Picture",
+                                modifier = Modifier
+                                    .size(60.dp)
+                                    .clip(CircleShape)
+                            )
+                        } ?: Image(
+                            painter = painterResource(id = R.drawable.ic_launcher_foreground), // Fallback image
+                            contentDescription = "Default Doctor Image",
+                            modifier = Modifier.size(60.dp).clip(CircleShape)
+                        )
+                    }
+
                     Spacer(modifier = Modifier.width(16.dp))
+
                     Column(modifier = Modifier.weight(1f)) {
                         Text(
                             text = "Dr. ${appointment.doctorInfo?.name ?: "Unknown"}",
@@ -172,42 +175,38 @@ fun AppointmentCard(appointment: Appointment, showReviewSection: Boolean) {
                         Text(
                             text = appointment.doctorInfo?.specialization ?: "Specialty Not Available",
                             fontSize = 14.sp,
-                            color = Color.Blue, // Make the text blue
+                            color = Color.Blue,
                             modifier = Modifier
-                                .clip(RoundedCornerShape(8.dp)) // Clip instead of background for better handling
-                                .background(Color(0xFFE3F2FD)) // Light blue background with rounded edges
-                                .padding(horizontal = 8.dp, vertical = 4.dp) // Add padding around the text
+                                .clip(RoundedCornerShape(8.dp))
+                                .background(Color(0xFFE3F2FD))
+                                .padding(horizontal = 8.dp, vertical = 4.dp)
                         )
 
                         Spacer(modifier = Modifier.height(5.dp))
 
-
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
                             Icon(
-                                imageVector = Icons.Default.DateRange, // Use a calendar icon
+                                imageVector = Icons.Default.DateRange,
                                 contentDescription = "Calendar Icon",
-                                tint = Color.Gray, // Subtle gray tint
-                                modifier = Modifier.size(16.dp) // Match the size from the image
+                                tint = Color.Gray,
+                                modifier = Modifier.size(16.dp)
                             )
-                            Spacer(modifier = Modifier.width(8.dp)) // Space between icon and text
+                            Spacer(modifier = Modifier.width(8.dp))
                             Text(
                                 text = appointment.date ?: "N/A",
                                 fontSize = 14.sp,
-                                color = Color.DarkGray, // Match the color with the icon
-                                style = MaterialTheme.typography.bodySmall // Small, professional text
+                                color = Color.DarkGray,
+                                style = MaterialTheme.typography.bodySmall
                             )
                         }
 
                         Spacer(modifier = Modifier.height(5.dp))
 
                         Row(
-                            modifier = Modifier.fillMaxWidth(), // Ensures full width for spacing
-                            horizontalArrangement = Arrangement.SpaceBetween, // Places items on opposite ends
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            // Time Section
                             Row(verticalAlignment = Alignment.CenterVertically) {
                                 Icon(
                                     painter = painterResource(id = R.drawable.clock),
@@ -224,7 +223,6 @@ fun AppointmentCard(appointment: Appointment, showReviewSection: Boolean) {
                                 )
                             }
 
-                            // Status Section
                             Text(
                                 text = "Status: ${appointment.status ?: "Pending"}",
                                 fontSize = 14.sp,
@@ -236,16 +234,12 @@ fun AppointmentCard(appointment: Appointment, showReviewSection: Boolean) {
                                 }
                             )
                         }
-
                     }
                 }
-                //Spacer(modifier = Modifier.height(8.dp))
-
-
 
                 if (showReviewSection) {
                     if (doctorId.isNotEmpty()) {
-                        ReviewSection(doctorId = doctorId)  // ✅ Ensure correct doctorId is passed
+                        ReviewSection(doctorId = doctorId)
                     } else {
                         Log.e("Firestore", "❌ Error: Doctor ID is empty in AppointmentCard!")
                     }
@@ -351,12 +345,22 @@ fun ReviewSection(doctorId: String) {
         }
     }
 }
-
-
+@Composable
+fun DeclinedAppointmentsList(appointments: List<Appointment>, client: Client) {
+    if (appointments.isEmpty()) {
+        NoAppointmentsMessage()
+    } else {
+        LazyColumn(modifier = Modifier.padding(16.dp)) {
+            items(appointments) { appointment ->
+                AppointmentCard(appointment, showReviewSection = false, firestore = FirebaseFirestore.getInstance(), client = client)
+            }
+        }
+    }
+}
 fun fetchAppointments(
     firestore: FirebaseFirestore,
     userId: String,
-    onResult: (List<Appointment>, List<Appointment>) -> Unit
+    onResult: (List<Appointment>, List<Appointment>, List<Appointment>) -> Unit
 ) {
     val today = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()).format(Date())
 
@@ -366,6 +370,7 @@ fun fetchAppointments(
         .addOnSuccessListener { result ->
             val active = mutableListOf<Appointment>()
             val previous = mutableListOf<Appointment>()
+            val declined = mutableListOf<Appointment>()
 
             result.documents.forEach { document ->
                 val appointment = document.toObject(Appointment::class.java)?.copy(id = document.id)
@@ -375,29 +380,25 @@ fun fetchAppointments(
                 appointment?.let {
                     it.patientId = document.getString("patientId") ?: "Unknown"
 
-                    // Fetch Doctor Info using doctorId
                     firestore.collection("doctors").document(it.doctorId)
                         .get()
                         .addOnSuccessListener { doctorDoc ->
                             val doctorInfo = doctorDoc.toObject(DoctorInfo::class.java)
                             it.doctorInfo = doctorInfo
 
-                            // Classify into Active or Previous
-                            if (status == "approved" && compareDates(appointmentDate, today) >= 0) {
-                                active.add(it)
-                            } else {
-                                previous.add(it)
+                            when {
+                                status == "approved" && compareDates(appointmentDate, today) >= 0 -> active.add(it)
+                                status == "approved" && compareDates(appointmentDate, today) < 0 -> previous.add(it)
+                                status == "declined" -> declined.add(it)
                             }
-
-                            // Return final result
-                            onResult(active, previous)
+                            onResult(active, previous, declined)
                         }
                 }
             }
         }
         .addOnFailureListener { e ->
             Log.e("Firestore", "Error fetching appointments: ${e.message}")
-            onResult(emptyList(), emptyList())
+            onResult(emptyList(), emptyList(), emptyList())
         }
 }
 
@@ -424,13 +425,17 @@ fun compareDates(date1: String?, date2: String?): Int {
 }
 // 🔹 Active Appointments List
 @Composable
-fun ActiveAppointmentsList(appointments: List<Appointment>) {
+fun ActiveAppointmentsList(appointments: List<Appointment>, client: Client) {
     if (appointments.isEmpty()) {
         NoAppointmentsMessage()
     } else {
         LazyColumn(modifier = Modifier.padding(16.dp)) {
             items(appointments) { appointment ->
-                AppointmentCard(appointment, showReviewSection = false)
+                AppointmentCard(
+                    appointment, showReviewSection = false,
+                    firestore = FirebaseFirestore.getInstance(),
+                    client = client
+                )
             }
 
             // 🔹 Extra space at the bottom to prevent shadow effect cutoff
@@ -440,7 +445,7 @@ fun ActiveAppointmentsList(appointments: List<Appointment>) {
         }
     }
 }
-// 🔹 Tab Section
+
 @Composable
 fun TabSection(
     selectedTabIndex: Int,
@@ -448,42 +453,21 @@ fun TabSection(
 ) {
     Surface {
         Row(
-            modifier = Modifier
-                .fillMaxWidth(),
+            modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            listOf("Active", "Previous").forEachIndexed { index, title ->
+            listOf("Active", "Previous", "Declined by Doctor").forEachIndexed { index, title ->
                 val isSelected = selectedTabIndex == index
-
                 Box(
-                    modifier = Modifier
-                        .weight(1f)
-                        .clickable { onTabChange(index) }
-                        .height(45.dp)
+                    modifier = Modifier.weight(1f).clickable { onTabChange(index) }.height(45.dp),
+                    contentAlignment = Alignment.Center
                 ) {
-                    Text(
-                        text = title,
-                        color = if (isSelected) Color(0xFF6200EE) else Color.Black,
-                        modifier = Modifier.align(Alignment.Center),
-                        fontWeight = if (isSelected) FontWeight.Medium else FontWeight.Medium
-                    )
+                    Text(text = title, color = if (isSelected) Color(0xFF6200EE) else Color.Black)
                     if (isSelected) {
                         Box(
-                            modifier = Modifier
-                                .align(Alignment.BottomCenter)
-                                .height(2.dp)
-                                .width(40.dp)
-                                .background(Color(0xFF6200EE))
+                            modifier = Modifier.align(Alignment.BottomCenter).height(2.dp).width(40.dp).background(Color(0xFF6200EE))
                         )
                     }
-
-                    Box(
-                        modifier = Modifier
-                            .align(Alignment.BottomCenter)
-                            .fillMaxWidth()
-                            .height(1.dp)
-                            .background(Color(0xFFE0E0E0)) // Light gray
-                    )
                 }
             }
         }

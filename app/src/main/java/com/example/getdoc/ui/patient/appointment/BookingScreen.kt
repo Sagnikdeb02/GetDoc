@@ -3,25 +3,33 @@ package com.example.getdoc.ui.theme.ui.patient.appointments
 import android.app.DatePickerDialog
 import android.content.Context
 import android.util.Log
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
+import com.example.getdoc.convertImageByteArrayToBitmap
 import com.example.getdoc.data.model.DoctorInfo
+import com.example.getdoc.fetchProfilePictureDynamically
 import com.example.getdoc.ui.patient.component.CustomAppBar
 import com.example.getdoc.ui.patient.component.CustomButton
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
+import io.appwrite.Client
 import java.util.Calendar
 
 @Composable
@@ -29,7 +37,7 @@ fun BookingDoctorScreen(
     doctorId: String,
     navController: NavController,
     firestore: FirebaseFirestore,
-    onBackClick: () -> Unit
+    onBackClick: () -> Unit,client: Client
 ) {
     val context = LocalContext.current
     var doctor by remember { mutableStateOf<DoctorInfo?>(null) }
@@ -39,6 +47,7 @@ fun BookingDoctorScreen(
     var bookedSlots by remember { mutableStateOf<List<String>>(emptyList()) }
     var selectedSlot by remember { mutableStateOf("") }
     var isSlotBooked by remember { mutableStateOf(false) }
+    var profileImage by remember { mutableStateOf<ByteArray?>(null) }
 
     // 🔹 Fetch Doctor Info from Firestore
     LaunchedEffect(doctorId, selectedDate) {
@@ -62,6 +71,8 @@ fun BookingDoctorScreen(
                 Log.e("Firestore", "Error fetching doctor details: ${e.message}")
                 isLoading = false
             }
+        profileImage = fetchProfilePictureDynamically(client, firestore, doctorId)
+
     }
 
     Scaffold(
@@ -84,6 +95,22 @@ fun BookingDoctorScreen(
                         )
                     ){
                         Column(modifier = Modifier.padding(16.dp)){
+                            Box(
+                                modifier = Modifier
+                                    .size(80.dp)
+                                    .clip(shape = CircleShape)
+                                    .background(Color.LightGray),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                profileImage?.let {
+                                    Image(
+                                        bitmap = convertImageByteArrayToBitmap(it).asImageBitmap(),
+                                        contentDescription = "Doctor Profile Picture",
+                                        modifier = Modifier.size(80.dp).clip(CircleShape)
+                                    )
+                                } ?: Text("No Image", color = Color.Gray)
+                            }
+
                             Text(
                                 text = "Dr. ${doctor!!.name}",
                                 style = MaterialTheme.typography.titleLarge,

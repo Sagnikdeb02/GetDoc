@@ -1,46 +1,38 @@
 package com.example.getdoc.ui.patient
 
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.example.getdoc.ui.patient.component.DoctorCard
 import com.google.firebase.firestore.FirebaseFirestore
 import io.appwrite.Client
-import io.appwrite.services.Storage
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AllDoctorsScreen(
+    viewModel: PatientViewModel,
     firestore: FirebaseFirestore,
     client: Client,
     navController: NavController
 ) {
+    var searchQuery by remember { mutableStateOf("") }
+    val doctors by viewModel.doctorList.collectAsState()
+    val isLoading by viewModel.isLoading.collectAsState()
+    val filteredDoctors = doctors.filter { it.name.contains(searchQuery, ignoreCase = true) }
+
     Scaffold(
         topBar = {
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(16.dp) // Added padding
+                    .padding(16.dp)
             ) {
                 Text(
                     text = "All Doctors",
@@ -54,51 +46,42 @@ fun AllDoctorsScreen(
                 .fillMaxSize()
                 .padding(paddingValues)
         ) {
-
-            val viewModel = remember { PatientViewModel(client, firestore) }
-            val doctorList by viewModel.doctorList.collectAsState()
-
-
-            LazyColumn {
-                items(doctorList) { doctor ->
-                    DoctorCard(
-                        doctor = doctor,
-                        bucketId = "678dd5d30039f0a22428",
-                        navController = navController,
-                        client = client,
-                        firestore = firestore,
-                    )
+            Search(query = searchQuery, onQueryChange = { searchQuery = it })
+            if (isLoading) {
+                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    CircularProgressIndicator()
                 }
-
-                // Add extra space at the bottom to prevent shadow cutoff
-                item {
-                    Spacer(modifier = Modifier.height(40.dp))
+            } else {
+                LazyColumn {
+                    items(filteredDoctors) { doctor ->
+                        DoctorCard(
+                            doctor = doctor,
+                            bucketId = "678dd5d30039f0a22428",
+                            navController = navController,
+                            client = client,
+                            firestore = firestore,
+                        )
+                    }
+                    item {
+                        Spacer(modifier = Modifier.height(40.dp))
+                    }
                 }
-
-
             }
-
-
         }
     }
-
 }
 
-
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun HeaderSection2() {
-    TopAppBar(
-        title = {
-            Text(text = "All Doctors")
-        }
+fun Search(query: String, onQueryChange: (String) -> Unit) {
+    OutlinedTextField(
+        value = query,
+        onValueChange = onQueryChange,
+        label = { Text(text = "Search...") },
+        placeholder = { Text(text = "Eg: 'Dr. John'") },
+        singleLine = true,
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 8.dp),
+        shape = RoundedCornerShape(40.dp)
     )
 }
-
-
-
-
-
-
-
-

@@ -116,9 +116,7 @@ fun DoctorNavigation(
                             DoctorProfileOption.HELP -> navController.navigate("help")
                         }
                     },
-                    onEditClick = {
-                        navController.navigate("edit_doctor_profile")
-                    },
+                    onEditClick = {navController.navigate(DoctorProfileUpdateScreen)},
                     onLogoutClick = {
                         authViewModel.signOutUser()
                     }

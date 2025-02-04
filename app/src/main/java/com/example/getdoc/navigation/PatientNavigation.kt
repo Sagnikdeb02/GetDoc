@@ -79,15 +79,8 @@ fun PatientNavigation(
         ) {
 
             composable<PatientHomeScreen> {
-                val patientHomeUiState = PatientHomeUiState(
-                    name = "",
-                    location = "",
-                    searchQuery = "",
-                    doctors = listOf()  // Provide an empty list or actual doctor data
-                )
 
                 PatientHomeScreen(
-                    patientHomeUiState,
                     viewModel = PatientViewModel(client, firestore),
                     firestore = firestore,
                     client = client,
@@ -98,7 +91,8 @@ fun PatientNavigation(
                 AllDoctorsScreen(
                     firestore = firestore,
                     client = client,
-                    navController = navController
+                    navController = navController,
+                    viewModel = PatientViewModel(client, firestore)
                 )
             }
 
@@ -110,7 +104,9 @@ fun PatientNavigation(
                         navController,
                         doctorId = doctorId,
                         onBackClick = { navController.popBackStack() },
-                        viewModel = PatientViewModel(client, firestore)
+                        viewModel = PatientViewModel(client, firestore),
+                        firestore = firestore,
+                        client = client
                     )
                 } else {
                     Log.e("Navigation", "Error: Doctor ID is empty!")
@@ -123,7 +119,8 @@ fun PatientNavigation(
                     doctorId = doctorId,
                     navController = navController,  // ✅ Passing navController directly
                     firestore = firestore,
-                    onBackClick = { navController.popBackStack() }
+                    onBackClick = { navController.popBackStack() },
+                    client = client
                 )
             }
 
@@ -139,7 +136,7 @@ fun PatientNavigation(
                     selectedSlot = selectedSlot,
                     onBackClick = { navController.popBackStack() },
                     firestore = firestore,
-                    navController = navController
+                    navController = navController, client = client
                 )
             }
 
@@ -174,14 +171,11 @@ fun PatientNavigation(
 
                 AppointmentsScreen(
                     navController = navController,
-                    firestore = firestore
+                    firestore = firestore,
+                    client = client
                 )
             }
-            composable<PatientProfileInputScreen> {
-                PatientProfileInputScreen(
-                    viewModel = PatientViewModel(client, firestore)
-                )
-            }
+
             composable<PatientProfileScreen> {
                 PatientProfileScreen(
                     onLogoutClick = {
@@ -197,11 +191,7 @@ fun PatientNavigation(
             composable<PatientAppointmentScreen> {
 
             }
-            composable<PatientProfileInputScreen> {
-                PatientProfileInputScreen(
-                    viewModel = PatientViewModel(client, firestore)
-                )
-            }
+
 
             composable<PatientProfileUpdateScreen> {
                 ProfileUpdateScreen(

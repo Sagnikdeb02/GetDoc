@@ -16,6 +16,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
@@ -24,12 +25,15 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.example.getdoc.R
+import com.example.getdoc.convertImageByteArrayToBitmap
 import com.example.getdoc.data.model.DoctorInfo
+import com.example.getdoc.fetchProfilePictureDynamically
 import com.example.getdoc.theme.backgroundColor
 import com.example.getdoc.theme.homeTabBackground
 import com.example.getdoc.ui.patient.PatientViewModel
 import com.example.getdoc.ui.patient.component.CustomAppBar
 import com.google.firebase.firestore.FirebaseFirestore
+import io.appwrite.Client
 import kotlinx.coroutines.launch
 
 @Composable
@@ -37,21 +41,26 @@ fun DoctorDetailsScreen(
     navController: NavController,
     doctorId: String,
     onBackClick: () -> Unit,
-    viewModel: PatientViewModel
+    viewModel: PatientViewModel,
+    firestore: FirebaseFirestore,
+    client: Client
 ) {
     val coroutineScope = rememberCoroutineScope()
     var doctor by remember { mutableStateOf<DoctorInfo?>(null) }
     var isLoading by remember { mutableStateOf(true) }
+    var profileImage by remember { mutableStateOf<ByteArray?>(null) }
 
-    // Fetch doctor details from Firestore
+    // Fetch doctor details and profile picture
     LaunchedEffect(doctorId) {
         coroutineScope.launch {
             fetchDoctorById(doctorId) { fetchedDoctor ->
                 doctor = fetchedDoctor
                 isLoading = false
             }
+            profileImage = fetchProfilePictureDynamically(client, firestore, doctorId)
         }
     }
+
     var reviews by remember { mutableStateOf(listOf<Review>()) }
 
     LaunchedEffect(doctorId) {
@@ -93,15 +102,21 @@ fun DoctorDetailsScreen(
                             horizontalArrangement = Arrangement.SpaceBetween // Space between image and details
                         ) {
                             // Left side: Image
-                            Image(
-                                painter = painterResource(id = R.drawable.ic_launcher_foreground), // Replace with your image resource
-                                contentDescription = "Doctor Image",
+                            Box(
                                 modifier = Modifier
-                                    .size(80.dp) // Image size
-                                    .clip(CircleShape) // Circular shape
-                                    .background(Color.LightGray), // Placeholder background
-                                contentScale = ContentScale.Crop
-                            )
+                                    .size(80.dp)
+                                    .clip(CircleShape)
+                                    .background(Color.LightGray),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                profileImage?.let {
+                                    Image(
+                                        bitmap = convertImageByteArrayToBitmap(it).asImageBitmap(),
+                                        contentDescription = "Profile Picture",
+                                        modifier = Modifier.size(80.dp).clip(CircleShape)
+                                    )
+                                } ?: Text("No Image", color = Color.Gray)
+                            }
 
                             Spacer(modifier = Modifier.width(16.dp)) // Space between image and details
 
