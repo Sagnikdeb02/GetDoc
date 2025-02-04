@@ -79,7 +79,7 @@ fun MyCredentialsPageComponent(
 
                 if (uiState.status == "declined" && !uiState.rejectionReason.isNullOrEmpty()) {
                     Text(
-                        text = "Reason: ${uiState.rejectionReason}",
+                        text = "Reason: Admin declined your request.",
                         fontSize = 14.sp,
                         color = Color.Red
                     )

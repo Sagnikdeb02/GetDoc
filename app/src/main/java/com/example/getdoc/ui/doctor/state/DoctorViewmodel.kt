@@ -41,7 +41,7 @@ class DoctorViewModel(
     fun fetchDoctorStatus(userId: String) {
         Log.d("DoctorViewModel", "Fetching doctor status for user: $userId")
 
-        // 🔹 Fetch Latest Data Once
+        // 🔹 Step 1: Check in "doctor_registrations" (Pending/Declined)
         firestore.collection("doctor_registrations").document(userId)
             .get()
             .addOnSuccessListener { document ->
@@ -50,20 +50,47 @@ class DoctorViewModel(
                     val rejectionReason = document.getString("rejectionReason") ?: ""
 
                     _uiState.value = _uiState.value.copy(status = status, rejectionReason = rejectionReason)
-                    Log.d("DoctorViewModel", "Fetched doctor status: $status, Reason: $rejectionReason")
+                    Log.d("DoctorViewModel", "Fetched doctor status from registrations: $status, Reason: $rejectionReason")
+
+                    // 🔹 Listen for real-time updates in "doctor_registrations"
+                    listenForDoctorStatusUpdates(userId, "doctor_registrations")
                 } else {
-                    Log.e("DoctorViewModel", "Document does not exist for user: $userId")
+                    Log.d("DoctorViewModel", "Doctor not found in registrations, checking 'doctors' collection...")
+
+                    // 🔹 Step 2: If not found, check in "doctors" (Approved)
+                    firestore.collection("doctors").document(userId)
+                        .get()
+                        .addOnSuccessListener { doctorDoc ->
+                            if (doctorDoc.exists()) {
+                                val status = doctorDoc.getString("status") ?: "approved"
+                                _uiState.value = _uiState.value.copy(status = status, rejectionReason = null)
+
+                                Log.d("DoctorViewModel", "Fetched doctor status from doctors: $status")
+
+                                // 🔹 Listen for real-time updates in "doctors"
+                                listenForDoctorStatusUpdates(userId, "doctors")
+                            } else {
+                                Log.e("DoctorViewModel", "No record found in either collection.")
+                            }
+                        }
+                        .addOnFailureListener { e ->
+                            Log.e("DoctorViewModel", "Error fetching doctor status from doctors: ${e.message}")
+                        }
                 }
             }
             .addOnFailureListener { exception ->
-                Log.e("DoctorViewModel", "Error fetching doctor status", exception)
+                Log.e("DoctorViewModel", "Error fetching doctor status: ${exception.message}")
             }
+    }
 
-        // 🔹 Listen for Real-time Updates
-        firestore.collection("doctor_registrations").document(userId)
+    /**
+     * 🔹 Real-time listener for doctor status updates
+     */
+    private fun listenForDoctorStatusUpdates(userId: String, collection: String) {
+        firestore.collection(collection).document(userId)
             .addSnapshotListener { snapshot, error ->
                 if (error != null) {
-                    Log.e("DoctorViewModel", "Error fetching real-time status: ${error.message}")
+                    Log.e("DoctorViewModel", "Error fetching real-time status from $collection: ${error.message}")
                     return@addSnapshotListener
                 }
 
@@ -71,11 +98,12 @@ class DoctorViewModel(
                     val status = it.getString("status") ?: "pending"
                     val rejectionReason = it.getString("rejectionReason") ?: ""
 
-                    Log.d("DoctorViewModel", "Realtime status update: $status, Reason: $rejectionReason")
+                    Log.d("DoctorViewModel", "Realtime status update from $collection: $status, Reason: $rejectionReason")
                     _uiState.value = _uiState.value.copy(status = status, rejectionReason = rejectionReason)
                 }
             }
     }
+
 
     /**
      * Submits the doctor's credentials for admin approval.
