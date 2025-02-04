@@ -116,7 +116,9 @@ fun ConfirmScreen(
                         },
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(8.dp),
-                        colors = ButtonDefaults.buttonColors(MaterialTheme.colorScheme.primary)
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = Color(0xFF008080),
+                            contentColor = Color.DarkGray)
                     ) {
                         Text(
                             text = "Back to Home",

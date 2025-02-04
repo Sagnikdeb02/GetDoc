@@ -23,7 +23,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.navigation
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
-import com.example.getdoc.ui.authentication.AdminHomeScreen
+
 import com.example.getdoc.ui.authentication.AuthState
 import com.example.getdoc.ui.authentication.AuthViewModel
 import com.example.getdoc.ui.doctor.DoctorHomeScreen

@@ -21,9 +21,9 @@ fun CustomButton(
     modifier: Modifier = Modifier
         .fillMaxWidth()
         .padding(vertical = 8.dp),
-    buttonColor: Color = MaterialTheme.colorScheme.primary,
+    buttonColor: Color = Color(0xFF008080),
     textColor: Color = Color.White,
-    shape: Shape = RoundedCornerShape(8.dp),
+    shape: Shape = RoundedCornerShape(30.dp),
     fontSize: Int = 16
 ) {
     Button(
