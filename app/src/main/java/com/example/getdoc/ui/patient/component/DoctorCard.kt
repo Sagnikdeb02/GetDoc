@@ -10,16 +10,19 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.outlined.LocationOn
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
@@ -74,100 +77,149 @@ fun DoctorCard(
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(12.dp)
+            .padding(vertical = 6.dp, horizontal = 16.dp)
             .clickable {
                 val encodedDoctorId = URLEncoder.encode(doctor.userId, StandardCharsets.UTF_8.toString())
                 navController.navigate("doctor_details/$encodedDoctorId")
             },
-        shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White),
-        elevation = CardDefaults.cardElevation(6.dp)
+        shape = RoundedCornerShape(16.dp), // Rounded corners
+        elevation = CardDefaults.cardElevation(
+            defaultElevation = 10.dp // Soft shadow
+        ),
+        colors = CardDefaults.cardColors(
+            containerColor = Color.Transparent // Transparent to allow gradient background
+        )
     ) {
-        Row(
+        Box(
             modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            verticalAlignment = Alignment.CenterVertically
+                .fillMaxSize()
+                .background(
+                    brush = Brush.verticalGradient( // Apply a vertical gradient
+                        colors = listOf(
+                            Color(0xFFFFFFFF), // Pure white
+                            Color(0xFFF0F7FB) // Even lighter gray for a subtle effect
+                        )
+                    ),
+                    shape = RoundedCornerShape(16.dp) // Match the card's shape
+                )
+
         ) {
-            // Profile Image Section
-            Box(
+            Row(
                 modifier = Modifier
-                    .size(80.dp)
-                    .clip(CircleShape)
-                    .background(Color(0xFFE0E0E0)),
-                contentAlignment = Alignment.Center
+                    .fillMaxWidth()
+                    .padding(16.dp),
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                when {
-                    isLoading -> CircularProgressIndicator()
-                    imageData != null -> {
-                        Image(
-                            bitmap = BitmapFactory.decodeByteArray(imageData, 0, imageData!!.size).asImageBitmap(),
-                            contentDescription = "Doctor Image",
-                            contentScale = ContentScale.Crop,
-                            modifier = Modifier
-                                .size(80.dp)
-                                .clip(CircleShape)
-                        )
-                    }
-                    else -> {
-                        Log.e("DoctorCard", "🚨 No profile image available for ${doctor.userId}")
-                        Icon(
-                            imageVector = Icons.Default.Person,
-                            contentDescription = "Default Profile",
-                            modifier = Modifier.size(50.dp),
-                            tint = Color.Gray
-                        )
+                // Profile Image Section
+                Box(
+                    modifier = Modifier
+                        .size(80.dp)
+                        .clip(CircleShape)
+                        .background(Color(0xFFE0E0E0)),
+                    contentAlignment = Alignment.Center
+                ) {
+                    when {
+                        isLoading -> CircularProgressIndicator()
+                        imageData != null -> {
+                            Image(
+                                bitmap = BitmapFactory.decodeByteArray(imageData, 0, imageData!!.size).asImageBitmap(),
+                                contentDescription = "Doctor Image",
+                                contentScale = ContentScale.Crop,
+                                modifier = Modifier
+                                    .size(80.dp)
+                                    .clip(CircleShape)
+                            )
+                        }
+                        else -> {
+                            Log.e("DoctorCard", "🚨 No profile image available for ${doctor.userId}")
+                            Icon(
+                                imageVector = Icons.Default.Person,
+                                contentDescription = "Default Profile",
+                                modifier = Modifier.size(50.dp),
+                                tint = Color.Gray
+                            )
+                        }
                     }
                 }
-            }
 
-            Spacer(modifier = Modifier.width(16.dp))
+                Spacer(modifier = Modifier.width(16.dp))
 
-            // Doctor Information
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = "Dr. ${doctor.name}",
-                    fontSize = 20.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = Color.Black
-                )
-                Text(
-                    text = doctor.specialization,
-                    fontSize = 14.sp,
-                    color = Color.Gray
-                )
-                Text(
-                    text = doctor.location,
-                    fontSize = 12.sp,
-                    color = Color.Gray
-                )
-
-                Spacer(modifier = Modifier.height(6.dp))
-
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(
-                        painter = painterResource(id = R.drawable.star),
-                        contentDescription = "Rating",
-                        tint = Color(0xFFFFD700),
-                        modifier = Modifier.size(18.dp)
-                    )
-                    Spacer(modifier = Modifier.width(4.dp))
+                // Doctor Information
+                Column(modifier = Modifier.weight(1f)) {
                     Text(
-                        text = "${doctor.rating} Rating",
-                        fontSize = 14.sp,
-                        fontWeight = FontWeight.Bold
+                        text = "Dr. ${doctor.name}",
+                        fontSize = 20.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color.Black
                     )
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(
+                        text = doctor.specialization,
+                        fontSize = 14.sp,
+                        color = Color.Blue, // Make the text blue
+                        modifier = Modifier
+                            .background(Color(0xFFE3F2FD), shape = RoundedCornerShape(8.dp)) // Light blue background with rounded edges
+                            .padding(horizontal = 8.dp, vertical = 4.dp) // Add padding around the text
+                    )
+
+                    Spacer(modifier = Modifier.height(4.dp))
+
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(
+                            imageVector = Icons.Outlined.LocationOn,
+                            contentDescription = "Location",
+                            tint = Color.DarkGray,
+                            modifier = Modifier.size(16.dp) // Adjust the size as needed
+                        )
+                        Spacer(modifier = Modifier.width(4.dp)) // Add spacing between icon and text
+                        Text(
+                            text = doctor.location,
+                            fontSize = 14.sp,
+                            color = Color.DarkGray,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis // Add "..." if the text is too long
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.height(3.dp))
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(), // Ensures the row takes full width
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(
+                                painter = painterResource(id = R.drawable.star),
+                                contentDescription = "Rating",
+                                tint = Color(0xFFFFD700),
+                                modifier = Modifier.size(18.dp)
+                            )
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text(
+                                text = "${doctor.rating}",
+                                fontSize = 14.sp
+                            )
+                        }
+
+                        Text(
+                            text = "৳ ${doctor.consultingFee}",
+                            fontSize = 14.sp,
+                            color = Color.Blue, // Make the text blue
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(8.dp)) // Clip instead of background for better handling
+                                .background(Color(0xFFE3F2FD)) // Light blue background with rounded edges
+                                .padding(horizontal = 8.dp, vertical = 4.dp) // Add padding around the text
+                        )
+                    }
+
                 }
-
-                Spacer(modifier = Modifier.height(6.dp))
-
-                Text(
-                    text = "৳ ${doctor.consultingFee}",
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = Color(0xFF388E3C) // Dark Green
-                )
             }
         }
     }
 }
+
+
+
+
+

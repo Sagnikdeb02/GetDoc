@@ -1,18 +1,26 @@
 package com.example.getdoc.ui.patient.appointment
 
 import android.util.Log
+import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.DateRange
+import androidx.compose.material.icons.outlined.LocationOn
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
+import com.example.getdoc.R
 import com.example.getdoc.data.model.DoctorInfo
 import com.example.getdoc.ui.patient.component.CustomAppBar
 import com.google.firebase.auth.FirebaseAuth
@@ -74,31 +82,79 @@ fun ProceedScreen(
                 if (isLoading) {
                     CircularProgressIndicator(modifier = Modifier.align(Alignment.CenterHorizontally))
                 } else if (doctor != null) {
+
                     // Doctor Info
-                    Text("Dr. ${doctor!!.name}", fontWeight = FontWeight.Bold, fontSize = 20.sp)
-                    Text("Specialization: ${doctor!!.specialization}")
-                    Text("Experience: ${doctor!!.experience} years")
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(12.dp),
+                        colors = CardDefaults.cardColors(containerColor = Color(0xFFEDEDED)
+                        )
+                    ) {
+                        Column(modifier = Modifier.padding(16.dp)) {
+                            Text("Dr. ${doctor!!.name}", fontWeight = FontWeight.Bold, fontSize = 20.sp)
+                            Text("Specialization: ${doctor!!.specialization}")
+                            Text("Experience: ${doctor!!.experience} years")
 
-                    Spacer(modifier = Modifier.height(16.dp))
+                            Spacer(modifier = Modifier.height(16.dp))
 
-                    // Appointment Details
-                    Text("Appointment Date: $selectedDate")
-                    Text("Time Slot: $selectedSlot")
+                            // Appointment Details
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Icon(
+                                    imageVector = Icons.Outlined.DateRange,
+                                    contentDescription = "Date",
+                                    tint = Color.DarkGray,
+                                    modifier = Modifier.size(16.dp)
+                                )
+                                Spacer(modifier = Modifier.width(4.dp))
+                                Text(text = "Appointment Date: $selectedDate")
+                            }
 
-                    Spacer(modifier = Modifier.height(16.dp))
+
+
+                            Spacer(modifier = Modifier.height(7.dp))
+
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Icon(
+                                    painter = painterResource(id = R.drawable.clock),
+                                    contentDescription = "Time",
+                                    tint = Color.DarkGray,
+                                    modifier = Modifier.size(16.dp)
+                                )
+                                Spacer(modifier = Modifier.width(4.dp))
+                                Text(text = "Time Slot: $selectedSlot")
+                            }
+
+
+                        }
+                    }
+
+
+
+
+
+
+
+
+                    Spacer(modifier = Modifier.height(64.dp))
 
                     // Patient Details Section
-                    Text("Patient Details", fontWeight = FontWeight.Bold, fontSize = 16.sp)
+
+
+                    Text(
+                        text = "Patient Details",
+                        style = MaterialTheme.typography.titleLarge
+                    )
+                    Spacer(modifier = Modifier.height(16.dp))
 
                     if (patient != null) {
                         PatientCard(patient!!)
                     } else {
-                        Button(
+                        OutlinedButton(
                             onClick = {
                                 navController.navigate("add_patient_screen/$doctorId/$selectedDate/$selectedSlot")
                             },
                             modifier = Modifier.fillMaxWidth(),
-                            shape = RoundedCornerShape(8.dp)
+                            shape = RoundedCornerShape(30.dp)
                         ) {
                             Text(text = "Add Patient")
                         }
@@ -121,8 +177,11 @@ fun ProceedScreen(
                                 Log.e("Appointment", "No patient selected!")
                             }
                         },
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = Color(0xFF008080),
+                            contentColor = Color.White),
                         modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(8.dp)
+                        shape = RoundedCornerShape(30.dp)
                     ) {
                         Text(text = "Confirm Booking")
                     }
@@ -143,8 +202,7 @@ fun PatientCard(patient: Map<String, String>) {
         colors = CardDefaults.cardColors(containerColor = Color(0xFFF2F2F2))
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
-            Text("Patient Details", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-            Spacer(modifier = Modifier.height(8.dp))
+
             Text("Name: ${patient["firstName"]} ${patient["lastName"]}")
             Text("Gender: ${patient["gender"]}")
             Text("Age: ${patient["age"]} years")

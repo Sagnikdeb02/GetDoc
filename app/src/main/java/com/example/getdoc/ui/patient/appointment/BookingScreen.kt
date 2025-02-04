@@ -77,20 +77,32 @@ fun BookingDoctorScreen(
                     CircularProgressIndicator(modifier = Modifier.align(Alignment.CenterHorizontally))
                 } else if (doctor != null) {
                     // ✅ Doctor's Info
-                    Text(
-                        text = "Dr. ${doctor!!.name}",
-                        style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 22.sp
-                    )
-                    Text(text = "Specialization: ${doctor!!.specialization}")
-                    Text(text = "Experience: ${doctor!!.experience} years")
-                    Text(text = "Consultation Fee: ৳ ${doctor!!.consultingFee}")
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(12.dp),
+                        colors = CardDefaults.cardColors(containerColor = Color(0xFFEDEDED)
+                        )
+                    ){
+                        Column(modifier = Modifier.padding(16.dp)){
+                            Text(
+                                text = "Dr. ${doctor!!.name}",
+                                style = MaterialTheme.typography.titleLarge,
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 22.sp
+                            )
+                            Text(text = "Specialization: ${doctor!!.specialization}")
+                            Text(text = "Experience: ${doctor!!.experience} years")
+                            Text(text = "Consultation Fee: ৳ ${doctor!!.consultingFee}")
+                        }
+                    }
+
+
+
 
                     Spacer(modifier = Modifier.height(16.dp))
 
                     // ✅ Date Picker
-                    Text("Choose A Date", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, fontSize = 18.sp)
+                    Text("Choose A Date", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, fontSize = 16.sp)
                     Spacer(modifier = Modifier.height(8.dp))
 
                     Button(
@@ -104,7 +116,10 @@ fun BookingDoctorScreen(
                                 }
                             }
                         },
-                        shape = RoundedCornerShape(8.dp)
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = Color(0xFFE0F7FA),
+                            contentColor = Color.DarkGray),
+                        shape = RoundedCornerShape(30.dp)
                     ) {
                         Text("Select Date: $selectedDate")
                     }
@@ -126,7 +141,7 @@ fun BookingDoctorScreen(
                                     onClick = {
                                         selectedSlot = slot
                                         isSlotBooked = bookedSlots.contains(slot)
-                                    }
+                                    },
                                 )
                             }
                         }
@@ -200,17 +215,22 @@ fun fetchAvailableSlots(firestore: FirebaseFirestore, doctorId: String, selected
 fun SlotButton(text: String, isSelected: Boolean, isUnavailable: Boolean, onClick: () -> Unit) {
     Button(
         onClick = onClick,
-        shape = RoundedCornerShape(8.dp),
+        shape = RoundedCornerShape(30.dp),
         colors = ButtonDefaults.buttonColors(
             containerColor = when {
                 isUnavailable -> Color.Gray
-                isSelected -> MaterialTheme.colorScheme.primary
+                isSelected ->  Color(0xFF008080)
                 else -> Color(0xFFE0F7FA)
+            },
+            contentColor = when {
+                isUnavailable -> Color.DarkGray
+                isSelected -> Color.White
+                else -> Color.DarkGray
             }
         ),
         enabled = !isUnavailable
     ) {
-        Text(text, fontSize = 14.sp, color = if (isUnavailable) Color.White else Color(0xFF00796B))
+        Text(text, fontSize = 14.sp, )
     }
 }
 

@@ -2,11 +2,14 @@ package com.example.getdoc.ui.patient
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -40,6 +43,7 @@ import com.example.getdoc.R
 import com.example.getdoc.convertImageByteArrayToBitmap
 import com.example.getdoc.fetchProfilePictureDynamically
 import com.example.getdoc.fetchUsernameDynamically
+import com.example.getdoc.theme.AppBackground
 import com.example.getdoc.ui.patient.component.DoctorCard
 import com.example.getdoc.ui.patient.state.PatientHomeUiState
 import com.google.firebase.auth.FirebaseAuth
@@ -60,7 +64,7 @@ fun PatientHomeScreen(
 ) {
     var searchQuery by remember { mutableStateOf("") }
     var selectedSpecialization by remember { mutableStateOf("All") }
-    val specializations = listOf("All", "Cardiology", "Dermatology", "Neurology", "Orthopedics")
+    val specializations = listOf("All", "Cardiology", "Neurology", "Orthopedics", "ENT")
     val doctors by viewModel.doctorList.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
     var username by remember { mutableStateOf("Loading...") }
@@ -74,50 +78,78 @@ fun PatientHomeScreen(
 
     Scaffold(
         topBar = {
-            TopAppBar(
-                title = {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier.fillMaxWidth()
+            Row(
+                modifier = Modifier
+                .fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "GetDoc",
+                    fontSize = 24.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color(0xFF008080), // teal color
+                    modifier = Modifier.padding(16.dp)
+                )
+
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier
+                        .background(color = AppBackground)
+                        .padding(16.dp)
+                ) {
+
+                    // Username
+                    Text(
+                        text = "Hi, $username",
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+
+                    Spacer(modifier = Modifier.width(8.dp))
+
+                    // Profile Image
+                    Box(
+                        modifier = Modifier
+                            .size(40.dp)
+                            .clip(CircleShape)
+                            .background(Color.LightGray),
+                        contentAlignment = Alignment.Center
                     ) {
-                        // Profile Image
-                        Box(
-                            modifier = Modifier
-                                .size(40.dp)
-                                .clip(CircleShape)
-                                .background(Color.LightGray),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            profileImage?.let {
-                                Image(
-                                    bitmap = convertImageByteArrayToBitmap(it).asImageBitmap(),
-                                    contentDescription = "Profile Picture",
-                                    modifier = Modifier.size(40.dp).clip(CircleShape)
-                                )
-                            } ?: Icon(
-                                painter = painterResource(id = R.drawable.profile),
-                                contentDescription = "Default Profile",
-                                modifier = Modifier.size(40.dp),
-                                tint = Color.Gray
+                        profileImage?.let {
+                            Image(
+                                bitmap = convertImageByteArrayToBitmap(it).asImageBitmap(),
+                                contentDescription = "Profile Picture",
+                                modifier = Modifier
+                                    .size(40.dp)
+                                    .clip(CircleShape)
                             )
-                        }
-                        Spacer(modifier = Modifier.width(8.dp))
-                        // Username
-                        Text(
-                            text = "Hi, $username",
-                            fontSize = 18.sp,
-                            fontWeight = FontWeight.Bold
+                        } ?: Icon(
+                            painter = painterResource(id = R.drawable.profile),
+                            contentDescription = "Default Profile",
+                            modifier = Modifier.size(40.dp),
+                            tint = Color.Gray
                         )
                     }
+
+
                 }
-            )
+
+
+            }
+
+
+
         }
     ) { paddingValues ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(paddingValues)
+                .background(color = AppBackground)
+                .padding(top = paddingValues.calculateTopPadding() / 2)
+
         ) {
+            Spacer(modifier = Modifier.height(25.dp))
             Search(query = searchQuery, onQueryChange = { searchQuery = it })
             FilterBar(selectedSpecialization, specializations) { selectedSpecialization = it }
             TopDoctorsSection(
@@ -134,7 +166,10 @@ fun PatientHomeScreen(
 fun FilterBar(selected: String, specializations: List<String>, onFilterSelected: (String) -> Unit) {
     Row(
         horizontalArrangement = Arrangement.spacedBy(8.dp),
-        modifier = Modifier.fillMaxWidth()
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp)
+            .horizontalScroll(rememberScrollState())
     ) {
         specializations.forEach { spec ->
             FilterChip(
@@ -156,8 +191,8 @@ fun Search(query: String, onQueryChange: (String) -> Unit, modifier: Modifier = 
         singleLine = true,
         modifier = modifier
             .fillMaxWidth()
-            .padding(16.dp),
-        shape = RoundedCornerShape(16.dp)
+            .padding(horizontal = 16.dp, vertical = 8.dp),
+        shape = RoundedCornerShape(40.dp)
     )
 }
 
@@ -172,10 +207,13 @@ fun TopDoctorsSection(
     val isLoading by viewModel.isLoading.collectAsState()
     val storage = Storage(client)
 
-    Column(modifier = Modifier.padding(16.dp)) {
+    Column(modifier = Modifier) {
         Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
         ) {
             Text(text = "Top Doctors", style = MaterialTheme.typography.headlineSmall)
             Text(text = "View All", color = MaterialTheme.colorScheme.primary)

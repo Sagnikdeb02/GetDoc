@@ -68,14 +68,24 @@ fun DoctorReviewsScreen(doctorId: String) {
         isLoading = false
     }
 
-    Column(modifier = Modifier.padding(16.dp)) {
+    Spacer(modifier = Modifier.height(16.dp))
+
+    Column(modifier = Modifier.padding(horizontal = 16.dp)) {
+
+
         Text(
             text = "Patient Reviews",
-            fontSize = 20.sp,
-            fontWeight = FontWeight.Bold,
-            color = MaterialTheme.colorScheme.primary,
-            modifier = Modifier.padding(bottom = 8.dp)
+            style = MaterialTheme.typography.titleLarge
         )
+
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(1.dp)
+                .background(Color(0xFFE0E0E0)) // Light gray
+        )
+
+        Spacer(modifier = Modifier.height(10.dp))
 
         if (isLoading) {
             // Show loading indicator while fetching reviews
@@ -108,9 +118,9 @@ fun ReviewItem(review: Review) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 8.dp, horizontal = 4.dp),
-        elevation = CardDefaults.cardElevation(4.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
+            .padding(vertical = 8.dp),
+        //elevation = CardDefaults.cardElevation(4.dp),
+        colors = CardDefaults.cardColors(containerColor = Color.Transparent)
     ) {
         Row(
             modifier = Modifier.padding(12.dp),
@@ -141,7 +151,7 @@ fun ReviewItem(review: Review) {
                         Icon(
                             imageVector = Icons.Default.Star,
                             contentDescription = "Star $index",
-                            tint = if (index < review.rating) Color.Yellow else Color.Gray,
+                            tint = if (index < review.rating) Color(0xFFFFD700) else Color(0xFFEDEDED),
                             modifier = Modifier.size(20.dp)
                         )
                     }

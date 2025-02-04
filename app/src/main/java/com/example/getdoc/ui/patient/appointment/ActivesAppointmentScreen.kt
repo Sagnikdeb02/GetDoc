@@ -2,18 +2,25 @@ package com.example.getdoc.ui.patient.appointment
 
 import Appointment
 import android.util.Log
+import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Star
+import androidx.compose.material.icons.outlined.Star
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
@@ -48,7 +55,18 @@ fun AppointmentsScreen(
     }
 
     Scaffold(
-        topBar = { TopAppBar(title = { Text("My Appointments") }) }
+        topBar = {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp) // Added padding
+            ) {
+                Text(
+                    text = "My Appointments",
+                    style = MaterialTheme.typography.headlineSmall
+                )
+            }
+        }
     ) { paddingValues ->
         Column(
             modifier = Modifier
@@ -110,54 +128,127 @@ fun AppointmentCard(appointment: Appointment, showReviewSection: Boolean) {
         modifier = Modifier
             .fillMaxWidth()
             .padding(vertical = 8.dp),
-        elevation = CardDefaults.cardElevation(4.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White)
+        shape = RoundedCornerShape(16.dp), // Rounded corners
+        elevation = CardDefaults.cardElevation(
+            defaultElevation = 10.dp // Soft shadow
+        ),
+        colors = CardDefaults.cardColors(
+            containerColor = Color.Transparent // Transparent to allow gradient background
+        )
     ) {
-        Column(modifier = Modifier.padding(16.dp)) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Image(
-                    painter = painterResource(
-                        id = if (appointment.doctorInfo?.profileImage.isNullOrEmpty())
-                            R.drawable.ic_launcher_foreground
-                        else R.drawable.ic_launcher_foreground
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(
+                    brush = Brush.verticalGradient( // Apply a vertical gradient
+                        colors = listOf(
+                            Color(0xFFFFFFFF), // Pure white
+                            Color(0xFFF0F7FB) // Even lighter gray for a subtle effect
+                        )
                     ),
-                    contentDescription = "Doctor Profile",
-                    modifier = Modifier
-                        .size(60.dp)
-                        .clip(CircleShape)
+                    shape = RoundedCornerShape(16.dp) // Match the card's shape
                 )
-                Spacer(modifier = Modifier.width(16.dp))
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(
-                        text = "Dr. ${appointment.doctorInfo?.name ?: "Unknown"}",
-                        style = MaterialTheme.typography.headlineSmall
-                    )
-                    Text(
-                        text = appointment.doctorInfo?.specialization ?: "Specialty Not Available",
-                        fontSize = 14.sp,
-                        color = Color.Gray
-                    )
-                    Text(text = "Date: ${appointment.date ?: "N/A"}", fontSize = 14.sp)
-                    Text(
-                        text = "Status: ${appointment.status ?: "Pending"}",
-                        fontSize = 14.sp,
-                        color = when (appointment.status) {
-                            "approved" -> Color.Green
-                            "pending" -> Color.Yellow
-                            "declined" -> Color.Red
-                            else -> Color.Gray
-                        }
-                    )
-                }
-            }
-            Spacer(modifier = Modifier.height(8.dp))
-            Text(text = "Time: ${appointment.timeSlot ?: "N/A"}", fontSize = 14.sp, color = Color.Gray)
 
-            if (showReviewSection) {
-                if (doctorId.isNotEmpty()) {
-                    ReviewSection(doctorId = doctorId)  // ✅ Ensure correct doctorId is passed
-                } else {
-                    Log.e("Firestore", "❌ Error: Doctor ID is empty in AppointmentCard!")
+        ) {
+            Column(modifier = Modifier.padding(16.dp)) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Image(
+                        painter = painterResource(
+                            id = if (appointment.doctorInfo?.profileImage.isNullOrEmpty())
+                                R.drawable.ic_launcher_foreground
+                            else R.drawable.ic_launcher_foreground
+                        ),
+                        contentDescription = "Doctor Profile",
+                        modifier = Modifier
+                            .size(60.dp)
+                            .clip(CircleShape)
+                    )
+                    Spacer(modifier = Modifier.width(16.dp))
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = "Dr. ${appointment.doctorInfo?.name ?: "Unknown"}",
+                            style = MaterialTheme.typography.headlineSmall
+                        )
+                        Text(
+                            text = appointment.doctorInfo?.specialization ?: "Specialty Not Available",
+                            fontSize = 14.sp,
+                            color = Color.Blue, // Make the text blue
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(8.dp)) // Clip instead of background for better handling
+                                .background(Color(0xFFE3F2FD)) // Light blue background with rounded edges
+                                .padding(horizontal = 8.dp, vertical = 4.dp) // Add padding around the text
+                        )
+
+                        Spacer(modifier = Modifier.height(5.dp))
+
+
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.DateRange, // Use a calendar icon
+                                contentDescription = "Calendar Icon",
+                                tint = Color.Gray, // Subtle gray tint
+                                modifier = Modifier.size(16.dp) // Match the size from the image
+                            )
+                            Spacer(modifier = Modifier.width(8.dp)) // Space between icon and text
+                            Text(
+                                text = appointment.date ?: "N/A",
+                                fontSize = 14.sp,
+                                color = Color.DarkGray, // Match the color with the icon
+                                style = MaterialTheme.typography.bodySmall // Small, professional text
+                            )
+                        }
+
+                        Spacer(modifier = Modifier.height(5.dp))
+
+                        Row(
+                            modifier = Modifier.fillMaxWidth(), // Ensures full width for spacing
+                            horizontalArrangement = Arrangement.SpaceBetween, // Places items on opposite ends
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            // Time Section
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Icon(
+                                    painter = painterResource(id = R.drawable.clock),
+                                    contentDescription = "Time",
+                                    tint = Color.DarkGray,
+                                    modifier = Modifier.size(16.dp)
+                                )
+                                Spacer(modifier = Modifier.width(4.dp))
+                                Text(
+                                    text = "Time: ${appointment.timeSlot ?: "N/A"}",
+                                    fontSize = 14.sp,
+                                    color = Color.Black,
+                                    style = MaterialTheme.typography.bodySmall
+                                )
+                            }
+
+                            // Status Section
+                            Text(
+                                text = "Status: ${appointment.status ?: "Pending"}",
+                                fontSize = 14.sp,
+                                color = when (appointment.status) {
+                                    "approved" -> Color.Green
+                                    "pending" -> Color.Yellow
+                                    "declined" -> Color.Red
+                                    else -> Color.Gray
+                                }
+                            )
+                        }
+
+                    }
+                }
+                //Spacer(modifier = Modifier.height(8.dp))
+
+
+
+                if (showReviewSection) {
+                    if (doctorId.isNotEmpty()) {
+                        ReviewSection(doctorId = doctorId)  // ✅ Ensure correct doctorId is passed
+                    } else {
+                        Log.e("Firestore", "❌ Error: Doctor ID is empty in AppointmentCard!")
+                    }
                 }
             }
         }
@@ -177,17 +268,22 @@ fun ReviewSection(doctorId: String) {
 
     if (!isSubmitted) {
         Column(
-            modifier = Modifier.fillMaxWidth().padding(8.dp)
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(8.dp)
         ) {
-            Text(text = "Rate Your Doctor:", fontSize = 16.sp, fontWeight = FontWeight.Bold)
 
-            Row(modifier = Modifier.padding(vertical = 8.dp)) {
+            Row(
+                modifier = Modifier
+                    .padding(top = 8.dp)
+                    .fillMaxWidth(),
+                horizontalArrangement = Arrangement.Center) {
                 repeat(5) { index ->
                     IconButton(onClick = { rating = index + 1 }) {
                         Icon(
-                            imageVector = Icons.Default.Star,
+                            imageVector = Icons.Outlined.Star,
                             contentDescription = "Star $index",
-                            tint = if (index < rating) Color.Yellow else Color.Gray,
+                            tint = if (index < rating) Color(0xFFFFD700) else Color(0xFFEDEDED),
                             modifier = Modifier.size(30.dp)
                         )
                     }
@@ -199,12 +295,18 @@ fun ReviewSection(doctorId: String) {
                 onValueChange = { reviewText = it },
                 label = { Text("Write a review...") },
                 modifier = Modifier.fillMaxWidth(),
-                maxLines = 3
+                maxLines = 3,
+                shape = RoundedCornerShape(30.dp) // Apply rounded corners
             )
 
             Spacer(modifier = Modifier.height(8.dp))
 
             Button(
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = Color(0xFFDCD4EC), // Active state color
+                    contentColor = Color.DarkGray, // Active state text color
+                    disabledContainerColor = Color(0xFFEDEDED), // Custom disabled background color
+                    disabledContentColor = Color.Gray), // Custom disabled text color
                 onClick = {
                     if (reviewText.isNotEmpty() && rating > 0) {
                         submitReview(doctorId, rating, reviewText)
@@ -214,7 +316,7 @@ fun ReviewSection(doctorId: String) {
                 modifier = Modifier.fillMaxWidth(),
                 enabled = reviewText.isNotEmpty() && rating > 0
             ) {
-                Text(text = "Submit Review", color = Color.White)
+                Text(text = "Submit Review", color = Color.DarkGray)
             }
         }
     } else {
@@ -330,6 +432,11 @@ fun ActiveAppointmentsList(appointments: List<Appointment>) {
             items(appointments) { appointment ->
                 AppointmentCard(appointment, showReviewSection = false)
             }
+
+            // 🔹 Extra space at the bottom to prevent shadow effect cutoff
+            item {
+                Spacer(modifier = Modifier.height(40.dp))
+            }
         }
     }
 }
@@ -339,31 +446,51 @@ fun TabSection(
     selectedTabIndex: Int,
     onTabChange: (Int) -> Unit
 ) {
-    TabRow(
-        selectedTabIndex = selectedTabIndex,
-        containerColor = MaterialTheme.colorScheme.primaryContainer,
-        contentColor = MaterialTheme.colorScheme.onPrimaryContainer
-    ) {
-        listOf("Active", "Previous").forEachIndexed { index, title ->
-            Tab(
-                selected = selectedTabIndex == index,
-                onClick = {
-                    if (selectedTabIndex != index) {  // Prevent unnecessary recomposition
-                        onTabChange(index)
-                    }
-                },
-                text = {
+    Surface {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            listOf("Active", "Previous").forEachIndexed { index, title ->
+                val isSelected = selectedTabIndex == index
+
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .clickable { onTabChange(index) }
+                        .height(45.dp)
+                ) {
                     Text(
                         text = title,
-                        modifier = Modifier.padding(16.dp),
-                        fontWeight = if (selectedTabIndex == index) FontWeight.Bold else FontWeight.Normal,
-                        color = if (selectedTabIndex == index) MaterialTheme.colorScheme.primary else Color.Gray
+                        color = if (isSelected) Color(0xFF6200EE) else Color.Black,
+                        modifier = Modifier.align(Alignment.Center),
+                        fontWeight = if (isSelected) FontWeight.Medium else FontWeight.Medium
+                    )
+                    if (isSelected) {
+                        Box(
+                            modifier = Modifier
+                                .align(Alignment.BottomCenter)
+                                .height(2.dp)
+                                .width(40.dp)
+                                .background(Color(0xFF6200EE))
+                        )
+                    }
+
+                    Box(
+                        modifier = Modifier
+                            .align(Alignment.BottomCenter)
+                            .fillMaxWidth()
+                            .height(1.dp)
+                            .background(Color(0xFFE0E0E0)) // Light gray
                     )
                 }
-            )
+            }
         }
     }
 }
+
+
 
 
 // 🔹 Loading Indicator

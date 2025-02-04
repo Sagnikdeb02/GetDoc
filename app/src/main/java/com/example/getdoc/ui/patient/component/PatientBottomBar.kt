@@ -80,7 +80,7 @@ fun PatientBottomNavigationBar(
             },
             label = { Text(
                 "My Appointments",
-                fontSize = 9.sp
+                fontSize = 8.sp
             ) }
         )
         NavigationBarItem(
