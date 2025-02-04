@@ -23,6 +23,8 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.navigation
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import com.example.getdoc.AboutUsScreen
+import com.example.getdoc.ChangePasswordScreen
 
 import com.example.getdoc.ui.authentication.AuthState
 import com.example.getdoc.ui.authentication.AuthViewModel
@@ -110,10 +112,9 @@ fun DoctorNavigation(
                     onOptionClick = { option ->
                         when (option) {
                             DoctorProfileOption.MY_CREDENTIALS -> navController.navigate(DoctorCredentialsScreen)
-                            DoctorProfileOption.CHANGE_CONTACT -> navController.navigate("change_contact")
-                            DoctorProfileOption.CHANGE_PASSWORD -> navController.navigate("change_password")
-                            DoctorProfileOption.ABOUT_US -> navController.navigate("about_us")
-                            DoctorProfileOption.HELP -> navController.navigate("help")
+                            DoctorProfileOption.CHANGE_PASSWORD -> navController.navigate(DoctorChangePasswordScreen)
+                            DoctorProfileOption.ABOUT_US -> navController.navigate(DoctorAboutUsScreen)
+                            DoctorProfileOption.HELP -> {}
                         }
                     },
                     onEditClick = {navController.navigate(DoctorProfileUpdateScreen)},
@@ -133,7 +134,17 @@ fun DoctorNavigation(
 
             }
 
+            composable<DoctorAboutUsScreen> {
+                AboutUsScreen()
+            }
 
+            composable<DoctorChangePasswordScreen>{
+                ChangePasswordScreen(
+                    viewModel = AuthViewModel(),
+                    onPasswordChangeSuccess =  {navController.popBackStack()}
+
+                )
+            }
         }
     }
 }

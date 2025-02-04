@@ -28,3 +28,12 @@ import kotlinx.serialization.Serializable
 @Serializable data object DoctorProfileUpdateScreen
 @Serializable data object DoctorCredentialsScreen
 @Serializable data object AppointmentsScreen
+
+
+@Serializable data object DoctorAboutUsScreen
+@Serializable data object PatientAboutUsScreen
+@Serializable data object DoctorChangePasswordScreen
+@Serializable data object PatientChangePasswordScreen
+@Serializable data object ForgotPasswordScreen
+@Serializable data object DoctorDeleteAccountScreen
+@Serializable data object PatientDeleteAccountScreen

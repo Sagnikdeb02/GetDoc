@@ -15,6 +15,8 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.navigation
 import androidx.navigation.compose.rememberNavController
+import com.example.getdoc.AboutUsScreen
+import com.example.getdoc.ChangePasswordScreen
 import com.example.getdoc.ui.authentication.AuthState
 import com.example.getdoc.ui.authentication.AuthViewModel
 import com.example.getdoc.ui.doctor.DoctorViewModel
@@ -22,7 +24,7 @@ import com.example.getdoc.ui.doctor.profile.DoctorBottomNavigationBar
 import com.example.getdoc.ui.doctor.profile.ProfileUpdateScreen
 import com.example.getdoc.ui.patient.AllDoctorsScreen
 import com.example.getdoc.ui.patient.PatientHomeScreen
-import com.example.getdoc.ui.patient.PatientProfileInputScreen
+import com.example.getdoc.ui.patient.PatientProfileOption
 import com.example.getdoc.ui.patient.PatientProfileScreen
 import com.example.getdoc.ui.patient.PatientViewModel
 import com.example.getdoc.ui.patient.appointment.AddPatientScreen
@@ -182,7 +184,14 @@ fun PatientNavigation(
                         authViewModel.signOutUser()
                     },
                     onEditClick = {navController.navigate(PatientProfileUpdateScreen)},
-                    onOptionClick = {},
+                    onOptionClick ={ option ->
+                                    when (option) {
+                                        PatientProfileOption.DELETE_ACCOUNT -> {}
+                                        PatientProfileOption.CHANGE_PASSWORD -> {navController.navigate(PatientChangePasswordScreen)}
+                                        PatientProfileOption.ABOUT_US -> {navController.navigate(PatientAboutUsScreen)}
+                                        PatientProfileOption.HELP -> {}
+                                    }
+                },
                     patientViewModel = PatientViewModel(client, firestore),
                     firestore = firestore,
                     client = client
@@ -198,6 +207,17 @@ fun PatientNavigation(
                     viewModel = DoctorViewModel(client, firestore),
                     client = client,
                     modifier = Modifier.fillMaxSize()
+                )
+            }
+
+            composable<PatientAboutUsScreen> {
+                AboutUsScreen()
+            }
+            composable<PatientChangePasswordScreen>{
+                ChangePasswordScreen(
+                    viewModel = AuthViewModel(),
+                    onPasswordChangeSuccess =  {navController.popBackStack()}
+
                 )
             }
         }

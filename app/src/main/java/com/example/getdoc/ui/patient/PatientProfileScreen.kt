@@ -62,9 +62,7 @@ import io.appwrite.Client
 
 
 enum class PatientProfileOption(val displayName: String) {
-    MY_APPOINTMENTS("My Appointments"),
-    MEDICAL_HISTORY("Medical History"),
-    CHANGE_CONTACT("Change Contact"),
+    DELETE_ACCOUNT("Delete Account"),
     CHANGE_PASSWORD("Change Password"),
     ABOUT_US("About Us"),
     HELP("Help")

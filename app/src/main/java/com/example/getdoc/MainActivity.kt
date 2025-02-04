@@ -12,7 +12,6 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.getdoc.navigation.AppNavigation
 import com.example.getdoc.ui.doctor.DoctorViewModel
 import com.example.getdoc.ui.doctor.profile.MyCredentialsPageComponent
-import com.example.getdoc.ui.patient.PatientProfileInputScreen
 import com.example.getdoc.ui.patient.PatientTopBar
 import com.example.getdoc.ui.patient.PatientViewModel
 import com.example.getdoc.ui.patient.TopDoctorsSection

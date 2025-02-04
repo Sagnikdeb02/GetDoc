@@ -35,7 +35,6 @@ import io.appwrite.Client
 
 enum class DoctorProfileOption(val displayName: String) {
     MY_CREDENTIALS("My Credentials"),
-    CHANGE_CONTACT("Change Contact"),
     CHANGE_PASSWORD("Change Password"),
     ABOUT_US("About Us"),
     HELP("Help")
