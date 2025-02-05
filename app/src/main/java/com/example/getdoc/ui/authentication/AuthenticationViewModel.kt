@@ -46,68 +46,6 @@ class AuthenticationViewModel : ViewModel() {
             }
         }
     }
-
-    fun onEmailChange(email: String) {
-        _authUiState.update { it.copy(email = email) }
-    }
-
-    fun onPasswordChange(password: String) {
-        _authUiState.update { it.copy(password = password) }
-    }
-
-    fun onConfirmPasswordChange(confirmPassword: String) {
-        _authUiState.update { it.copy(confirmPassword = confirmPassword) }
-    }
-
-    fun onRoleChange(role: Role) {
-        _authUiState.update { it.copy(role = role) }
-    }
-
-    fun onSignUpClick() {
-        val email = authUiState.value.email
-        val password = authUiState.value.password
-
-        firebaseAuth.createUserWithEmailAndPassword(email, password)
-            .addOnSuccessListener { authResult ->
-                _firebaseUser.value = authResult.user
-                Log.d("AuthenticationViewModel", "User signed up successfully")
-                viewModelScope.launch(Dispatchers.IO) {
-                    saveUserSession(email, authUiState.value.role)
-                }
-            }
-            .addOnFailureListener { exception ->
-                _authError.value = exception.message
-                Log.e("AuthenticationViewModel", "Sign-up failed: ${exception.message}")
-            }
-    }
-
-    fun onSignInClick() {
-        val email = authUiState.value.email
-        val password = authUiState.value.password
-
-        firebaseAuth.signInWithEmailAndPassword(email, password)
-            .addOnSuccessListener { authResult ->
-                _firebaseUser.value = authResult.user
-                Log.d("AuthenticationViewModel", "User signed in successfully")
-                viewModelScope.launch(Dispatchers.IO) {
-                    saveUserSession(email, authUiState.value.role)
-                }
-            }
-            .addOnFailureListener { exception ->
-                _authError.value = exception.message
-                Log.e("AuthenticationViewModel", "Sign-in failed: ${exception.message}")
-            }
-    }
-
-    fun logout() {
-        firebaseAuth.signOut()
-        _firebaseUser.value = null
-        viewModelScope.launch(Dispatchers.IO) {
-            clearUserSession()
-        }
-    }
-
-
     private suspend fun saveUserSession(email: String, role: Role?) {
         context?.dataStore?.edit { preferences ->
             preferences[PreferencesKeys.USER_EMAIL] = email

@@ -17,6 +17,7 @@ import androidx.navigation.compose.navigation
 import androidx.navigation.compose.rememberNavController
 import com.example.getdoc.AboutUsScreen
 import com.example.getdoc.ChangePasswordScreen
+import com.example.getdoc.DeleteAccountScreen
 import com.example.getdoc.HelpScreen
 import com.example.getdoc.ui.authentication.AuthState
 import com.example.getdoc.ui.authentication.AuthViewModel
@@ -188,10 +189,10 @@ fun PatientNavigation(
                     onEditClick = {navController.navigate(PatientProfileUpdateScreen)},
                     onOptionClick ={ option ->
                                     when (option) {
-                                        PatientProfileOption.DELETE_ACCOUNT -> {}
+                                        PatientProfileOption.DELETE_ACCOUNT -> {navController.navigate(PatientDeleteAccountScreen)}
                                         PatientProfileOption.CHANGE_PASSWORD -> {navController.navigate(PatientChangePasswordScreen)}
                                         PatientProfileOption.ABOUT_US -> {navController.navigate(PatientAboutUsScreen)}
-                                        PatientProfileOption.HELP -> {}
+                                        PatientProfileOption.HELP -> {navController.navigate(PatientHelpScreen)}
                                     }
                 },
                     patientViewModel = PatientViewModel(client, firestore),
@@ -224,6 +225,13 @@ fun PatientNavigation(
             }
             composable<PatientHelpScreen> {
                 HelpScreen()
+            }
+
+            composable<PatientDeleteAccountScreen> {
+                DeleteAccountScreen(
+                    navController = navController,
+                    viewModel = AuthViewModel()
+                )
             }
         }
     }

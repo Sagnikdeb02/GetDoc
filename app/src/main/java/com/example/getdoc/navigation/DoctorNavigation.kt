@@ -25,6 +25,7 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.example.getdoc.AboutUsScreen
 import com.example.getdoc.ChangePasswordScreen
+import com.example.getdoc.DeleteAccountScreen
 import com.example.getdoc.HelpScreen
 
 import com.example.getdoc.ui.authentication.AuthState
@@ -116,6 +117,7 @@ fun DoctorNavigation(
                             DoctorProfileOption.CHANGE_PASSWORD -> navController.navigate(DoctorChangePasswordScreen)
                             DoctorProfileOption.ABOUT_US -> navController.navigate(DoctorAboutUsScreen)
                             DoctorProfileOption.HELP -> {navController.navigate(DoctorHelpScreen)}
+                            DoctorProfileOption.DELETE_ACCOUNT -> {navController.navigate(DoctorDeleteAccountScreen)}
                         }
                     },
                     onEditClick = {navController.navigate(DoctorProfileUpdateScreen)},
@@ -148,6 +150,13 @@ fun DoctorNavigation(
             }
             composable<DoctorHelpScreen> {
                 HelpScreen()
+            }
+
+            composable<DoctorDeleteAccountScreen> {
+                DeleteAccountScreen(
+                    navController = navController,
+                    viewModel = AuthViewModel()
+                )
             }
         }
     }

@@ -161,11 +161,6 @@ fun AppNavigation(modifier: Modifier = Modifier, client: Client, firestore: Fire
             )
         }
 
-//        doctorNavigation(
-//            client = client,
-//            firestore = firestore,
-//            navController = navController
-//        )
 
         composable<PatientHomeScreen> {
             PatientNavigation(
@@ -179,4 +174,9 @@ fun AppNavigation(modifier: Modifier = Modifier, client: Client, firestore: Fire
                 }
             )
         }
+
+        composable<ForgotPasswordScreen> {
+            ForgotPasswordScreen(navController)
+        }
+
     }}
