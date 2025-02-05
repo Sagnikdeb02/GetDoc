@@ -175,8 +175,6 @@ fun AppNavigation(modifier: Modifier = Modifier, client: Client, firestore: Fire
             )
         }
 
-        composable<ForgotPasswordScreen> {
-            ForgotPasswordScreen(navController)
-        }
+
 
     }}
