@@ -91,14 +91,14 @@ fun MyCredentialsPageComponent(
             modifier = Modifier.fillMaxWidth().weight(1f).padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            item { FormFieldComponent("Full Name", uiState.name ?: "", { viewModel.updateUiState("name", it) }) }
-            item { FormFieldComponent("Degree", uiState.degree ?: "", { viewModel.updateUiState("degree", it) }) }
-            item { FormFieldComponent("Speciality", uiState.speciality ?: "", { viewModel.updateUiState("speciality", it) }) }
-            item { FormFieldComponent("DOB", uiState.dob ?: "", { viewModel.updateUiState("dob", it) }) }
-            item { FormFieldComponent("Clinic Address", uiState.address ?: "", { viewModel.updateUiState("address", it) }) }
-            item { FormFieldComponent("Experience", uiState.experience ?: "", { viewModel.updateUiState("experience", it) }) }
-            item { FormFieldComponent("Consultation Fee", uiState.fee ?: "", { viewModel.updateUiState("fee", it) }) }
-            item { FormFieldComponent("About You", uiState.aboutYou ?: "", { viewModel.updateUiState("aboutYou", it) }) }
+            item { FormFieldComponent("Full Name (e.g. Prapti Rani)", uiState.name ?: "", { viewModel.updateUiState("name", it) }) }
+            item { FormFieldComponent("Degree (e.g. MBBS, MD)", uiState.degree ?: "", { viewModel.updateUiState("degree", it) }) }
+            item { FormFieldComponent("Speciality (e.g. Cardiologist)", uiState.speciality ?: "", { viewModel.updateUiState("speciality", it) }) }
+            item { FormFieldComponent("DOB (e.g. 1985/12/1)", uiState.dob ?: "", { viewModel.updateUiState("dob", it) }) }
+            item { FormFieldComponent("Clinic Address (e.g. 123 Main Street, Dhaka)", uiState.address ?: "", { viewModel.updateUiState("address", it) }) }
+            item { FormFieldComponent("Experience (e.g. 10 )", uiState.experience ?: "", { viewModel.updateUiState("experience", it) }) }
+            item { FormFieldComponent("Consultation Fee (e.g. 500)", uiState.fee ?: "", { viewModel.updateUiState("fee", it) }) }
+            item { FormFieldComponent("About You (e.g. Passionate about providing quality healthcare.)", uiState.aboutYou ?: "", { viewModel.updateUiState("aboutYou", it) }) }
 
         }
 

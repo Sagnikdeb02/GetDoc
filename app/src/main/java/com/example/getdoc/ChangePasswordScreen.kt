@@ -9,8 +9,10 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.getdoc.ui.authentication.AuthViewModel
+import com.google.firebase.auth.EmailAuthProvider
 import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.launch
+import java.util.regex.Pattern
 
 @Composable
 fun ChangePasswordScreen(viewModel: AuthViewModel, onPasswordChangeSuccess: () -> Unit) {
@@ -23,6 +25,11 @@ fun ChangePasswordScreen(viewModel: AuthViewModel, onPasswordChangeSuccess: () -
     var errorMessage by remember { mutableStateOf<String?>(null) }
     var isPasswordVisible by remember { mutableStateOf(false) }
     val coroutineScope = rememberCoroutineScope()
+
+    fun isValidPassword(password: String): Boolean {
+        val passwordPattern = "^(?=.*[0-9])(?=.*[!@#\$%^&*])[a-zA-Z0-9!@#\$%^&*]{6,}$"
+        return Pattern.compile(passwordPattern).matcher(password).matches()
+    }
 
     Column(
         modifier = Modifier
@@ -80,18 +87,27 @@ fun ChangePasswordScreen(viewModel: AuthViewModel, onPasswordChangeSuccess: () -
         Button(
             onClick = {
                 errorMessage = null
-                if (newPassword != confirmPassword) {
+                if (!isValidPassword(newPassword)) {
+                    errorMessage = "Password must be at least 6 characters, include a number, and a special character"
+                } else if (newPassword != confirmPassword) {
                     errorMessage = "Passwords do not match"
                 } else {
-                    coroutineScope.launch {
-                        try {
-                            user?.updatePassword(newPassword)?.addOnSuccessListener {
-                               onPasswordChangeSuccess()
-                            }?.addOnFailureListener {
-                                errorMessage = it.message
-                            }
-                        } catch (e: Exception) {
-                            errorMessage = e.message
+                    user?.let { currentUser ->
+                        val credential = EmailAuthProvider.getCredential(currentUser.email!!, currentPassword)
+                        coroutineScope.launch {
+                            currentUser.reauthenticate(credential)
+                                .addOnSuccessListener {
+                                    currentUser.updatePassword(newPassword)
+                                        .addOnSuccessListener {
+                                            onPasswordChangeSuccess()
+                                        }
+                                        .addOnFailureListener {
+                                            errorMessage = it.message
+                                        }
+                                }
+                                .addOnFailureListener {
+                                    errorMessage = "Current password is incorrect"
+                                }
                         }
                     }
                 }
@@ -111,5 +127,3 @@ fun ChangePasswordScreen(viewModel: AuthViewModel, onPasswordChangeSuccess: () -
         }
     }
 }
-
-
