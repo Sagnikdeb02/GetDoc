@@ -34,7 +34,6 @@ import com.google.firebase.firestore.FirebaseFirestore
 import io.appwrite.Client
 
 
-
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PatientHomeScreen(
@@ -59,11 +58,19 @@ fun PatientHomeScreen(
 
     val searchSuggestions = doctors.filter { it.name.contains(searchQuery, ignoreCase = true) }
 
-    val displayedDoctors = when {
-        searchQuery.isNotBlank() -> doctors.filter { it.name.equals(searchQuery, ignoreCase = true) }
-        selectedSpecialization != "All" -> doctors.filter { it.specialization == selectedSpecialization }
-        else -> doctors
+    // **Fixed Filtering Logic**
+    val displayedDoctors = remember(searchQuery, selectedSpecialization, doctors) {
+        doctors.filter { doctor ->
+            val specInDb = doctor.specialization.trim().lowercase()
+            val selectedSpec = selectedSpecialization.trim().lowercase()
+            println("Doctor: ${doctor.name}, Specialization in DB: $specInDb, Selected: $selectedSpec")
+
+            val matchesSearch = searchQuery.isBlank() || doctor.name.contains(searchQuery, ignoreCase = true)
+            val matchesSpecialization = selectedSpecialization == "All" || specInDb == selectedSpec
+            matchesSearch && matchesSpecialization
+        }
     }
+
 
     Scaffold(
         topBar = {
@@ -125,25 +132,6 @@ fun PatientHomeScreen(
 }
 
 @Composable
-fun DoctorSuggestions(suggestions: List<DoctorInfo>, navController: NavController, client: Client, firestore: FirebaseFirestore) {
-    LazyColumn(
-        modifier = Modifier.fillMaxWidth().padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(8.dp)
-    ) {
-        items(suggestions) { doctor ->
-            DoctorCard(
-                doctor = doctor,
-                bucketId = "678e94b20023a8f92be0",
-                navController = navController,
-                client = client,
-                firestore = firestore
-            )
-        }
-    }
-}
-
-
-@Composable
 fun FilterBar(selected: String, specializations: List<String>, onFilterSelected: (String) -> Unit) {
     Row(
         horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -162,20 +150,26 @@ fun FilterBar(selected: String, specializations: List<String>, onFilterSelected:
     }
 }
 
+
 @Composable
-fun Search(query: String, onQueryChange: (String) -> Unit, modifier: Modifier = Modifier) {
-    OutlinedTextField(
-        value = query,
-        onValueChange = onQueryChange,
-        label = { Text(text = "Search...") },
-        placeholder = { Text(text = "Eg: 'Dr. John'") },
-        singleLine = true,
-        modifier = modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 8.dp),
-        shape = RoundedCornerShape(40.dp)
-    )
+fun DoctorSuggestions(suggestions: List<DoctorInfo>, navController: NavController, client: Client, firestore: FirebaseFirestore) {
+    LazyColumn(
+        modifier = Modifier.fillMaxWidth().padding(16.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        items(suggestions) { doctor ->
+            DoctorCard(
+                doctor = doctor,
+                bucketId = "678e94b20023a8f92be0",
+                navController = navController,
+                client = client,
+                firestore = firestore
+            )
+        }
+    }
 }
+
+
 
 @Composable
 fun TopDoctorsSection(
