@@ -456,7 +456,7 @@ fun TabSection(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            listOf("Active", "Previous", "Declined by Doctor").forEachIndexed { index, title ->
+            listOf("Active", "Previous", "Declined").forEachIndexed { index, title ->
                 val isSelected = selectedTabIndex == index
                 Box(
                     modifier = Modifier.weight(1f).clickable { onTabChange(index) }.height(45.dp),

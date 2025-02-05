@@ -17,6 +17,7 @@ import androidx.navigation.compose.navigation
 import androidx.navigation.compose.rememberNavController
 import com.example.getdoc.AboutUsScreen
 import com.example.getdoc.ChangePasswordScreen
+import com.example.getdoc.HelpScreen
 import com.example.getdoc.ui.authentication.AuthState
 import com.example.getdoc.ui.authentication.AuthViewModel
 import com.example.getdoc.ui.doctor.DoctorViewModel
@@ -219,6 +220,9 @@ fun PatientNavigation(
                     onPasswordChangeSuccess =  {navController.popBackStack()}
 
                 )
+            }
+            composable<PatientHelpScreen> {
+                HelpScreen()
             }
         }
     }

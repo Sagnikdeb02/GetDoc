@@ -1,4 +1,4 @@
-package com.example.getdoc.ui.doctor.profile
+package com.example.getdoc
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -98,8 +98,3 @@ fun FAQItem(question: String, answer: String) {
 }
 
 
-@Preview(showSystemUi = true, showBackground = true)
-@Composable
-fun HelpScreenPreview() {
-    HelpScreen()
-}

@@ -37,7 +37,6 @@ import com.google.firebase.firestore.FirebaseFirestore
 import io.appwrite.Client
 import java.text.SimpleDateFormat
 import java.util.*
-
 @SuppressLint("StateFlowValueCalledInComposition")
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -54,15 +53,32 @@ fun DoctorHomeScreen(
     var username by remember { mutableStateOf("Loading...") }
     var profileImage by remember { mutableStateOf<ByteArray?>(null) }
     var userId = FirebaseAuth.getInstance().currentUser?.uid ?: ""
+
     LaunchedEffect(userId) {
         username = fetchUsernameDynamically(firestore, userId)
         profileImage = fetchProfilePictureDynamically(client, firestore, userId)
     }
-    // Fetch appointments when doctor ID or selected date changes
-    LaunchedEffect(doctorId, selectedDate) {
+
+    LaunchedEffect(doctorId) {
         doctorId?.let {
-            fetchAppointments(firestore, it, selectedDate, todayDate) { fetchedAppointments ->
+            fetchAppointments(firestore, it) { fetchedAppointments ->
                 appointments = fetchedAppointments
+            }
+        }
+    }
+
+    LaunchedEffect(selectedDate) {
+        if (selectedDate.isNotEmpty()) {
+            doctorId?.let {
+                fetchAppointmentsByDate(firestore, it, selectedDate) { fetchedAppointments ->
+                    appointments = fetchedAppointments
+                }
+            }
+        } else {
+            doctorId?.let {
+                fetchAppointments(firestore, it) { fetchedAppointments ->
+                    appointments = fetchedAppointments
+                }
             }
         }
     }
@@ -73,10 +89,8 @@ fun DoctorHomeScreen(
             .background(Color(0xFFF0F4F7))
             .padding(16.dp)
     ) {
-
         Row(
-            modifier = Modifier
-                .fillMaxWidth(),
+            modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
@@ -84,15 +98,10 @@ fun DoctorHomeScreen(
                 text = "GetDoc",
                 fontSize = 24.sp,
                 fontWeight = FontWeight.Bold,
-                color = Color(0xFF008080), // teal color
-                //modifier = Modifier.padding(16.dp)
+                color = Color(0xFF008080)
             )
 
-            Row(
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-
-                // Username
+            Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(
                     text = "Hi, $username",
                     fontSize = 18.sp,
@@ -101,13 +110,8 @@ fun DoctorHomeScreen(
 
                 Spacer(modifier = Modifier.width(8.dp))
 
-
-                // Profile Image
                 Box(
-                    modifier = Modifier
-                        .size(40.dp)
-                        .clip(CircleShape)
-                        .background(Color.LightGray),
+                    modifier = Modifier.size(40.dp).clip(CircleShape).background(Color.LightGray),
                     contentAlignment = Alignment.Center
                 ) {
                     profileImage?.let {
@@ -117,43 +121,35 @@ fun DoctorHomeScreen(
                             modifier = Modifier.size(40.dp).clip(CircleShape)
                         )
                     } ?: Icon(
-                        painter = painterResource(id = R.drawable.profile),  // Default profile icon
+                        painter = painterResource(id = R.drawable.profile),
                         contentDescription = "Default Profile",
                         modifier = Modifier.size(40.dp),
                         tint = Color.Gray
                     )
                 }
             }
-
-
         }
-
-
 
         Spacer(modifier = Modifier.height(30.dp))
 
-        // Calendar and Appointments Title
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-                text = if (selectedDate.isEmpty()) "New Appointments" else "Appointments for $selectedDate",
+                text = if (selectedDate.isEmpty()) "All Appointments" else "Appointments for $selectedDate",
                 style = MaterialTheme.typography.titleLarge
             )
             Icon(
                 painter = painterResource(id = R.drawable.img_14),
                 contentDescription = "Calendar Icon",
-                modifier = Modifier
-                    .clickable { isCalendarVisible = !isCalendarVisible }
-                    .size(24.dp)
+                modifier = Modifier.clickable { isCalendarVisible = !isCalendarVisible }.size(24.dp)
             )
         }
 
         Spacer(modifier = Modifier.height(8.dp))
 
-        // Date Picker
         val datePickerState = rememberDatePickerState()
 
         AnimatedVisibility(isCalendarVisible) {
@@ -163,9 +159,6 @@ fun DoctorHomeScreen(
                     onClick = {
                         datePickerState.selectedDateMillis?.let { millis ->
                             selectedDate = convertMillisToDate(millis)
-                            fetchAppointments(firestore, doctorId ?: "", selectedDate, todayDate) { fetchedAppointments ->
-                                appointments = fetchedAppointments
-                            }
                         }
                         isCalendarVisible = false
                     },
@@ -178,26 +171,27 @@ fun DoctorHomeScreen(
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // **Filter Appointments** (Excluding Declined + Past Dates)
-        val filteredAppointments = appointments.filter {
-            it.patientInfo.status == "approved" && compareDates(it.date, todayDate) >= 0
-        }
-
-        if (filteredAppointments.isEmpty()) {
+        if (appointments.isEmpty()) {
             Text(
-                text = "No appointments available",
+                text = if (selectedDate.isEmpty()) "No appointments available" else "No appointments on this date",
                 color = Color.Gray,
                 modifier = Modifier.align(Alignment.CenterHorizontally)
             )
         } else {
             LazyColumn {
-                items(filteredAppointments) { appointment ->
+                items(appointments) { appointment ->
                     AppointmentCard(
                         appointment = appointment,
                         onDecline = {
                             updateAppointmentStatus(firestore, appointment.id, "declined") {
-                                fetchAppointments(firestore, doctorId ?: "", selectedDate, todayDate) { updatedAppointments ->
-                                    appointments = updatedAppointments
+                                if (selectedDate.isNotEmpty()) {
+                                    fetchAppointmentsByDate(firestore, doctorId ?: "", selectedDate) { updatedAppointments ->
+                                        appointments = updatedAppointments
+                                    }
+                                } else {
+                                    fetchAppointments(firestore, doctorId ?: "") { updatedAppointments ->
+                                        appointments = updatedAppointments
+                                    }
                                 }
                             }
                         }
@@ -208,6 +202,63 @@ fun DoctorHomeScreen(
         }
     }
 }
+
+fun fetchAppointmentsByDate(
+    firestore: FirebaseFirestore,
+    doctorId: String,
+    date: String,
+    onResult: (List<Appointment>) -> Unit
+) {
+    firestore.collection("appointments")
+        .whereEqualTo("doctorId", doctorId)
+        .whereEqualTo("date", date)
+        .whereEqualTo("patientInfo.status", "approved")
+        .get()
+        .addOnSuccessListener { result ->
+            val appointments = result.documents.mapNotNull { document ->
+                try {
+                    document.toObject(Appointment::class.java)?.copy(id = document.id)
+                } catch (e: Exception) {
+                    Log.e("Firestore", "Error parsing appointment: ${e.message}")
+                    null
+                }
+            }
+            onResult(appointments)
+        }
+        .addOnFailureListener { e ->
+            Log.e("Firestore", "Error fetching appointments: ${e.message}")
+            onResult(emptyList())
+        }
+}
+
+
+
+fun fetchAppointments(
+    firestore: FirebaseFirestore,
+    doctorId: String,
+    onResult: (List<Appointment>) -> Unit
+) {
+    firestore.collection("appointments")
+        .whereEqualTo("doctorId", doctorId)
+        .whereEqualTo("patientInfo.status", "approved")
+        .get()
+        .addOnSuccessListener { result ->
+            val appointments = result.documents.mapNotNull { document ->
+                try {
+                    document.toObject(Appointment::class.java)?.copy(id = document.id)
+                } catch (e: Exception) {
+                    Log.e("Firestore", "Error parsing appointment: ${e.message}")
+                    null
+                }
+            }
+            onResult(appointments)
+        }
+        .addOnFailureListener { e ->
+            Log.e("Firestore", "Error fetching appointments: ${e.message}")
+            onResult(emptyList())
+        }
+}
+
 
 @Composable
 fun AppointmentCard(
