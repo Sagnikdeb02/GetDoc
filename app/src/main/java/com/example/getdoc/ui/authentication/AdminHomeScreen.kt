@@ -19,6 +19,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.text.font.FontWeight
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
 import com.google.firebase.firestore.FirebaseFirestore
 import io.appwrite.Client
@@ -30,10 +31,11 @@ import kotlinx.coroutines.withContext
 @SuppressLint("RememberReturnType")
 @Composable
 fun AdminHomeScreen(
-    navController: NavHostController,
+    viewModel: AuthViewModel,
     firestore: FirebaseFirestore,
     client: Client,
-    bucketId: String = "678dd5d30039f0a22428"
+    bucketId: String = "678dd5d30039f0a22428",
+    onLogoutClick: () -> Unit
 ) {
     val coroutineScope = rememberCoroutineScope()
     var doctorList by remember { mutableStateOf<List<Map<String, Any>>>(emptyList()) }
@@ -65,6 +67,14 @@ fun AdminHomeScreen(
         fetchDoctorRegistrations()
     }
 
+    val authState by viewModel.authState.collectAsStateWithLifecycle()
+
+    LaunchedEffect(authState) {
+        if (authState is AuthState.Uninitialized) {
+            onLogoutClick()
+        }
+    }
+
     Column(modifier = Modifier.padding(16.dp)) {
         Text("Admin Panel", fontWeight = FontWeight.Bold, fontSize = 24.sp)
 
@@ -73,11 +83,7 @@ fun AdminHomeScreen(
         // Logout Button
         Button(
             onClick = {
-                coroutineScope.launch {
-                    navController.navigate("login") {
-                        popUpTo("adminHome") { inclusive = true }
-                    }
-                }
+                viewModel.signOutUser()
             },
             modifier = Modifier.fillMaxWidth()
         ) {

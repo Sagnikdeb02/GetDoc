@@ -27,38 +27,9 @@ class AuthViewModel : ViewModel() {
     private val defaultAdminEmail = "admin@getdoc.com"
     private val defaultAdminPassword = "admin123"
 
-
     init {
-
-        loadUserData()
-    }
-
-    fun ensureAdminExists() {
-        val user = firebaseAuth.currentUser
-        if (user == null) {
-            firebaseAuth.fetchSignInMethodsForEmail(defaultAdminEmail)
-                .addOnSuccessListener { result ->
-                    if (result.signInMethods.isNullOrEmpty()) {
-                        // Admin does not exist, create it
-                        firebaseAuth.createUserWithEmailAndPassword(defaultAdminEmail, defaultAdminPassword)
-                            .addOnSuccessListener { authResult ->
-                                val user = authResult.user
-                                user?.let {
-                                    val adminData = hashMapOf(
-                                        "email" to defaultAdminEmail,
-                                        "role" to Role.ADMIN.name
-                                    )
-                                    db.collection("users").document(defaultAdminEmail)
-                                        .set(adminData)
-                                }
-                            }
-                            .addOnFailureListener {
-                                Log.e("AuthViewModel", "Failed to create default admin: ${it.message}")
-                            }
-                    } else {
-                        Log.d("AuthViewModel", "Admin already exists.")
-                    }
-                }
+        if (verificationCheckJob == null) {
+            loadUserData()
         }
     }
 
@@ -100,31 +71,24 @@ class AuthViewModel : ViewModel() {
         firebaseAuth.createUserWithEmailAndPassword(email, password)
             .addOnSuccessListener { authResult ->
                 authResult.user?.sendEmailVerification()?.addOnCompleteListener { verificationTask ->
-                    if (verificationTask.isSuccessful) {
-                        checkEmailVerification()
-                        _authState.value = AuthState.VerificationEmailSent
-                    } else {
+                    if (!verificationTask.isSuccessful) {
                         _authState.value = AuthState.Error(
                             "Failed to send verification email: ${verificationTask.exception?.message}"
                         )
+                        return@addOnCompleteListener
                     }
+                    val userMap = hashMapOf(
+                        "email" to email,
+                        "role" to role.name
+                    )
+                    db.collection("users").document(email).set(userMap)
+                        .addOnFailureListener {
+
+                        }
+                    _authState.value = AuthState.VerificationEmailSent
+                    loadUserData()
                 }
 
-                val userMap = hashMapOf(
-                    "email" to email,
-                    "role" to role.name
-                )
-
-                db.collection("users")
-                    .document(email)
-                    .set(userMap)
-                    .addOnSuccessListener {
-                        _authState.value = AuthState.Authenticated(
-                            user = authResult.user!!,
-                            role
-                        )
-                        signInUser(email, password)
-                    }
             }
             .addOnFailureListener {
                 _authState.value = AuthState.Error(it.message ?: "Unknown error")
@@ -141,7 +105,6 @@ class AuthViewModel : ViewModel() {
                 if (user != null && user.isEmailVerified) {
                     loadUserData()
                     verificationCheckJob?.cancel()
-                    break
                 }
                 delay(2000)
             }
@@ -149,12 +112,12 @@ class AuthViewModel : ViewModel() {
     }
 
     fun loadUserData() {
-        Log.d("AuthViewModel", "Loading user data")
+        _authState.value = AuthState.Loading
+        firebaseAuth.currentUser?.reload()
         val user = firebaseAuth.currentUser
-        if (user != null) {
+        if (user != null && user.isEmailVerified) {
             val userEmail = user.email
             if (userEmail != null) {
-                Log.d("AuthViewModel", "User email: $userEmail")
                 db.collection("users").document(userEmail).get()
                     .addOnSuccessListener { document ->
                         if (document != null && document.exists()) {
@@ -164,10 +127,15 @@ class AuthViewModel : ViewModel() {
                         } else {
                             _authState.value = AuthState.Error("User data not found")
                         }
+                    }.addOnFailureListener {
+                        _authState.value = AuthState.Error("Error fetching user role: ${it.message}")
                     }
             }
+        } else if (user != null && !user.isEmailVerified) {
+            _authState.value = AuthState.VerificationEmailSent
+            checkEmailVerification()
         } else {
-            _authState.value = AuthState.Error("User not authenticated")
+            _authState.value = AuthState.Uninitialized
         }
     }
 

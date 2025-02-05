@@ -28,6 +28,7 @@ fun LogInScreen(
     viewModel: AuthViewModel,
     onLoginSuccess: (role: Role) -> Unit,
     onSignUpClick: () -> Unit,
+    onVerificationEmailSent: () -> Unit
 ) {
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
@@ -56,7 +57,7 @@ fun LogInScreen(
             AuthState.PendingApproval -> {}
             is AuthState.Rejected -> {}
             AuthState.Uninitialized -> {}
-            AuthState.VerificationEmailSent -> {}
+            AuthState.VerificationEmailSent -> onVerificationEmailSent()
         }
     }
 

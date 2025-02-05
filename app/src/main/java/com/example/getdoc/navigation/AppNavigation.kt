@@ -1,10 +1,12 @@
 package com.example.getdoc.navigation
 
+import android.util.Log
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.core.app.AppLaunchChecker
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.NavHost
@@ -38,8 +40,8 @@ fun AppNavigation(modifier: Modifier = Modifier, client: Client, firestore: Fire
 
     NavHost(navController = navController, startDestination = SplashScreen) {
         composable<SplashScreen> {
+
             LaunchedEffect(authState) {
-                delay(1000)
                 when (authState) {
                     is AuthState.Authenticated -> {
                         val userRole = (authState as AuthState.Authenticated).role
@@ -95,9 +97,6 @@ fun AppNavigation(modifier: Modifier = Modifier, client: Client, firestore: Fire
         }
 
         composable<LoginScreen> {
-            LaunchedEffect(Unit) {
-                authViewModel.ensureAdminExists()  // Ensures admin exists only when LoginScreen is shown
-            }
             LogInScreen(
                 viewModel = authViewModel,
                 onLoginSuccess = {
@@ -108,7 +107,8 @@ fun AppNavigation(modifier: Modifier = Modifier, client: Client, firestore: Fire
                     }
 
                 },
-                onSignUpClick = { navController.navigate(ChooseRoleScreen) }
+                onSignUpClick = { navController.navigate(ChooseRoleScreen) },
+                onVerificationEmailSent = { navController.navigate(WaitingForVerificationScreen) }
             )
         }
 
@@ -135,11 +135,15 @@ fun AppNavigation(modifier: Modifier = Modifier, client: Client, firestore: Fire
 
         composable<AdminHomeScreen> {
             AdminHomeScreen(
+                viewModel = authViewModel,
                 client = client,
                 bucketId = "678dd5d30039f0a22428",
-                navController = navController,
                 firestore = firestore,
-            )
+            ) {
+                navController.navigate(LoginScreen) {
+                    popUpTo(0) { inclusive = true }
+                }
+            }
         }
 
 
@@ -149,7 +153,6 @@ fun AppNavigation(modifier: Modifier = Modifier, client: Client, firestore: Fire
                 client = client,
                 firestore = firestore,
                 authViewModel = authViewModel,
-                modifier = Modifier,
                 onLogoutClick = {
                     navController.navigate(LoginScreen) {
                         popUpTo(0) { inclusive = true }

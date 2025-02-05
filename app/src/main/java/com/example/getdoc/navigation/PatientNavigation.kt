@@ -87,7 +87,8 @@ fun PatientNavigation(
                     viewModel = PatientViewModel(client, firestore),
                     firestore = firestore,
                     client = client,
-                    navController = navController)
+                    navController = navController
+                )
             }
 
             composable<AllDoctorsScreen> {
