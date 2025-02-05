@@ -80,7 +80,7 @@ fun ProfileUpdateScreen(
     }
 
     Column(
-        modifier = modifier.fillMaxSize().background(Color(0xFFF8F9FA)),
+        modifier = modifier.fillMaxSize().background(Color(0xFFF8F9FA)).padding(16.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {

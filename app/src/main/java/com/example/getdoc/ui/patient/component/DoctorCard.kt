@@ -156,10 +156,8 @@ fun DoctorCard(
                     Text(
                         text = doctor.specialization,
                         fontSize = 14.sp,
-                        color = Color.Blue, // Make the text blue
-                        modifier = Modifier
-                            .background(Color(0xFFE3F2FD), shape = RoundedCornerShape(8.dp)) // Light blue background with rounded edges
-                            .padding(horizontal = 8.dp, vertical = 4.dp) // Add padding around the text
+                        color = Color.DarkGray, // Make the text blue
+
                     )
 
                     Spacer(modifier = Modifier.height(4.dp))

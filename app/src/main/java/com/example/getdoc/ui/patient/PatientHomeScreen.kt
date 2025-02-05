@@ -44,7 +44,7 @@ fun PatientHomeScreen(
 ) {
     var searchQuery by remember { mutableStateOf("") }
     var selectedSpecialization by remember { mutableStateOf("All") }
-    val specializations = listOf("All", "Cardiologist", "Neurologist", "Orthopedics", "ENT")
+    val specializations = listOf("All", "Cardiologist", "Neurologist", "Orthopedics", "Pediatrician", "Dermatologist", "ENT")
     val doctors by viewModel.doctorList.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
     var username by remember { mutableStateOf("Loading...") }

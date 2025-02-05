@@ -132,12 +132,8 @@ fun DoctorDetailsScreen(
 
                                 // Specialization
                                 Text(
-                                    text = "Specialization: ${it.specialization}",
-                                    fontSize = 14.sp,
-                                    color = Color.Blue,
-                                    modifier = Modifier
-                                        .background(Color(0xFFE3F2FD), shape = RoundedCornerShape(8.dp))
-                                        .padding(horizontal = 8.dp, vertical = 4.dp)
+                                    text = it.specialization,
+                                    fontSize = 14.sp
                                 )
                                 Spacer(modifier = Modifier.height(8.dp))
 
@@ -284,3 +280,5 @@ fun fetchDoctorById(doctorId: String, onDoctorFetched: (DoctorInfo?) -> Unit) {
             onDoctorFetched(null)
         }
 }
+
+

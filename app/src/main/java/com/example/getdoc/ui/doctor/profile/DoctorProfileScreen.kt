@@ -70,10 +70,16 @@ fun DoctorProfileScreen(
 
     Scaffold(
         topBar = {
-            TopAppBar(
-                title = { Text("Doctor Profile", fontSize = 22.sp, fontWeight = FontWeight.Bold, color = Color.Black) },
-                colors = TopAppBarDefaults.mediumTopAppBarColors(containerColor = Color.White)
-            )
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp)
+            ) {
+                Text(
+                    text = "Profile",
+                    style = MaterialTheme.typography.headlineSmall
+                )
+            }
         }
     ) { padding ->
         Column(
