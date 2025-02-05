@@ -5,10 +5,13 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
 import com.example.getdoc.navigation.LoginScreen
+import com.example.getdoc.ui.authentication.AuthState
+import com.example.getdoc.ui.authentication.AuthUiState
 import com.example.getdoc.ui.authentication.AuthViewModel
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseUser
@@ -16,17 +19,23 @@ import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.launch
 @Composable
 fun DeleteAccountScreen(
-    navController: NavHostController, // Pass the NavController from parent
-    viewModel: AuthViewModel = viewModel(),
+    viewModel: AuthViewModel,
+    onAccountDeleted: () -> Unit
 ) {
-    val auth = FirebaseAuth.getInstance()
-    val firestore = FirebaseFirestore.getInstance()
-    val user = auth.currentUser
 
     var showConfirmationDialog by remember { mutableStateOf(false) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
     var isDeleting by remember { mutableStateOf(false) }
-    val coroutineScope = rememberCoroutineScope()
+
+    val uiState by viewModel.authState.collectAsStateWithLifecycle()
+    LaunchedEffect(uiState) {
+        if (uiState is AuthState.Uninitialized) {
+            onAccountDeleted()
+        } else if (uiState is AuthState.Error) {
+            errorMessage = (uiState as AuthState.Error).message
+            isDeleting = false
+        }
+    }
 
     Column(
         modifier = Modifier
@@ -76,22 +85,7 @@ fun DeleteAccountScreen(
                     onClick = {
                         showConfirmationDialog = false
                         isDeleting = true
-                        coroutineScope.launch {
-                            deleteAccount(
-                                user,
-                                firestore,
-                                onSuccess = {
-                                    isDeleting = false
-                                    coroutineScope.launch {
-                                        onAccountDeleted(navController)
-                                    }
-                                },
-                                onFailure = { error ->
-                                    isDeleting = false
-                                    errorMessage = error
-                                }
-                            )
-                        }
+                        viewModel.deleteAccount()
                     }
                 ) {
                     Text("Confirm")
@@ -105,42 +99,5 @@ fun DeleteAccountScreen(
             title = { Text("Are you sure?") },
             text = { Text("This action cannot be undone. Do you really want to delete your account?") }
         )
-    }
-}
-
-private fun deleteAccount(
-    user: FirebaseUser?,
-    firestore: FirebaseFirestore,
-    onSuccess: () -> Unit,
-    onFailure: (String) -> Unit
-) {
-    user?.let { firebaseUser ->
-        val userEmail = firebaseUser.email
-
-        if (userEmail != null) {
-            firestore.collection("users").document(userEmail).delete()
-                .addOnSuccessListener {
-                    firebaseUser.delete()
-                        .addOnSuccessListener {
-                            onSuccess()
-                        }
-                        .addOnFailureListener { exception ->
-                            onFailure("Failed to delete account: ${exception.message}")
-                        }
-                }
-                .addOnFailureListener { exception ->
-                    onFailure("Failed to delete user data: ${exception.message}")
-                }
-        } else {
-            onFailure("User email not found.")
-        }
-    } ?: run {
-        onFailure("User not authenticated.")
-    }
-}
-
-private fun onAccountDeleted(navController: NavHostController) {
-    navController.navigate(LoginScreen) {
-        popUpTo(0) { inclusive = true }
     }
 }

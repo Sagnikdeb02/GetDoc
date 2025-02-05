@@ -13,7 +13,7 @@ import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.launch
 
 @Composable
-fun ChangePasswordScreen(viewModel: AuthViewModel = viewModel(), onPasswordChangeSuccess: () -> Unit) {
+fun ChangePasswordScreen(viewModel: AuthViewModel, onPasswordChangeSuccess: () -> Unit) {
     val auth = FirebaseAuth.getInstance()
     val user = auth.currentUser
 

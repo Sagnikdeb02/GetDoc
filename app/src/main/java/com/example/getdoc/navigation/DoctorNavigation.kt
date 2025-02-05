@@ -105,7 +105,6 @@ fun DoctorNavigation(
             }
 
             composable<DoctorProfileScreen> {
-                val viewModel: AuthViewModel = viewModel()
 
                 DoctorProfileScreen(
                     navController = navController,
@@ -143,9 +142,8 @@ fun DoctorNavigation(
 
             composable<DoctorChangePasswordScreen>{
                 ChangePasswordScreen(
-                    viewModel = AuthViewModel(),
+                    viewModel = authViewModel,
                     onPasswordChangeSuccess =  {navController.popBackStack()}
-
                 )
             }
             composable<DoctorHelpScreen> {
@@ -154,8 +152,8 @@ fun DoctorNavigation(
 
             composable<DoctorDeleteAccountScreen> {
                 DeleteAccountScreen(
-                    navController = navController,
-                    viewModel = AuthViewModel()
+                    viewModel = authViewModel,
+                    onAccountDeleted = { onLogoutClick() }
                 )
             }
         }

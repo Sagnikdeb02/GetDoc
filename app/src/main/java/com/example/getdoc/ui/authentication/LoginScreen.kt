@@ -4,6 +4,7 @@ package com.example.getdoc.ui.authentication
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -28,10 +29,10 @@ fun LogInScreen(
     viewModel: AuthViewModel,
     onLoginSuccess: (role: Role) -> Unit,
     onSignUpClick: () -> Unit,
-    onVerificationEmailSent: () -> Unit
+    onVerificationEmailSent: () -> Unit,
+    onForgotPasswordClick: () -> Unit
 ) {
-    val context = LocalContext.current
-    val coroutineScope = rememberCoroutineScope()
+
 
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
@@ -153,14 +154,18 @@ fun LogInScreen(
             Spacer(modifier = Modifier.height(16.dp))
             Row(
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 60.dp),
+                    .fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Text(text = "Don't have an account? ")
                 TextButton(
-                    onClick = { onSignUpClick() }
+                    onClick = onForgotPasswordClick
+                ) {
+                    Text(text = "Forgot Password?", color = Color(0xFF174666))
+
+                }
+                TextButton(
+                    onClick = onSignUpClick
                 ) {
                     Text(text = "Sign Up", color = Color(0xFF174666))
                 }

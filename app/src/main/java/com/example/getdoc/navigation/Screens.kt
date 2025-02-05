@@ -8,6 +8,7 @@ import kotlinx.serialization.Serializable
 @Serializable data object ChooseRoleScreen
 @Serializable data class RegistrationScreen(val role: Role)
 @Serializable data object WaitingForVerificationScreen
+@Serializable data object ForgetPasswordScreen
 
 @Serializable data object PatientHomeScreen
 @Serializable data object DoctorHomeScreen
@@ -34,7 +35,6 @@ import kotlinx.serialization.Serializable
 @Serializable data object PatientAboutUsScreen
 @Serializable data object DoctorChangePasswordScreen
 @Serializable data object PatientChangePasswordScreen
-@Serializable data object ForgotPasswordScreen
 @Serializable data object DoctorDeleteAccountScreen
 @Serializable data object PatientDeleteAccountScreen
 @Serializable data object DoctorHelpScreen

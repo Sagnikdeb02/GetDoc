@@ -137,6 +137,7 @@ class AuthViewModel : ViewModel() {
         } else {
             _authState.value = AuthState.Uninitialized
         }
+        Log.d("AuthViewModel", "loadUserData called")
     }
 
 
@@ -145,7 +146,41 @@ class AuthViewModel : ViewModel() {
         _authState.value = AuthState.Uninitialized
     }
 
+    fun deleteAccount() {
+        val user = firebaseAuth.currentUser
+        user?.let { firebaseUser ->
+            val userEmail = firebaseUser.email
+            if (userEmail != null) {
+                val tempUserData = db.collection("users").document(userEmail)
+                db.collection("users").document(userEmail).delete()
+                    .addOnSuccessListener {
+                        user.delete()
+                            .addOnCompleteListener {
+                                if (it.isSuccessful) {
+                                    _authState.value = AuthState.Uninitialized
+                                } else {
+                                    db.collection("users").document(userEmail).set(tempUserData)
+                                    _authState.value = AuthState.Error("Failed to delete user")
+                                }
+                            }
+                    }
+            }
+        }
+    }
+
+    fun resetPassword(email: String) {
+        firebaseAuth.sendPasswordResetEmail(email)
+            .addOnCompleteListener {
+                if (it.isSuccessful) {
+                    _authState.value = AuthState.Error("Password reset email sent")
+                } else {
+                    _authState.value = AuthState.Error("Failed to send password reset email")
+                }
+            }
+    }
+
 }
+
 
 sealed class AuthState {
     object Uninitialized : AuthState()

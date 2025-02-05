@@ -229,8 +229,8 @@ fun PatientNavigation(
 
             composable<PatientDeleteAccountScreen> {
                 DeleteAccountScreen(
-                    navController = navController,
-                    viewModel = AuthViewModel()
+                    viewModel = authViewModel,
+                    onAccountDeleted = { onLogoutClick() }
                 )
             }
         }

@@ -1,18 +1,17 @@
 package com.example.getdoc.navigation
 
-import android.util.Log
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import androidx.core.app.AppLaunchChecker
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
+import com.example.getdoc.ForgetPasswordScreen
 import com.example.getdoc.ui.authentication.AdminHomeScreen
 import com.example.getdoc.ui.authentication.AuthState
 import com.example.getdoc.ui.authentication.AuthViewModel
@@ -23,17 +22,12 @@ import com.example.getdoc.ui.authentication.RegistrationScreen
 import com.example.getdoc.ui.authentication.Role
 import com.example.getdoc.ui.authentication.SplashScreen
 import com.example.getdoc.ui.authentication.WaitingForVerificationScreen
-import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import io.appwrite.Client
-import kotlinx.coroutines.delay
 
 @Composable
 fun AppNavigation(modifier: Modifier = Modifier, client: Client, firestore: FirebaseFirestore) {
     val navController = rememberNavController()
-    val authenticationViewModel: AuthenticationViewModel = viewModel()
-    val firebaseUser by authenticationViewModel.firebaseUser.collectAsStateWithLifecycle()
-    val context = LocalContext.current
 
     val authViewModel: AuthViewModel = viewModel()
     val authState by authViewModel.authState.collectAsStateWithLifecycle()
@@ -108,10 +102,21 @@ fun AppNavigation(modifier: Modifier = Modifier, client: Client, firestore: Fire
 
                 },
                 onSignUpClick = { navController.navigate(ChooseRoleScreen) },
-                onVerificationEmailSent = { navController.navigate(WaitingForVerificationScreen) }
+                onVerificationEmailSent = { navController.navigate(WaitingForVerificationScreen) },
+                onForgotPasswordClick = {
+                    navController.navigate(ForgetPasswordScreen)
+                }
             )
         }
 
+        composable<ForgetPasswordScreen> {
+            ForgetPasswordScreen(
+                viewModel = authViewModel,
+                onPasswordResetSuccess = {
+                    navController.navigateUp()
+                }
+            )
+        }
 
         composable<ChooseRoleScreen> {
             ChooseRoleScreen(
@@ -177,4 +182,5 @@ fun AppNavigation(modifier: Modifier = Modifier, client: Client, firestore: Fire
 
 
 
-    }}
+    }
+}
