@@ -17,6 +17,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.res.painterResource
@@ -72,41 +73,62 @@ fun DoctorHomeScreen(
             .background(Color(0xFFF0F4F7))
             .padding(16.dp)
     ) {
+
         Row(
-            verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier
+                .fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            // Profile Image
-            Box(
-                modifier = Modifier
-                    .size(40.dp)
-                    .clip(CircleShape)
-                    .background(Color.LightGray),
-                contentAlignment = Alignment.Center
+            Text(
+                text = "GetDoc",
+                fontSize = 24.sp,
+                fontWeight = FontWeight.Bold,
+                color = Color(0xFF008080), // teal color
+                //modifier = Modifier.padding(16.dp)
+            )
+
+            Row(
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                profileImage?.let {
-                    Image(
-                        bitmap = convertImageByteArrayToBitmap(it).asImageBitmap(),
-                        contentDescription = "Profile Picture",
-                        modifier = Modifier.size(40.dp).clip(CircleShape)
-                    )
-                } ?: Icon(
-                    painter = painterResource(id = R.drawable.profile),  // Default profile icon
-                    contentDescription = "Default Profile",
-                    modifier = Modifier.size(40.dp),
-                    tint = Color.Gray
+
+                // Username
+                Text(
+                    text = "Hi, $username",
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.Bold
                 )
+
+                Spacer(modifier = Modifier.width(8.dp))
+
+
+                // Profile Image
+                Box(
+                    modifier = Modifier
+                        .size(40.dp)
+                        .clip(CircleShape)
+                        .background(Color.LightGray),
+                    contentAlignment = Alignment.Center
+                ) {
+                    profileImage?.let {
+                        Image(
+                            bitmap = convertImageByteArrayToBitmap(it).asImageBitmap(),
+                            contentDescription = "Profile Picture",
+                            modifier = Modifier.size(40.dp).clip(CircleShape)
+                        )
+                    } ?: Icon(
+                        painter = painterResource(id = R.drawable.profile),  // Default profile icon
+                        contentDescription = "Default Profile",
+                        modifier = Modifier.size(40.dp),
+                        tint = Color.Gray
+                    )
+                }
             }
 
-            Spacer(modifier = Modifier.width(8.dp))
 
-            // Username
-            Text(
-                text = "Hi, $username",
-                fontSize = 18.sp,
-                fontWeight = FontWeight.Bold
-            )
         }
+
+
 
         Spacer(modifier = Modifier.height(30.dp))
 
@@ -117,10 +139,8 @@ fun DoctorHomeScreen(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-                text = if (selectedDate.isEmpty()) "All Appointments" else "Appointments for $selectedDate",
-                fontSize = 18.sp,
-                fontWeight = FontWeight.Bold,
-                color = Color(0xFF2E7D32)
+                text = if (selectedDate.isEmpty()) "New Appointments" else "Appointments for $selectedDate",
+                style = MaterialTheme.typography.titleLarge
             )
             Icon(
                 painter = painterResource(id = R.drawable.img_14),
@@ -195,32 +215,67 @@ fun AppointmentCard(
     onDecline: () -> Unit
 ) {
     Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White)
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 6.dp),
+        shape = RoundedCornerShape(16.dp), // Rounded corners
+        elevation = CardDefaults.cardElevation(
+            defaultElevation = 10.dp // Soft shadow
+        ),
+        colors = CardDefaults.cardColors(
+            containerColor = Color.Transparent // Transparent to allow gradient background
+        )
     ) {
-        Column(modifier = Modifier.padding(16.dp)) {
-            Text("Patient: ${appointment.patientInfo.firstName} ${appointment.patientInfo.lastName}", fontSize = 16.sp, fontWeight = FontWeight.Bold)
-            Text("Gender: ${appointment.patientInfo.gender}", fontSize = 14.sp, color = Color.Gray)
-            Text("Age: ${appointment.patientInfo.age} years", fontSize = 14.sp, color = Color.Gray)
-            Text("Relation: ${appointment.patientInfo.relation}", fontSize = 14.sp, color = Color.Gray)
-            Text("Date: ${appointment.date}", fontSize = 14.sp, color = Color.Gray)
-            Text("Time: ${appointment.timeSlot}", fontSize = 14.sp, color = Color.Gray)
 
-            val statusColor = Color(0xFF2E7D32) // Approved status color
-            Text("Status: ${appointment.patientInfo.status}", fontSize = 14.sp, color = statusColor)
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(
+                    brush = Brush.verticalGradient( // Apply a vertical gradient
+                        colors = listOf(
+                            Color(0xFFFFFFFF), // Pure white
+                            Color(0xFFF0F7FB) // Even lighter gray for a subtle effect
+                        )
+                    ),
+                    shape = RoundedCornerShape(16.dp) // Match the card's shape
+                )
 
-            Spacer(modifier = Modifier.height(8.dp))
+        ){
+            Row(modifier = Modifier.padding(16.dp)) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text("Patient: ${appointment.patientInfo.firstName} ${appointment.patientInfo.lastName}", fontSize = 16.sp, fontWeight = FontWeight.Bold)
+                    Text("Gender: ${appointment.patientInfo.gender}", fontSize = 14.sp, color = Color.Gray)
+                    Text("Age: ${appointment.patientInfo.age} years", fontSize = 14.sp, color = Color.Gray)
+                    Text("Relation: ${appointment.patientInfo.relation}", fontSize = 14.sp, color = Color.Gray)
 
-            // Show Decline Button ONLY for Approved Appointments
-            Button(
-                onClick = onDecline,
-                colors = ButtonDefaults.buttonColors(containerColor = Color.Red),
-                shape = RoundedCornerShape(12.dp)
-            ) {
-                Text("Decline", color = Color.White)
+                    val statusColor = Color(0xFF2E7D32) // Approved status color
+                    Text("Status: ${appointment.patientInfo.status}", fontSize = 14.sp, color = statusColor)
+                }
+
+                Spacer(modifier = Modifier.width(16.dp)) // Add spacing between columns
+
+                Column(horizontalAlignment = Alignment.End, verticalArrangement = Arrangement.Bottom) {
+                    Text("Date: ${appointment.date}", fontSize = 14.sp, color = Color.Gray)
+                    Text("Time: ${appointment.timeSlot}", fontSize = 14.sp, color = Color.Gray)
+
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    // Show Decline Button ONLY for Approved Appointments
+                    Button(
+                        onClick = onDecline,
+                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF008080)),
+                        shape = RoundedCornerShape(12.dp)
+                    ) {
+                        Text("Decline", color = Color.White)
+                    }
+                }
             }
+
         }
+
+
+
+
     }
 }
 

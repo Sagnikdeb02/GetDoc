@@ -155,9 +155,9 @@ fun FilterBar(selectedFilter: String, onFilterSelected: (String) -> Unit) {
             Button(
                 onClick = { onFilterSelected(filter) },
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = if (selectedFilter == filter) Color(0xFF2E7D32) else Color.LightGray
+                    containerColor = if (selectedFilter == filter) Color(0xFF008080) else Color.LightGray
                 ),
-                shape = RoundedCornerShape(16.dp),
+                shape = RoundedCornerShape(30.dp),
                 modifier = Modifier.padding(horizontal = 4.dp)
             ) {
                 Text(text = filter, color = Color.White, fontSize = 14.sp)
@@ -170,8 +170,9 @@ fun FilterBar(selectedFilter: String, onFilterSelected: (String) -> Unit) {
 fun AppointmentCard(appointment: Appointment) {
     Card(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White)
+        shape = RoundedCornerShape(10.dp),
+        colors = CardDefaults.cardColors(containerColor = Color.White),
+        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
             Text("Patient: ${appointment.patientInfo.firstName} ${appointment.patientInfo.lastName}", fontSize = 16.sp, fontWeight = FontWeight.Bold)
