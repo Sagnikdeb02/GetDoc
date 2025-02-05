@@ -189,15 +189,9 @@ fun DoctorCard(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
-                            Icon(
-                                painter = painterResource(id = R.drawable.star),
-                                contentDescription = "Rating",
-                                tint = Color(0xFFFFD700),
-                                modifier = Modifier.size(18.dp)
-                            )
-                            Spacer(modifier = Modifier.width(4.dp))
+
                             Text(
-                                text = "${doctor.rating}",
+                                text = doctor.degree,
                                 fontSize = 14.sp
                             )
                         }

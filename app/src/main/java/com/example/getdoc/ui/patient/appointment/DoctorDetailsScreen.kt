@@ -203,9 +203,7 @@ fun DoctorDetailsScreen(
                                     modifier = Modifier.fillMaxWidth(),
                                     horizontalArrangement = Arrangement.SpaceBetween // Align buttons to the right
                                 ) {
-                                    OutlinedButton(onClick = { Log.d("DoctorDetails", "Call clicked") }) {
-                                        Text("Call")
-                                    }
+
                                     Spacer(modifier = Modifier.width(8.dp))
                                     Button(
                                         onClick = {
@@ -217,7 +215,7 @@ fun DoctorDetailsScreen(
                                             }
                                         },
                                         colors = ButtonDefaults.buttonColors(
-                                            containerColor = Color(0xFFFFA726),
+                                            containerColor = Color(0xFF008080),
                                             contentColor = Color.White)
                                     ) {
                                         Text("Book")

@@ -96,8 +96,10 @@ fun MyCredentialsPageComponent(
             item { FormFieldComponent("Speciality", uiState.speciality ?: "", { viewModel.updateUiState("speciality", it) }) }
             item { FormFieldComponent("DOB", uiState.dob ?: "", { viewModel.updateUiState("dob", it) }) }
             item { FormFieldComponent("Clinic Address", uiState.address ?: "", { viewModel.updateUiState("address", it) }) }
+            item { FormFieldComponent("Experience", uiState.experience ?: "", { viewModel.updateUiState("experience", it) }) }
             item { FormFieldComponent("Consultation Fee", uiState.fee ?: "", { viewModel.updateUiState("fee", it) }) }
             item { FormFieldComponent("About You", uiState.aboutYou ?: "", { viewModel.updateUiState("aboutYou", it) }) }
+
         }
 
         // **Only show actions if NOT DECLINED**

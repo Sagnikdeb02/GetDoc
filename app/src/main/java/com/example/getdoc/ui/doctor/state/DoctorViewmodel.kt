@@ -154,6 +154,7 @@ class DoctorViewModel(
                     "consultingFee" to (state.fee?.toIntOrNull() ?: 0),
                     "about" to (state.aboutYou ?: ""),
                     "licenseUrl" to licenseUrl,
+                    "experience" to (state.experience?.toIntOrNull() ?: 0),
                     "status" to "pending",
                     "rating" to 0.0
                 )
@@ -187,6 +188,7 @@ class DoctorViewModel(
             "dob" to (state.dob ?: ""),
             "location" to (state.address ?: ""),
             "consultingFee" to (state.fee?.toIntOrNull() ?: 0),
+            "experience" to (state.experience?.toIntOrNull() ?: 0),
             "about" to (state.aboutYou ?: "")
         )
 
@@ -227,6 +229,7 @@ class DoctorViewModel(
             "dob" -> _uiState.value.copy(dob = value)
             "address" -> _uiState.value.copy(address = value)
             "fee" -> _uiState.value.copy(fee = value)
+            "experience" -> _uiState.value.copy(experience = value)
             "aboutYou" -> _uiState.value.copy(aboutYou = value)
             else -> _uiState.value
         }

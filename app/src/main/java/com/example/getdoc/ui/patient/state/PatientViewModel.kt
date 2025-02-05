@@ -159,86 +159,8 @@ class PatientViewModel(
     }
 
 
-    fun uploadPatientProfile(context: Context) {
-
-        val state = _profileUiState.value
-        _profileUiState.value = state.copy(isLoading = true, errorMessage = null)
 
 
-        val userId = FirebaseAuth.getInstance().currentUser?.uid
-        if (userId.isNullOrEmpty()) {
-            _profileUiState.value = state.copy(isLoading = false, errorMessage = "User not authenticated")
-            Toast.makeText(context, "User is not authenticated!", Toast.LENGTH_LONG).show()
-            return
-        }
-
-        if (state.usernameInput.isEmpty() || state.imageUri == null) {
-            _profileUiState.value = state.copy(isLoading = false, errorMessage = "Please provide all details")
-            Toast.makeText(context, "Please enter username and select an image", Toast.LENGTH_LONG).show()
-            return
-        }
-
-        viewModelScope.launch {
-            try {
-                val imageFile = uriToFile(state.imageUri, context)
-                if (imageFile != null) {
-                    val storage = Storage(client)
-                    val inputFile = InputFile.fromFile(imageFile)
-
-                    // Upload image to Appwrite
-                    val result = storage.createFile(
-                        bucketId = "678dd5d30039f0a22428",
-                        fileId = ID.unique(),
-                        file = inputFile
-                    )
-
-                    // Prepare Firestore data
-                    val profileData = hashMapOf(
-                        "username" to state.usernameInput,
-                        "location" to state.locationInput,
-                        "profileImageUrl" to result.id
-                    )
-
-                    firestore.collection("patients")
-                        .document(userId)
-                        .set(profileData)
-                        .addOnSuccessListener {
-                            _profileUiState.value = state.copy(isLoading = false, isSuccess = true)
-                            Toast.makeText(context, "Profile updated successfully!", Toast.LENGTH_LONG).show()
-                        }
-                        .addOnFailureListener { e ->
-                            _profileUiState.value = state.copy(isLoading = false, errorMessage = e.localizedMessage)
-                            Toast.makeText(context, "Error: ${e.localizedMessage}", Toast.LENGTH_LONG).show()
-                        }
-                } else {
-                    _profileUiState.value = state.copy(isLoading = false, errorMessage = "Image conversion failed")
-                    Toast.makeText(context, "Failed to process image", Toast.LENGTH_LONG).show()
-                }
-            } catch (e: AppwriteException) {
-                _profileUiState.value = state.copy(isLoading = false, errorMessage = e.message)
-                Toast.makeText(context, "Error uploading image: ${e.message}", Toast.LENGTH_LONG).show()
-            } catch (e: Exception) {
-                _profileUiState.value = state.copy(isLoading = false, errorMessage = e.message)
-                Toast.makeText(context, "Unexpected error: ${e.message}", Toast.LENGTH_LONG).show()
-            }
-        }
-    }
-
-    private fun uriToFile(uri: Uri, context: Context): File? {
-        return try {
-            val inputStream: InputStream? = context.contentResolver.openInputStream(uri)
-            val tempFile = File.createTempFile("upload_", ".jpg", context.cacheDir)
-            inputStream?.use { input ->
-                FileOutputStream(tempFile).use { output ->
-                    input.copyTo(output)
-                }
-            }
-            tempFile
-        } catch (e: Exception) {
-            Log.e("PatientViewModel", "Failed to convert Uri to File: ${e.message}")
-            null
-        }
-    }
 
     private fun convertImageByteArrayToBitmap(imageData: ByteArray): Bitmap {
         return BitmapFactory.decodeByteArray(imageData, 0, imageData.size)

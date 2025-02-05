@@ -14,6 +14,7 @@ data class DoctorCredentialScreenUiState(
     val rejectionReason: String? = null,
     val isLoading: Boolean = false,
     val isSuccess: Boolean = false,
-    val errorMessage: String? = null
+    val errorMessage: String? = null,
+    val experience: String? = null
 )
 

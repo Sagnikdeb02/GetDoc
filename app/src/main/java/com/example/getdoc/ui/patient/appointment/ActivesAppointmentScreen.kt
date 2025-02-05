@@ -481,7 +481,7 @@ fun TabSection(
 @Composable
 fun LoadingIndicator() {
     Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-        CircularProgressIndicator()
+        Text(text = "No Appointments Found", fontSize = 16.sp, fontWeight = FontWeight.Bold, color = Color.Gray)
     }
 }
 fun submitReview(doctorId: String, rating: Int, reviewText: String) {
