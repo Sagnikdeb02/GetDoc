@@ -1,6 +1,7 @@
 package com.example.getdoc.ui.authentication
 
 import android.util.Log
+import android.widget.Toast
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.NavHostController
@@ -23,17 +24,13 @@ class AuthViewModel : ViewModel() {
     val authState = _authState.asStateFlow()
     var verificationCheckJob: Job? = null
 
-    // Default admin credentials
-    private val defaultAdminEmail = "admin@getdoc.com"
-    private val defaultAdminPassword = "admin123"
-
     init {
         if (verificationCheckJob == null) {
             loadUserData()
         }
     }
 
-    fun signInUser(email: String, password: String) {
+    fun signInUser(email: String, password: String,context: android.content.Context) {
         _authState.value = AuthState.Loading
 
         firebaseAuth.signInWithEmailAndPassword(email, password)
@@ -43,6 +40,7 @@ class AuthViewModel : ViewModel() {
 
                 if (userEmail == null) {
                     _authState.value = AuthState.Error("Authentication failed: No email found")
+                    Toast.makeText(context, "Authentication failed: No email found", Toast.LENGTH_SHORT).show()
                     return@addOnSuccessListener
                 }
 
@@ -50,6 +48,7 @@ class AuthViewModel : ViewModel() {
                     .addOnSuccessListener { document ->
                         if (!document.exists()) {
                             _authState.value = AuthState.Error("User data not found")
+                            Toast.makeText(context, "User data not found", Toast.LENGTH_SHORT).show()
                             return@addOnSuccessListener
                         }
                         loadUserData()
@@ -57,16 +56,18 @@ class AuthViewModel : ViewModel() {
                     }
                     .addOnFailureListener {
                         _authState.value = AuthState.Error("Error fetching user role: ${it.message}")
+                        Toast.makeText(context, "Error fetching user role: ${it.message}", Toast.LENGTH_SHORT).show()
                     }
             }
             .addOnFailureListener {
                 _authState.value = AuthState.Error(it.message ?: "Unknown authentication error")
+                Toast.makeText(context, it.message ?: "Unknown authentication error", Toast.LENGTH_SHORT).show()
             }
     }
 
 
 
-    fun signUpUser(email: String, password: String, role: Role) {
+    fun signUpUser(email: String, password: String, role: Role,context: android.content.Context) {
         _authState.value = AuthState.Loading
         firebaseAuth.createUserWithEmailAndPassword(email, password)
             .addOnSuccessListener { authResult ->
@@ -75,6 +76,7 @@ class AuthViewModel : ViewModel() {
                         _authState.value = AuthState.Error(
                             "Failed to send verification email: ${verificationTask.exception?.message}"
                         )
+                        Toast.makeText(context, "Failed to send verification email", Toast.LENGTH_SHORT).show()
                         return@addOnCompleteListener
                     }
                     val userMap = hashMapOf(
@@ -92,6 +94,7 @@ class AuthViewModel : ViewModel() {
             }
             .addOnFailureListener {
                 _authState.value = AuthState.Error(it.message ?: "Unknown error")
+                Toast.makeText(context, it.message ?: "Unknown error", Toast.LENGTH_SHORT).show()
             }
     }
 

@@ -1,9 +1,9 @@
 package com.example.getdoc.ui.authentication
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
-
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -13,14 +13,8 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.Icon
-import androidx.compose.runtime.Composable
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Text
+import androidx.compose.material3.*
+import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.getdoc.R
 import java.util.regex.Pattern
@@ -35,7 +29,6 @@ fun RegistrationScreen(
     var password by remember { mutableStateOf("") }
     var confirmPassword by remember { mutableStateOf("") }
 
-    var usernameError by remember { mutableStateOf("") }
     var emailError by remember { mutableStateOf("") }
     var passwordError by remember { mutableStateOf("") }
     var confirmPasswordError by remember { mutableStateOf("") }
@@ -43,8 +36,8 @@ fun RegistrationScreen(
     var passwordVisible by remember { mutableStateOf(false) }
     var isLoading by remember { mutableStateOf(false) }
 
-
     val authState by viewModel.authState.collectAsStateWithLifecycle()
+    val context = LocalContext.current
 
     LaunchedEffect(authState) {
         if (authState is AuthState.VerificationEmailSent) {
@@ -52,13 +45,20 @@ fun RegistrationScreen(
         }
     }
 
-
     Column(
         modifier = Modifier
             .fillMaxSize()
             .background(Color.White)
             .padding(16.dp)
     ) {
+        Image(
+            painter = painterResource(id = R.drawable.img),
+            contentDescription = "App Logo",
+            modifier = Modifier
+                .size(300.dp)
+                .align(Alignment.CenterHorizontally)
+        )
+
         Text(
             text = "Sign Up",
             fontSize = 26.sp,
@@ -66,10 +66,8 @@ fun RegistrationScreen(
             modifier = Modifier.align(Alignment.CenterHorizontally)
         )
 
-
         Spacer(modifier = Modifier.height(16.dp))
 
-        // Email Input
         OutlinedTextField(
             value = email,
             onValueChange = {
@@ -87,7 +85,6 @@ fun RegistrationScreen(
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // Password Input
         OutlinedTextField(
             value = password,
             onValueChange = {
@@ -107,7 +104,7 @@ fun RegistrationScreen(
                     Icon(
                         painter = painterResource(id = icon),
                         contentDescription = null,
-                        modifier = Modifier.size(24.dp) // Adjust the icon size here
+                        modifier = Modifier.size(24.dp)
                     )
                 }
             }
@@ -118,7 +115,6 @@ fun RegistrationScreen(
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // Confirm Password Input
         OutlinedTextField(
             value = confirmPassword,
             onValueChange = {
@@ -138,7 +134,7 @@ fun RegistrationScreen(
                     Icon(
                         painter = painterResource(id = icon),
                         contentDescription = null,
-                        modifier = Modifier.size(24.dp) // Adjust the icon size here
+                        modifier = Modifier.size(24.dp)
                     )
                 }
             }
@@ -149,16 +145,15 @@ fun RegistrationScreen(
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // Sign Up Button
         Button(
             onClick = {
                 emailError = validateEmail(email)
                 passwordError = validatePassword(password)
                 confirmPasswordError = validateConfirmPassword(password, confirmPassword)
 
-                if (usernameError.isEmpty() && emailError.isEmpty() && passwordError.isEmpty() && confirmPasswordError.isEmpty()) {
+                if (emailError.isEmpty() && passwordError.isEmpty() && confirmPasswordError.isEmpty()) {
                     isLoading = true
-                    viewModel.signUpUser(email, password, role)
+                    viewModel.signUpUser(email, password, role, context)
                 }
             },
             modifier = Modifier.fillMaxWidth(),
@@ -171,12 +166,12 @@ fun RegistrationScreen(
                 Text(text = "Sign Up", color = Color.White, fontSize = 18.sp)
             }
         }
-
-        if (signUpError.isNotEmpty()) {
-            Spacer(modifier = Modifier.height(8.dp))
-            Text(text = signUpError, color = Color.Red, fontSize = 12.sp)
-        }
     }
+}
+
+fun validatePassword(password: String): String {
+    val passwordPattern = "^(?=.*[0-9])(?=.*[!@#\$%^&*])[a-zA-Z0-9!@#\$%^&*]{6,}$"
+    return if (!Pattern.compile(passwordPattern).matcher(password).matches()) "Password must be at least 6 characters, include a number, and a special character" else ""
 }
 
 
@@ -186,13 +181,6 @@ fun validateEmail(email: String): String {
     return if (!Pattern.compile(emailPattern).matcher(email).matches()) "Invalid email format" else ""
 }
 
-fun validatePassword(password: String): String {
-    return when {
-        password.isBlank() -> "Password cannot be empty"
-        password.length < 6 -> "Password must be at least 6 characters"
-        else -> ""
-    }
-}
 
 fun validateConfirmPassword(password: String, confirmPassword: String): String {
     return if (confirmPassword != password) "Passwords do not match" else ""

@@ -1,10 +1,9 @@
 package com.example.getdoc.ui.authentication
 
-
+import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -12,17 +11,15 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.getdoc.R
 import java.util.regex.Pattern
-
-
 
 @Composable
 fun LogInScreen(
@@ -32,7 +29,7 @@ fun LogInScreen(
     onVerificationEmailSent: () -> Unit,
     onForgotPasswordClick: () -> Unit
 ) {
-
+    val context = LocalContext.current
 
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
@@ -52,7 +49,6 @@ fun LogInScreen(
                     Role.PATIENT -> onLoginSuccess(Role.PATIENT)
                 }
             }
-
             is AuthState.Error -> {}
             AuthState.Loading -> {}
             AuthState.PendingApproval -> {}
@@ -61,9 +57,6 @@ fun LogInScreen(
             AuthState.VerificationEmailSent -> onVerificationEmailSent()
         }
     }
-
-
-
 
     Column(
         modifier = Modifier
@@ -90,7 +83,6 @@ fun LogInScreen(
                 .padding(horizontal = 16.dp)
         ) {
             Text(text = "Sign In", fontSize = 26.sp, color = Color(0xFF174666))
-
             Spacer(modifier = Modifier.height(16.dp))
             OutlinedTextField(
                 value = email,
@@ -113,7 +105,11 @@ fun LogInScreen(
                 trailingIcon = {
                     IconButton(onClick = { passwordVisible = !passwordVisible }) {
                         val icon = if (passwordVisible) R.drawable.img_15 else R.drawable.img_2
-                        Icon(painter = painterResource(id = icon), contentDescription = null)
+                        Icon(
+                            painter = painterResource(id = icon),
+                            contentDescription = null,
+                            modifier = Modifier.size(24.dp)
+                        )
                     }
                 },
                 modifier = Modifier.fillMaxWidth(),
@@ -135,13 +131,14 @@ fun LogInScreen(
                     }
                     if (password.isEmpty()) {
                         passwordError = "Password cannot be empty"
-                    } else if (password.length < 6) {
-                        passwordError = "Password must be at least 6 characters"
+                    } else if (!isValidPassword(password)) {
+                        passwordError = "Password must be at least 6 characters, include a number, and a special character"
+                        Toast.makeText(context, "Invalid password format", Toast.LENGTH_SHORT).show()
                     }
 
                     if (emailError.isEmpty() && passwordError.isEmpty()) {
                         isLoading = true
-                        viewModel.signInUser(email, password)
+                        viewModel.signInUser(email, password,context)
                     }
                 },
                 modifier = Modifier.fillMaxWidth(),
@@ -153,20 +150,14 @@ fun LogInScreen(
 
             Spacer(modifier = Modifier.height(16.dp))
             Row(
-                modifier = Modifier
-                    .fillMaxWidth(),
+                modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                TextButton(
-                    onClick = onForgotPasswordClick
-                ) {
+                TextButton(onClick = onForgotPasswordClick) {
                     Text(text = "Forgot Password?", color = Color(0xFF174666))
-
                 }
-                TextButton(
-                    onClick = onSignUpClick
-                ) {
+                TextButton(onClick = onSignUpClick) {
                     Text(text = "Sign Up", color = Color(0xFF174666))
                 }
             }
@@ -174,10 +165,12 @@ fun LogInScreen(
     }
 }
 
-
-
-// Helper function to validate email format
 fun isValidEmail(email: String): Boolean {
     val emailPattern = "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$"
     return Pattern.compile(emailPattern).matcher(email).matches()
+}
+
+fun isValidPassword(password: String): Boolean {
+    val passwordPattern = "^(?=.*[0-9])(?=.*[!@#\$%^&*])[a-zA-Z0-9!@#\$%^&*]{6,}$"
+    return Pattern.compile(passwordPattern).matcher(password).matches()
 }
